@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRephraser</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="logo">AIRephraser</div>
+    <div class="user-info" id="userInfo">
+        <span class="user-name" id="userName"></span>
+        <button class="nav-btn" id="authBtn">👤 Войти</button>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="container">
+    <h1>AIRephraser</h1>
+    <p class="subtitle">Превращаем ИИ-текст в живые слова</p>
+
+    <!-- Editor Section -->
+    <div class="editor">
+        <div class="col">
+            <h3>📝 Ввод</h3>
+            <textarea id="input" placeholder="Вставьте текст для обработки..."></textarea>
+        </div>
+        <div class="col">
+            <h3 class="out-text">✨ Результат</h3>
+            <div id="result" class="output">Результат появится здесь...</div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <div class="control-group">
+            <label>⚡ Сила изменения</label>
+            <select id="intensity">
+                <option value="low">Слабая</option>
+                <option value="medium" selected>Нормальная</option>
+                <option value="high">Сильная</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>🎭 Тон</label>
+            <select id="tone">
+                <option value="neutral">Нейтральный</option>
+                <option value="formal">Формальный</option>
+                <option value="casual">Повседневный</option>
+                <option value="friendly">Дружелюбный</option>
+                <option value="academic">Академический</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>✍️ Стиль</label>
+            <select id="style">
+                <option value="simple">Простой</option>
+                <option value="creative">Креативный</option>
+                <option value="professional">Профессиональный</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>📏 Длина</label>
+            <select id="length">
+                <option value="same">Оставить</option>
+                <option value="shorter">Короче</option>
+                <option value="longer">Длиннее</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <button class="main-btn" id="humanizeBtn">🚀 Очеловечить текст</button>
+    <button class="copy-btn" id="copyBtn">📋 Скопировать результат</button>
+</main>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <h2>🔐 Вход</h2>
+        <div id="loginError" class="error-message"></div>
+        <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
+        <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password">
+        <button onclick="login()">Войти</button>
+        <div class="modal-link" onclick="showRegister()">📝 Нет аккаунта? Зарегистрироваться</div>
+    </div>
+</div>
+
+<!-- Register Modal -->
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <h2>📝 Регистрация</h2>
+        <div id="registerError" class="error-message"></div>
+        <div id="registerSuccess" class="success-message"></div>
+        <input type="text" id="registerUsername" placeholder="Имя пользователя" autocomplete="username">
+        <input type="email" id="registerEmail" placeholder="Email" autocomplete="email">
+        <input type="password" id="registerPassword" placeholder="Пароль (мин. 4 символа)" autocomplete="new-password">
+        <button onclick="register()">Зарегистрироваться</button>
+        <div class="modal-link" onclick="showLogin()">🔐 Уже есть аккаунт? Войти</div>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/main.js"></script>
+</body>
+</html>
