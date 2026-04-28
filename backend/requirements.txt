@@ -5,3 +5,8 @@ passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
 pydantic[email]
+dotenv
+asyncpg
+sqlalchemy
+aembic
+psycopg2-binary

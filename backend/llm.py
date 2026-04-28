@@ -1,23 +1,24 @@
 from openai import AsyncOpenAI
 import asyncio
+
+from app.config import OPENROUTER_API_KEY, MODEL_NAME, TEMPERATURE
 from prompts import (
     SYSTEM_PROMPT,
     get_rewrite_prompt,
     get_humanize_prompt
 )
 
-# Конфигурация клиента
-OPENROUTER_CONFIG = {
-    "api_key": "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",
-    "base_url": "https://openrouter.ai/api/v1",
-    "model": "meta-llama/llama-3-8b-instruct",
-    "temperature": 0.7
-}
-
 client = AsyncOpenAI(
-    api_key=OPENROUTER_CONFIG["api_key"],
-    base_url=OPENROUTER_CONFIG["base_url"]
+    api_key=OPENROUTER_API_KEY,
+    base_url="https://openrouter.ai/api/v1"
 )
+
+OPENROUTER_CONFIG = {
+    "api_key": OPENROUTER_API_KEY,
+    "base_url": "https://openrouter.ai/api/v1",
+    "model": MODEL_NAME,
+    "temperature": TEMPERATURE
+}
 
 
 async def ask_llm(prompt: str, text: str, temperature: float = None):
