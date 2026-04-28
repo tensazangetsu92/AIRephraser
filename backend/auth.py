@@ -54,6 +54,8 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
+# backend/auth.py - убедись что функция работает
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     token = credentials.credentials
     try:
@@ -61,9 +63,11 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         email = payload.get("sub")
         if email is None:
             raise HTTPException(status_code=401, detail="Неверный токен")
-        user = get_user_by_email(db, email)
+
+        user = db.query(User).filter(User.email == email).first()
         if user is None:
             raise HTTPException(status_code=401, detail="Пользователь не найден")
+
         return user
     except JWTError:
         raise HTTPException(status_code=401, detail="Неверный токен")

@@ -20,7 +20,8 @@ const elements = {
     loginPassword: document.getElementById('loginPassword'),
     registerUsername: document.getElementById('registerUsername'),
     registerEmail: document.getElementById('registerEmail'),
-    registerPassword: document.getElementById('registerPassword')
+    registerPassword: document.getElementById('registerPassword'),
+    googleLoginBtn: document.getElementById('googleLoginBtn')
 };
 
 // Функции модальных окон
@@ -99,6 +100,10 @@ async function handleRegister() {
     } else {
         elements.registerError.textContent = result.error;
     }
+}
+
+function handleGoogleLogin() {
+    Auth.loginWithGoogle();
 }
 
 function handleLogout() {
@@ -187,6 +192,10 @@ async function copyText() {
 function initEventListeners() {
     elements.humanizeBtn.addEventListener('click', send);
     elements.copyBtn.addEventListener('click', copyText);
+
+    if (elements.googleLoginBtn) {
+        elements.googleLoginBtn.addEventListener('click', handleGoogleLogin);
+    }
 
     elements.input.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 'Enter') {

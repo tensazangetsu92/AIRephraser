@@ -77,3 +77,15 @@ async def humanize(
     )
 
     return {"success": True, "result": result}
+
+@router.get("/me")
+async def get_me(current_user: User = Depends(get_current_user)):
+    """Получение информации о текущем пользователе"""
+    return {
+        "success": True,
+        "user": {
+            "email": current_user.email,
+            "username": current_user.username,
+            "id": current_user.id
+        }
+    }
