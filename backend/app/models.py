@@ -1,4 +1,6 @@
 # app/models.py
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr
 from typing import Literal, Optional
 
@@ -10,7 +12,6 @@ class UserLogin(BaseModel):
 class UserRegister(BaseModel):
     """Модель для регистрации пользователя"""
     email: EmailStr
-    username: str
     password: str
 
 class Token(BaseModel):
@@ -18,6 +19,16 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user: dict
+
+
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    created_at: Optional[datetime] = None
+    is_active: bool = True
+
+    class Config:
+        from_attributes = True
 
 class HumanizeRequest(BaseModel):
     """Модель запроса на обработку текста"""

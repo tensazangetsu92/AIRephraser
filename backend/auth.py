@@ -1,4 +1,4 @@
-# backend/auth.py (обновленный)
+# app/auth.py
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -25,11 +25,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
-def create_user(db: Session, email: str, username: str, password: str):
+def create_user(db: Session, email: str, password: str):  # Убрал username
     user = User(
         email=email,
-        username=username,
         password_hash=hash_password(password)
+        # username больше нет
     )
     db.add(user)
     db.commit()
@@ -54,8 +54,6 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-
-# backend/auth.py - убедись что функция работает
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     token = credentials.credentials
     try:

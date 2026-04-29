@@ -1,58 +1,60 @@
 // frontend/js/api.js
 const API = {
-    async request(endpoint, method = 'GET', data = null, token = null) {
+    baseUrl: '',
+
+    async request(endpoint, method, body, requiresAuth = false) {
         const headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         };
 
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+        if (requiresAuth) {
+            const token = Auth.getToken();
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            } else {
+                throw new Error('No authentication token');
+            }
         }
 
-        const config = {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
             method,
-            headers
-        };
+            headers,
+            body: body ? JSON.stringify(body) : undefined,
+        });
 
-        if (data) {
-            config.body = JSON.stringify(data);
-        }
+        const data = await response.json();
 
-        try {
-            const response = await fetch(endpoint, config);
-            const responseData = await response.json();
+        // Логируем ответ для отладки (НО НЕ В ПРОДАКШЕНЕ!)
+        console.log(`API Response ${endpoint}:`, { ok: response.ok, data });
 
-            return {
-                ok: response.ok,
-                status: response.status,
-                data: responseData
-            };
-        } catch (error) {
-            console.error('API Error:', error);
-            return {
-                ok: false,
-                status: 500,
-                data: { error: 'Ошибка соединения' }
-            };
-        }
+        return { ok: response.ok, data };
     },
 
     login(email, password) {
         return this.request('/login', 'POST', { email, password });
     },
 
-    register(username, email, password) {
-        return this.request('/register', 'POST', { username, email, password });
+    register(email, password) {
+        const username = email.split('@')[0];
+        return this.request('/register', 'POST', {
+            email,
+            password,
+            username
+        });
     },
 
-    humanize(text, intensity, tone, style, length, token) {
+    getMe() {
+        return this.request('/me', 'GET', null, true);
+    },
+
+    humanize(text, intensity, tone, style, length, targetLanguage = 'ru') {
         return this.request('/humanize', 'POST', {
             text,
             intensity,
             tone,
             style,
             length,
-            target_language: 'ru'
-        }, token);
+            target_language: targetLanguage
+        }, true);
     }
 };

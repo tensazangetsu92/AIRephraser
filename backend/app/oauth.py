@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 import secrets
 import os
 import httpx
+from sqlalchemy import func
 
 from app.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
 from app.database import get_db, User
@@ -76,7 +77,8 @@ async def google_auth_callback(request: Request, code: str = None, db: Session =
         if "error" in user_info:
             raise HTTPException(status_code=400, detail=f"Userinfo error: {user_info.get('error')}")
 
-        email = user_info.get("email")
+        # ПРИВОДИМ EMAIL К НИЖНЕМУ РЕГИСТРУ
+        email = user_info.get("email", "").lower()
         username = user_info.get("name", email.split("@")[0] if email else "user")
 
         if not email:
@@ -84,15 +86,15 @@ async def google_auth_callback(request: Request, code: str = None, db: Session =
 
         print(f"Google auth: email={email}, username={username}")
 
-        # Проверяем пользователя в БД
-        db_user = db.query(User).filter(User.email == email).first()
+        # Ищем пользователя с регистронезависимым поиском
+        db_user = db.query(User).filter(func.lower(User.email) == email).first()
 
         if not db_user:
             random_password = secrets.token_urlsafe(16)
             hashed_pw = hash_password(random_password)
 
             db_user = User(
-                email=email,
+                email=email,  # сохраняем в нижнем регистре
                 username=username,
                 password_hash=hashed_pw,
                 is_active=True

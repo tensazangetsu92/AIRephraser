@@ -13,7 +13,6 @@ from auth import (
     create_access_token,
     create_user,
     get_current_user,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
     get_user_by_email
 )
 from llm import humanize_pipeline
@@ -35,17 +34,16 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
         if existing_user:
             raise HTTPException(status_code=400, detail="Email уже зарегистрирован")
 
-        user = create_user(db, user_data.email, user_data.username, user_data.password)
+        user = create_user(db, user_data.email, user_data.password)
         return {
             "success": True,
             "message": "Пользователь успешно зарегистрирован",
-            "user": {"email": user.email, "username": user.username}
+            "user": {"email": user.email}
         }
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при регистрации: {str(e)}")
-
 
 @router.post("/login", response_model=Token)
 async def login(user_data: UserLogin, db: Session = Depends(get_db)):
@@ -57,9 +55,8 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     return Token(
         access_token=access_token,
         token_type="bearer",
-        user={"email": user.email, "username": user.username}
+        user={"email": user.email, "id": user.id}
     )
-
 
 @router.post("/humanize")
 async def humanize(
@@ -75,7 +72,6 @@ async def humanize(
         req.length,
         req.target_language
     )
-
     return {"success": True, "result": result}
 
 @router.get("/me")
@@ -85,7 +81,6 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "success": True,
         "user": {
             "email": current_user.email,
-            "username": current_user.username,
             "id": current_user.id
         }
     }
