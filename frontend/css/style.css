@@ -510,3 +510,11 @@ button:disabled {
     }
 }
 
+.modal-content {
+    user-select: none; /* Запрещает выделение текста при перетаскивании */
+}
+
+.modal-content input,
+.modal-content button {
+    user-select: text; /* Но поля ввода должны оставаться выделяемыми */
+}

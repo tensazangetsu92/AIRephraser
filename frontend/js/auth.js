@@ -356,7 +356,7 @@ function initAuthModal() {
         submitBtn.addEventListener('click', () => Auth.handleSubmit());
     }
 
-    // Обработчик Enter в полях ввода
+    // Обработчик Enter
     const inputs = ['authEmail', 'authPassword', 'authConfirmPassword'];
     inputs.forEach(inputId => {
         const input = document.getElementById(inputId);
@@ -385,56 +385,50 @@ function initAuthModal() {
         googleBtn.addEventListener('click', () => Auth.loginWithGoogle());
     }
 
-    // Закрытие по клику на крестик
+    // ========== ЛОГИКА ЗАКРЫТИЯ ==========
+
+    let mouseDownOnOverlay = false;
+
+    // Нажатие на фоне
+    modal.addEventListener('mousedown', (e) => {
+        if (e.target === modal) {
+            mouseDownOnOverlay = true;
+            console.log('mousedown on overlay'); // отладка
+        } else {
+            mouseDownOnOverlay = false;
+        }
+    });
+
+    // Отпускание на фоне
+    modal.addEventListener('mouseup', (e) => {
+        console.log('mouseup on:', e.target === modal ? 'overlay' : 'content', 'mouseDownOnOverlay:', mouseDownOnOverlay); // отладка
+        if (e.target === modal && mouseDownOnOverlay === true) {
+            console.log('closing modal'); // отладка
+            Auth.closeAuthModal();
+        }
+        mouseDownOnOverlay = false;
+    });
+
+    // Закрытие по крестику
     const closeBtn = modal.querySelector('.modal-close');
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => Auth.closeAuthModal());
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            Auth.closeAuthModal();
+        });
     }
 
-    // Закрытие по клику на оверлей (фон)
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            Auth.closeAuthModal();
-        }
-    });
-
-    // ---- ПРАВИЛЬНОЕ ЗАКРЫТИЕ БЕЗ ЛОЖНЫХ СРАБАТЫВАНИЙ ----
-    let mouseDownInside = false;
-    let dragPerformed = false;
+    // Предотвращаем закрытие при клике на содержимое
     const modalContent = modal.querySelector('.modal-content');
-
     if (modalContent) {
-        modalContent.addEventListener('mousedown', () => {
-            mouseDownInside = true;
-            dragPerformed = false;
+        modalContent.addEventListener('mousedown', (e) => {
+            mouseDownOnOverlay = false;
+            e.stopPropagation();
         });
-
-        modalContent.addEventListener('mousemove', () => {
-            if (mouseDownInside) {
-                dragPerformed = true;
-            }
+        modalContent.addEventListener('mouseup', (e) => {
+            e.stopPropagation();
         });
     }
-
-    document.addEventListener('mouseup', (e) => {
-        const isModalOpen = modal.style.display === 'flex';
-        if (!isModalOpen) return;
-
-        const isClickInside = modal.contains(e.target);
-        const isClickOnAuthBtn = e.target.id === 'authBtn' || e.target.closest('#authBtn');
-        const wasDragging = dragPerformed;
-
-        // Закрываем только если клик вне модального окна, не на кнопке auth, и не было перетаскивания
-        if (!isClickInside && !isClickOnAuthBtn && !wasDragging) {
-            Auth.closeAuthModal();
-        }
-
-        // Сбрасываем флаги
-        setTimeout(() => {
-            mouseDownInside = false;
-            dragPerformed = false;
-        }, 100);
-    });
 
     // Закрытие по ESC
     document.addEventListener('keydown', (e) => {
@@ -442,4 +436,6 @@ function initAuthModal() {
             Auth.closeAuthModal();
         }
     });
+
+    console.log('Auth modal initialized');
 }
