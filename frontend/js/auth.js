@@ -1,5 +1,8 @@
 // frontend/js/auth.js
+
+console.log("asd")
 const Auth = {
+
     token: localStorage.getItem('token'),
     isRegisterMode: false, // false = вход, true = регистрация
 
@@ -33,20 +36,27 @@ const Auth = {
     },
 
     async login(email, password) {
-        const result = await API.login(email, password);
+    const result = await API.login(email, password);
 
-        if (result.ok) {
-            this.setToken(result.data.access_token);
-            this.setUser(result.data.user);
-            this.closeAuthModal();
-            if (typeof updateUI === 'function') {
-                updateUI();
-            }
-            return { success: true, user: result.data.user };
-        } else {
-            return { success: false, error: result.data.detail || 'Ошибка входа' };
+    if (result.ok) {
+        this.setToken(result.data.access_token);
+        this.setUser(result.data.user);
+        this.closeAuthModal();
+
+        if (typeof updateUI === 'function') {
+            updateUI();
         }
-    },
+
+        if (typeof window.processPendingText === 'function') {
+            await window.processPendingText();
+        }
+
+        return { success: true, user: result.data.user };
+    } else {
+        return { success: false, error: result.data.detail || 'Ошибка входа' };
+    }
+}, // ← ВАЖНО: запятая, а не }
+
 
     async register(email, password) {
         // Отправляем email и password
@@ -114,9 +124,9 @@ const Auth = {
         this.setToken(null);
         this.setUser(null);
         this.closeAuthModal();
-        if (typeof updateUI === 'function') {
-            updateUI();
-        }
+
+        // Перезагружаем страницу
+        window.location.reload();
     },
 
     isAuthenticated() {

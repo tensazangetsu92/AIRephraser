@@ -1,32 +1,8 @@
 // frontend/js/main.js
-// DOM элементы
-const elements = {
-    input: document.getElementById('input'),
-    result: document.getElementById('result'),
-    humanizeBtn: document.getElementById('humanizeBtn'),
-    copyBtn: document.getElementById('copyBtn'),
-    intensity: document.getElementById('intensity'),
-    tone: document.getElementById('tone'),
-    style: document.getElementById('style'),
-    length: document.getElementById('length'),
-    authBtn: document.getElementById('authBtn'),
-    userName: document.getElementById('userName'),
-    // Эти элементы НЕ СУЩЕСТВУЮТ в новой HTML структуре!
-    // Убираем их, чтобы не было ошибок
-    // loginModal: document.getElementById('loginModal'),
-    // registerModal: document.getElementById('registerModal'),
-    // loginError: document.getElementById('loginError'),
-    // registerError: document.getElementById('registerError'),
-    // registerSuccess: document.getElementById('registerSuccess'),
-    // loginEmail: document.getElementById('loginEmail'),
-    // loginPassword: document.getElementById('loginPassword'),
-    // registerUsername: document.getElementById('registerUsername'),
-    // registerEmail: document.getElementById('registerEmail'),
-    // registerPassword: document.getElementById('registerPassword'),
-    // googleLoginBtn: document.getElementById('googleLoginBtn')
-};
+// DOM элементы - объявляем сразу и заполняем
+let elements = {};
 
-// Функции модальных окон (устаревшие, теперь используется единая форма)
+// Функции модальных окон
 function showLogin() {
     Auth.showAuthModal();
 }
@@ -41,7 +17,7 @@ function closeModals() {
     Auth.closeAuthModal();
 }
 
-// Функции авторизации (устаревшие, теперь используются методы Auth)
+// Функции авторизации
 async function handleLogin() {
     const email = document.getElementById('authEmail')?.value;
     const password = document.getElementById('authPassword')?.value;
@@ -52,7 +28,6 @@ async function handleLogin() {
     }
 
     const result = await Auth.login(email, password);
-
     if (!result.success) {
         alert(result.error);
     }
@@ -74,7 +49,6 @@ async function handleRegister() {
     }
 
     const result = await Auth.register(email, password);
-
     if (result.success) {
         alert('✅ Регистрация успешна! Теперь войдите.');
         Auth.toggleMode();
@@ -97,15 +71,8 @@ function updateUI() {
     const userNameSpan = document.getElementById('userName');
     const authBtn = document.getElementById('authBtn');
 
-    console.log('=== updateUI called ===');
-    console.log('user object:', user);
-    console.log('userNameSpan element:', userNameSpan);
-    console.log('authBtn element:', authBtn);
-    console.log('Auth.isAuthenticated():', Auth.isAuthenticated());
-
     if (user && Auth.isAuthenticated()) {
         const displayName = user.email || 'Пользователь';
-        console.log('Setting display name to:', displayName);
         if (userNameSpan) {
             userNameSpan.textContent = displayName;
         }
@@ -117,7 +84,6 @@ function updateUI() {
             };
         }
     } else {
-        console.log('No user, showing login button');
         if (userNameSpan) {
             userNameSpan.textContent = '';
         }
@@ -126,34 +92,28 @@ function updateUI() {
             authBtn.onclick = () => Auth.showAuthModal();
         }
     }
-    console.log('=== updateUI finished ===');
 }
 
-// Отправка текста на обработку
-async function send() {
-    const text = elements.input.value.trim();
+let pendingText = null;
 
-    if (!text) {
-        elements.result.innerText = '⚠️ Пожалуйста, введите текст для обработки';
-        return;
-    }
-
+// Обработка текста
+async function processText(text) {
     const requestData = {
         text: text,
-        intensity: elements.intensity.value,
-        tone: elements.tone.value,
-        style: elements.style.value,
-        length: elements.length.value
+        intensity: elements.intensity?.value || 'medium',
+        tone: elements.tone?.value || 'neutral',
+        style: elements.style?.value || 'simple',
+        length: elements.length?.value || 'same'
     };
 
-    elements.humanizeBtn.disabled = true;
-    elements.humanizeBtn.innerHTML = '<span class="loading"></span> Обработка...';
-    elements.result.innerText = '🔄 Обработка текста...';
+    if (elements.humanizeBtn) {
+        elements.humanizeBtn.disabled = true;
+        elements.humanizeBtn.innerHTML = '<span class="loading"></span> Обработка...';
+    }
+    if (elements.result) elements.result.innerText = '🔄 Обработка текста...';
 
-    // Получаем токен
     const token = Auth.getToken();
 
-    // Отправляем запрос через fetch напрямую или через API
     try {
         const response = await fetch('/humanize', {
             method: 'POST',
@@ -167,32 +127,73 @@ async function send() {
         const data = await response.json();
 
         if (response.ok) {
-            elements.result.innerText = data.result;
+            if (elements.result) elements.result.innerText = data.result;
         } else if (response.status === 401) {
-            elements.result.innerText = '❌ Сессия истекла. Войдите заново.';
+            if (elements.result) elements.result.innerText = '❌ Сессия истекла. Пожалуйста, войдите заново.';
             Auth.logout();
             updateUI();
+            setTimeout(() => Auth.showAuthModal(), 1500);
         } else {
-            elements.result.innerText = '❌ Ошибка: ' + (data.detail || 'Неизвестная ошибка');
+            if (elements.result) elements.result.innerText = '❌ Ошибка: ' + (data.detail || 'Неизвестная ошибка');
         }
     } catch (err) {
         console.error('Humanize error:', err);
-        elements.result.innerText = '❌ Ошибка соединения с сервером';
+        if (elements.result) elements.result.innerText = '❌ Ошибка соединения с сервером';
     }
 
-    elements.humanizeBtn.disabled = false;
-    elements.humanizeBtn.innerHTML = '🚀 Очеловечить текст';
+    if (elements.humanizeBtn) {
+        elements.humanizeBtn.disabled = false;
+        elements.humanizeBtn.innerHTML = '🚀 Очеловечить текст';
+    }
+}
+
+// Отправка текста на обработку
+async function send() {
+    console.log('=== SEND FUNCTION CALLED ===');
+
+    // Проверяем что элементы загружены
+    if (!elements.input) {
+        console.error('Elements not initialized!');
+        return;
+    }
+
+    const text = elements.input.value.trim();
+    console.log('Text:', text);
+    console.log('Auth.isAuthenticated():', Auth.isAuthenticated());
+
+    if (!text) {
+        if (elements.result) elements.result.innerText = '⚠️ Пожалуйста, введите текст для обработки';
+        return;
+    }
+
+    // Проверка авторизации
+    if (!Auth.isAuthenticated()) {
+        console.log('User NOT authenticated, saving pending text');
+        pendingText = text;
+        if (elements.result) elements.result.innerText = '🔐 Для использования сервиса необходимо войти в аккаунт';
+        Auth.showAuthModal();
+        return;
+    }
+
+    await processText(text);
+}
+
+async function processPendingText() {
+    console.log('processPendingText called, pendingText:', pendingText);
+    if (pendingText && Auth.isAuthenticated()) {
+        const text = pendingText;
+        pendingText = null;
+        await processText(text);
+    }
 }
 
 // Копирование текста
 async function copyText() {
-    const text = elements.result.innerText;
-
+    const text = elements.result?.innerText;
     if (!text || text === 'Результат появится здесь...' || text.includes('⚠️') || text.includes('❌') || text.includes('🔄')) {
         alert('Нет текста для копирования');
         return;
     }
-
     try {
         await navigator.clipboard.writeText(text);
         alert('✅ Текст скопирован в буфер обмена');
@@ -203,34 +204,57 @@ async function copyText() {
 
 // Event listeners
 function initEventListeners() {
-    if (elements.humanizeBtn) elements.humanizeBtn.addEventListener('click', send);
-    if (elements.copyBtn) elements.copyBtn.addEventListener('click', copyText);
+    console.log('initEventListeners called');
 
+    if (elements.humanizeBtn) {
+        elements.humanizeBtn.addEventListener('click', send);
+        console.log('humanizeBtn handler attached');
+    }
+    if (elements.copyBtn) {
+        elements.copyBtn.addEventListener('click', copyText);
+        console.log('copyBtn handler attached');
+    }
     if (elements.input) {
         elements.input.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter') {
                 send();
             }
         });
+        console.log('input handler attached');
     }
-
-    // Глобальные функции для вызова из onclick (если нужны)
-    window.handleLogin = handleLogin;
-    window.handleRegister = handleRegister;
-    window.handleGoogleLogin = handleGoogleLogin;
-    window.showLogin = showLogin;
-    window.showRegister = showRegister;
 }
 
 // Инициализация
 function init() {
-    console.log('Initializing main.js');
+    console.log('init called');
+
+    // Заполняем элементы
+    elements = {
+        input: document.getElementById('input'),
+        result: document.getElementById('result'),
+        humanizeBtn: document.getElementById('humanizeBtn'),
+        copyBtn: document.getElementById('copyBtn'),
+        intensity: document.getElementById('intensity'),
+        tone: document.getElementById('tone'),
+        style: document.getElementById('style'),
+        length: document.getElementById('length'),
+        authBtn: document.getElementById('authBtn'),
+        userName: document.getElementById('userName'),
+    };
+
+    console.log('Elements loaded:', {
+        humanizeBtn: !!elements.humanizeBtn,
+        input: !!elements.input,
+        result: !!elements.result
+    });
+
     initEventListeners();
-    // Даём время на загрузку Auth
-    setTimeout(() => {
-        updateUI();
-    }, 100);
+    updateUI();
 }
+
+// Делаем функции глобальными
+window.processPendingText = processPendingText;
+window.send = send;
 
 // Запуск
 init();

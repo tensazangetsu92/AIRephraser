@@ -1,0 +1,25 @@
+/* Variables & Global Styles */
+:root {
+    --primary-gradient: linear-gradient(135deg, #6366f1, #10b981);
+    --primary-color: #6366f1;
+    --secondary-color: #10b981;
+    --text-color: #1a1a1a;
+    --text-light: rgba(0, 0, 0, 0.6);
+    --border-color: #e0e0e0;
+    --bg-white: #ffffff;
+    --error-color: #ef4444;
+    --success-color: #10b981;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 20px 35px rgba(0, 0, 0, 0.2);
+    --radius-sm: 8px;
+    --radius-md: 10px;
+    --radius-lg: 12px;
+    --radius-xl: 1rem;
+}
+
+body {
+    background: radial-gradient(circle at top, rgba(99,102,241,0.25), transparent 40%),
+                radial-gradient(circle at bottom, rgba(16,185,129,0.15), transparent 50%),
+                #f8f8f8;
+    color: var(--text-color);
+}

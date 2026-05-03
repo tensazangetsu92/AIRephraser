@@ -1,7 +1,0 @@
-[35mapp/config.py[m[36m:[m# print(f"API Key loaded: {os.getenv('[1;31mOPENROUTER_API_KEY[m')}")
-[35mapp/config.py[m[36m:[m[1;31mOPENROUTER_API_KEY[m = os.getenv("[1;31mOPENROUTER_API_KEY[m")
-[35mapp/config.py[m[36m:[mif not [1;31mOPENROUTER_API_KEY[m:
-[35mapp/config.py[m[36m:[m    raise ValueError("[1;31mOPENROUTER_API_KEY[m не задан в .env файле!")
-[35mllm.py[m[36m:[mfrom app.config import [1;31mOPENROUTER_API_KEY[m, MODEL_NAME, TEMPERATURE
-[35mllm.py[m[36m:[m    api_key=[1;31mOPENROUTER_API_KEY[m,
-[35mllm.py[m[36m:[m    "api_key": [1;31mOPENROUTER_API_KEY[m,

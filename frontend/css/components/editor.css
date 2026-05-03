@@ -1,0 +1,47 @@
+/* Editor Styles */
+.editor {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.col {
+    flex: 1;
+}
+
+.col h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.out-text {
+    text-align: right;
+}
+
+textarea, .output {
+    width: 100%;
+    height: 280px;
+    padding: 1rem;
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    font-family: inherit;
+    resize: vertical;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.output {
+    background: var(--bg-white);
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
