@@ -2,6 +2,37 @@
 // DOM элементы - объявляем сразу и заполняем
 let elements = {};
 
+// Константа для максимального количества символов
+const MAX_CHARS = 1000;
+
+// Функция для обновления счетчика символов
+function updateCharCounter() {
+    if (!elements.input || !elements.charCounter) return;
+
+    const currentLength = elements.input.value.length;
+    const remaining = MAX_CHARS - currentLength;
+
+    // Обновляем текст счетчика
+    elements.charCounter.textContent = `Количество символов ${currentLength}/${MAX_CHARS}`;
+
+    // Меняем цвет в зависимости от количества символов
+    if (currentLength > MAX_CHARS) {
+        elements.charCounter.style.color = '#ef4444'; // Красный - превышение
+        elements.charCounter.style.fontWeight = 'bold';
+    } else if (currentLength > MAX_CHARS * 0.9) {
+        elements.charCounter.style.color = '#f59e0b'; // Оранжевый -接近 лимит
+        elements.charCounter.style.fontWeight = 'normal';
+    } else {
+        elements.charCounter.style.color = '#f0f0f0'; // Обычный цвет
+        elements.charCounter.style.fontWeight = 'normal';
+    }
+}
+
+// Проверка лимита символов
+function isWithinCharLimit(text) {
+    return text.length <= MAX_CHARS;
+}
+
 // Функции модальных окон
 function showLogin() {
     Auth.showAuthModal();
@@ -157,14 +188,32 @@ async function send() {
         return;
     }
 
-    const text = elements.input.value.trim();
-    console.log('Text:', text);
+    const text = elements.input.value; // Не используем trim() чтобы не терять пробелы
+    const textLength = text.length;
+
+    console.log('Text length:', textLength);
     console.log('Auth.isAuthenticated():', Auth.isAuthenticated());
 
-    if (!text) {
+    // Проверка на пустой текст
+    if (!text.trim()) {
         if (elements.result) elements.result.innerText = '⚠️ Пожалуйста, введите текст для обработки';
         return;
     }
+
+    // ========== ПРОВЕРКА ЛИМИТА СИМВОЛОВ ==========
+    if (!isWithinCharLimit(text)) {
+        const errorMessage = `❌ Превышен лимит символов! Максимум ${MAX_CHARS} символов. Сейчас ${textLength}/${MAX_CHARS}.`;
+        if (elements.result) elements.result.innerText = errorMessage;
+
+        // Подсвечиваем счетчик красным
+        if (elements.charCounter) {
+            elements.charCounter.style.color = '#ef4444';
+            elements.charCounter.style.fontWeight = 'bold';
+        }
+
+        return;
+    }
+    // =============================================
 
     // Проверка авторизации
     if (!Auth.isAuthenticated()) {
@@ -181,9 +230,18 @@ async function send() {
 async function processPendingText() {
     console.log('processPendingText called, pendingText:', pendingText);
     if (pendingText && Auth.isAuthenticated()) {
-        const text = pendingText;
-        pendingText = null;
-        await processText(text);
+        // Проверяем лимит для отложенного текста
+        if (isWithinCharLimit(pendingText)) {
+            const text = pendingText;
+            pendingText = null;
+            await processText(text);
+        } else {
+            const textLength = pendingText.length;
+            const errorMessage = `❌ Превышен лимит символов! Максимум ${MAX_CHARS} символов. Сейчас ${textLength}/${MAX_CHARS}.`;
+            if (elements.result) elements.result.innerText = errorMessage;
+            alert(`⚠️ Превышен лимит символов!\n\nМаксимум: ${MAX_CHARS} символов\nВы ввели: ${textLength} символов`);
+            pendingText = null;
+        }
     }
 }
 
@@ -215,6 +273,9 @@ function initEventListeners() {
         console.log('copyBtn handler attached');
     }
     if (elements.input) {
+        // Обновление счетчика при вводе
+        elements.input.addEventListener('input', updateCharCounter);
+
         elements.input.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter') {
                 send();
@@ -240,13 +301,20 @@ function init() {
         length: document.getElementById('length'),
         authBtn: document.getElementById('authBtn'),
         userName: document.getElementById('userName'),
+        charCounter: document.getElementById('charCounter'), // Добавляем счетчик
     };
 
     console.log('Elements loaded:', {
         humanizeBtn: !!elements.humanizeBtn,
         input: !!elements.input,
-        result: !!elements.result
+        result: !!elements.result,
+        charCounter: !!elements.charCounter
     });
+
+    // Инициализируем счетчик
+    if (elements.input && elements.charCounter) {
+        updateCharCounter();
+    }
 
     initEventListeners();
     updateUI();
