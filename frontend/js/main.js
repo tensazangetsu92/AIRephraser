@@ -77,7 +77,7 @@ function updateUI() {
             userNameSpan.textContent = displayName;
         }
         if (authBtn) {
-            authBtn.textContent = '🚪 Выйти';
+            authBtn.textContent = 'Выйти';
             authBtn.onclick = () => {
                 Auth.logout();
                 updateUI();
@@ -88,7 +88,7 @@ function updateUI() {
             userNameSpan.textContent = '';
         }
         if (authBtn) {
-            authBtn.textContent = '👤 Войти';
+            authBtn.textContent = 'Войти';
             authBtn.onclick = () => Auth.showAuthModal();
         }
     }

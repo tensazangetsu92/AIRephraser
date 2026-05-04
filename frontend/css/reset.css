@@ -6,6 +6,9 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-primary);
+    -webkit-font-smoothing: antialiased;  /* Сглаживание для Mac */
+    -moz-osx-font-smoothing: grayscale;   /* Сглаживание для Firefox */
     min-height: 100vh;
+
 }

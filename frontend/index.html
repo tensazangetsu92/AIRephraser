@@ -3,41 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIRephraser</title>
+    <title>Humary</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <!-- Navbar -->
 <nav class="navbar">
-    <div class="logo">AIRephraser</div>
+    <div class="logo">Humary</div>
     <div class="user-info" id="userInfo">
         <span class="user-name" id="userName"></span>
-        <button class="nav-btn" id="authBtn">👤 Войти</button>
+        <button class="nav-btn" id="authBtn">Войти</button>
     </div>
 </nav>
 
 <!-- Main Content -->
 <main class="container">
-    <h1>AIRephraser</h1>
+    <h1>Humary</h1>
     <p class="subtitle">Превращаем ИИ-текст в живые слова</p>
 
     <!-- Editor Section -->
     <div class="editor">
         <div class="col">
-            <h3>📝 Ввод</h3>
+            <h3>Ввод</h3>
             <textarea id="input" placeholder="Вставьте текст для обработки..."></textarea>
         </div>
         <div class="col">
-            <h3 class="out-text">✨ Результат</h3>
-            <div id="result" class="output">Результат появится здесь...</div>
+            <h3 class="out-text">Результат</h3>
+            <div id="result" class="output"></div>
         </div>
     </div>
 
     <!-- Controls -->
     <div class="controls">
         <div class="control-group">
-            <label>⚡ Сила изменения</label>
+            <label>Сила изменения</label>
             <select id="intensity">
                 <option value="low">Слабая</option>
                 <option value="medium" selected>Нормальная</option>
@@ -46,7 +47,7 @@
         </div>
 
         <div class="control-group">
-            <label>🎭 Тон</label>
+            <label>Тон</label>
             <select id="tone">
                 <option value="neutral">Нейтральный</option>
                 <option value="formal">Формальный</option>
@@ -57,7 +58,7 @@
         </div>
 
         <div class="control-group">
-            <label>✍️ Стиль</label>
+            <label>Стиль</label>
             <select id="style">
                 <option value="simple">Простой</option>
                 <option value="creative">Креативный</option>
@@ -66,18 +67,22 @@
         </div>
 
         <div class="control-group">
-            <label>📏 Длина</label>
+            <label>Длина</label>
             <select id="length">
                 <option value="same">Оставить</option>
                 <option value="shorter">Короче</option>
                 <option value="longer">Длиннее</option>
             </select>
         </div>
+        <div class="control-group">
+            <button class="main-btn" id="humanizeBtn">Очеловечить текст</button>
+        </div>
+
     </div>
 
     <!-- Buttons -->
-    <button class="main-btn" id="humanizeBtn">🚀 Очеловечить текст</button>
-    <button class="copy-btn" id="copyBtn">📋 Скопировать результат</button>
+
+
 </main>
 
 <!-- Единая форма входа/регистрации -->

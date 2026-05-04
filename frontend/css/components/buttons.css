@@ -10,11 +10,13 @@
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.1s, opacity 0.2s;
-    margin-bottom: 0.75rem;
+    margin-top: 15px;
+
 }
 
 .main-btn:hover {
     opacity: 0.9;
+    transform: translateY(-1px);
 }
 
 .main-btn:active {
