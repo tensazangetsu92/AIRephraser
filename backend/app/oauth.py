@@ -1,4 +1,4 @@
-# backend/app/oauth.py (альтернативная версия - без CSRF)
+# backend/app/oauth.py (исправленная версия - без username)
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -9,7 +9,7 @@ from sqlalchemy import func
 
 from app.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
 from app.database import get_db, User
-from auth import create_access_token, hash_password
+from auth import create_access_token, get_hash_password  # Исправлено: get_hash_password -> get_password_hash
 
 router = APIRouter(prefix="/auth/google", tags=["google-auth"])
 
@@ -77,34 +77,39 @@ async def google_auth_callback(request: Request, code: str = None, db: Session =
         if "error" in user_info:
             raise HTTPException(status_code=400, detail=f"Userinfo error: {user_info.get('error')}")
 
-        # ПРИВОДИМ EMAIL К НИЖНЕМУ РЕГИСТРУ
+        # Приводим email к нижнему регистру
         email = user_info.get("email", "").lower()
-        username = user_info.get("name", email.split("@")[0] if email else "user")
 
         if not email:
             raise HTTPException(status_code=400, detail="No email from Google")
 
-        print(f"Google auth: email={email}, username={username}")
+        print(f"Google auth: email={email}")
 
         # Ищем пользователя с регистронезависимым поиском
         db_user = db.query(User).filter(func.lower(User.email) == email).first()
 
         if not db_user:
+            # Генерируем случайный пароль
             random_password = secrets.token_urlsafe(16)
-            hashed_pw = hash_password(random_password)
+            hashed_pw = get_hash_password(random_password)  # Исправлено: правильное имя функции
 
+            # Создаём пользователя ТОЛЬКО с email (без username)
             db_user = User(
-                email=email,  # сохраняем в нижнем регистре
-                username=username,
+                email=email,
                 password_hash=hashed_pw,
                 is_active=True
+                # username - УДАЛЁН
             )
             db.add(db_user)
             db.commit()
             db.refresh(db_user)
             print(f"Создан пользователь: {email}")
 
-        # Создаем JWT
+            # Автоматически создаётся бесплатная подписка через get_user_subscription
+            from app.subscription import get_user_subscription
+            get_user_subscription(db, db_user.id)
+
+        # Создаём JWT
         jwt_token = create_access_token(data={"sub": db_user.email})
 
         # Редирект на фронт

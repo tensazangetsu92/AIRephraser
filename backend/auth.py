@@ -9,32 +9,40 @@ import os
 
 from app.database import get_db, User
 from app.config import SECRET_KEY
+from app.subscription import get_user_subscription
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 security = HTTPBearer()
 
-def hash_password(password: str) -> str:
+def get_hash_password(password: str) -> str:
     """Хеширование пароля"""
     salt = "humary_salt_2024"
     return hashlib.sha256((password + salt).encode()).hexdigest()
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return hash_password(plain_password) == hashed_password
+    return get_hash_password(plain_password) == hashed_password
 
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
-def create_user(db: Session, email: str, password: str):  # Убрал username
-    user = User(
+
+
+def create_user(db: Session, email: str, password: str):
+    """Создает нового пользователя с бесплатной подпиской"""
+    hashed_password = get_hash_password(password)
+    db_user = User(
         email=email,
-        password_hash=hash_password(password)
-        # username больше нет
+        password_hash=hashed_password
     )
-    db.add(user)
+    db.add(db_user)
     db.commit()
-    db.refresh(user)
-    return user
+    db.refresh(db_user)
+
+    # Автоматически создаём бесплатную подписку для нового пользователя
+    get_user_subscription(db, db_user.id)
+
+    return db_user
 
 def authenticate_user(db: Session, email: str, password: str):
     user = get_user_by_email(db, email)
