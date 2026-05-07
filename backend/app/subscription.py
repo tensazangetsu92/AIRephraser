@@ -4,31 +4,37 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from fastapi import HTTPException, status
 from app.database import User, Subscription, UsageStats
+import pytz  # Добавьте импорт
+
+# Часовой пояс Москвы (или используйте UTC)
+MOSCOW_TZ = pytz.timezone('Europe/Moscow')
+
+def get_current_datetime():
+    """Получить текущую дату/время с часовым поясом"""
+    return datetime.now(MOSCOW_TZ)
 
 # Планы подписки и их лимиты
-# Для free - total_requests (всего запросов за всё время)
-# Для premium и pro - daily_limit + total_requests (общий лимит)
 SUBSCRIPTION_PLANS = {
     "free": {
-        "total_requests": 5,  # Всего 5 запросов за всё время
-        "daily_limit": None,  # Нет дневного лимита
+        "total_requests": 5,
+        "daily_limit": None,
         "max_text_length": 1000,
         "price_monthly": 0,
         "price_yearly": 0
     },
     "premium": {
-        "total_requests": 300,  # Всего 300 запросов
-        "daily_limit": 50,  # Максимум 50 в день
+        "total_requests": 300,
+        "daily_limit": 50,
         "max_text_length": 5000,
-        "price_monthly": 9.99,
-        "price_yearly": 99.99
+        "price_monthly": 349,
+        "price_yearly": 2990
     },
     "pro": {
-        "total_requests": 1000,  # Всего 1000 запросов
-        "daily_limit": 100,  # Максимум 100 в день
+        "total_requests": 1000,
+        "daily_limit": 100,
         "max_text_length": 20000,
-        "price_monthly": 29.99,
-        "price_yearly": 299.99
+        "price_monthly": 699,
+        "price_yearly": 5990
     }
 }
 
@@ -37,7 +43,6 @@ def get_user_subscription(db: Session, user_id: int) -> Subscription:
     """Получить подписку пользователя"""
     subscription = db.query(Subscription).filter(Subscription.user_id == user_id).first()
 
-    # Если подписки нет - создаём бесплатную
     if not subscription:
         subscription = Subscription(
             user_id=user_id,
@@ -60,11 +65,10 @@ def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: 
         raise HTTPException(status_code=400, detail="Invalid plan type")
 
     subscription = get_user_subscription(db, user_id)
-
     plan = SUBSCRIPTION_PLANS[plan_type]
 
     # Рассчитываем дату окончания (через месяц)
-    end_date = datetime.now() + timedelta(days=30)
+    end_date = get_current_datetime() + timedelta(days=30)
 
     subscription.plan_type = plan_type
     subscription.is_active = True
@@ -92,7 +96,6 @@ def downgrade_to_free(db: Session, user_id: int):
     subscription.max_text_length = free_plan["max_text_length"]
 
     db.commit()
-
     return subscription
 
 
@@ -101,8 +104,8 @@ def check_subscription_expired(db: Session, user_id: int):
     subscription = get_user_subscription(db, user_id)
 
     if subscription.plan_type != "free" and subscription.end_date:
-        if datetime.now() > subscription.end_date:
-            # Подписка истекла - понижаем до бесплатной
+        # Используем текущее время с часовым поясом
+        if get_current_datetime() > subscription.end_date:
             downgrade_to_free(db, user_id)
             return True
 
@@ -114,7 +117,6 @@ def get_total_requests_count(db: Session, user_id: int) -> int:
     total = db.query(func.sum(UsageStats.requests_count)).filter(
         UsageStats.user_id == user_id
     ).scalar()
-
     return total or 0
 
 
@@ -158,7 +160,6 @@ def check_usage_limit(db: Session, user_id: int, text_length: int = 0) -> bool:
             UsageStats.request_date == today
         ).first()
 
-        # 👇 ВАЖНО: здесь создаётся запись, если её нет
         if not stats_today:
             stats_today = UsageStats(
                 user_id=user_id,
@@ -167,14 +168,14 @@ def check_usage_limit(db: Session, user_id: int, text_length: int = 0) -> bool:
                 total_chars_processed=0
             )
             db.add(stats_today)
-            db.commit()  # 👈 НЕ ЗАБУДЬТЕ commit!
+            db.commit()
 
         requests_today = stats_today.requests_count if stats_today else 0
 
         if requests_today >= subscription.daily_limit:
             raise HTTPException(
                 status_code=429,
-                detail=f"Превышен лимит длины текста. Максимум {subscription.max_text_length} символов для вашего тарифа"
+                detail=f"Достигнут дневной лимит. Максимум {subscription.daily_limit} запросов в день для вашего тарифа"
             )
 
     return True
@@ -206,7 +207,6 @@ def increment_usage(db: Session, user_id: int, text_length: int):
 def get_usage_stats(db: Session, user_id: int) -> dict:
     """Получить статистику использования"""
     subscription = get_user_subscription(db, user_id)
-    plan = SUBSCRIPTION_PLANS[subscription.plan_type]
 
     today = date.today()
 
@@ -224,9 +224,8 @@ def get_usage_stats(db: Session, user_id: int) -> dict:
     # Оставшиеся запросы
     remaining_requests = max(0, subscription.total_requests - total_requests)
 
-    # Оставшиеся запросы на сегодня (если есть дневной лимит)
-    remaining_today = max(0,
-                          subscription.daily_limit - requests_today) if subscription.daily_limit is not None else None
+    # Оставшиеся запросы на сегодня
+    remaining_today = max(0, subscription.daily_limit - requests_today) if subscription.daily_limit is not None else None
 
     return {
         "plan_type": subscription.plan_type,
@@ -237,5 +236,5 @@ def get_usage_stats(db: Session, user_id: int) -> dict:
         "daily_limit": subscription.daily_limit,
         "remaining_today": remaining_today,
         "max_text_length": subscription.max_text_length,
-        "end_date": subscription.end_date
+        "end_date": subscription.end_date.isoformat() if subscription.end_date else None
     }
