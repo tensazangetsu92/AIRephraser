@@ -320,6 +320,230 @@ function init() {
     updateUI();
 }
 
+// frontend/js/main.js - добавьте эти функции
+
+// Обновление подписки
+async function upgradeToPremium() {
+    if (!Auth.isAuthenticated()) {
+        alert('Пожалуйста, войдите в аккаунт, чтобы оформить подписку');
+        Auth.showAuthModal();
+        return;
+    }
+
+    try {
+        const response = await fetch('/subscription/upgrade', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Auth.getToken()}`
+            },
+            body: JSON.stringify({ plan_type: "premium" })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert('✅ Подписка Premium активирована!');
+            updateSubscriptionUI('premium');
+            updateUI();
+        } else {
+            alert('❌ Ошибка: ' + (data.detail || 'Не удалось активировать подписку'));
+        }
+    } catch (err) {
+        console.error('Upgrade error:', err);
+        alert('❌ Ошибка соединения с сервером');
+    }
+}
+
+async function upgradeToPro() {
+    if (!Auth.isAuthenticated()) {
+        alert('Пожалуйста, войдите в аккаунт, чтобы оформить подписку');
+        Auth.showAuthModal();
+        return;
+    }
+
+    try {
+        const response = await fetch('/subscription/upgrade', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Auth.getToken()}`
+            },
+            body: JSON.stringify({ plan_type: "pro" })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert('✅ Подписка Pro активирована!');
+            updateSubscriptionUI('pro');
+            updateUI();
+        } else {
+            alert('❌ Ошибка: ' + (data.detail || 'Не удалось активировать подписку'));
+        }
+    } catch (err) {
+        console.error('Upgrade error:', err);
+        alert('❌ Ошибка соединения с сервером');
+    }
+}
+
+// Обновление UI карточек подписки
+// Обновление UI карточек подписки
+async function updateSubscriptionUI(activePlan = null) {
+    // Если план не передан, получаем текущий с сервера
+    if (!activePlan && Auth.isAuthenticated()) {
+        try {
+            const response = await fetch('/subscription', {
+                headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+            });
+            const data = await response.json();
+            if (data.success) {
+                activePlan = data.subscription.plan_type;
+            }
+        } catch (err) {
+            console.error('Failed to get subscription:', err);
+            return;
+        }
+    }
+
+    // Приоритет планов (чем выше уровень, тем больше)
+    const planLevel = { 'free': 0, 'premium': 1, 'pro': 2 };
+    const currentLevel = planLevel[activePlan] || 0;
+
+    // Обновляем кнопки в карточках
+    const cards = document.querySelectorAll('.tariff-card');
+    cards.forEach(card => {
+        const plan = card.getAttribute('data-plan');
+        const btn = card.querySelector('.tariff-btn');
+        const planLevelValue = planLevel[plan] || 0;
+
+        if (planLevelValue <= currentLevel) {
+            // План равен текущему или ниже - считаем доступным
+            if (plan === activePlan) {
+                // Текущий активный план
+                btn.textContent = 'Текущий план';
+                btn.disabled = true;
+                btn.classList.add('tariff-btn-current');
+            } else {
+                // Более низкий план (уже включён в текущий)
+                btn.textContent = 'Уже доступен';
+                btn.disabled = true;
+                btn.classList.add('tariff-btn-current', 'tariff-btn-included');
+            }
+        } else {
+            // Более высокий план - нужно апгрейдить
+            btn.textContent = 'Выбрать тариф';
+            btn.disabled = false;
+            btn.classList.remove('tariff-btn-current', 'tariff-btn-included');
+
+            // Назначаем правильную функцию
+            if (plan === 'premium') {
+                btn.onclick = () => upgradeToPremium();
+            } else if (plan === 'pro') {
+                btn.onclick = () => upgradeToPro();
+            }
+        }
+    });
+}
+
+// Получить текущую подписку при загрузке
+async function loadCurrentSubscription() {
+    if (!Auth.isAuthenticated()) return;
+
+    try {
+        const response = await fetch('/subscription', {
+            headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            updateSubscriptionUI(data.subscription.plan_type);
+
+            // Обновляем лимиты в интерфейсе
+            updateLimitsDisplay(data.subscription, data.usage);
+        }
+    } catch (err) {
+        console.error('Failed to load subscription:', err);
+    }
+}
+
+// Отображение лимитов пользователю
+function updateLimitsDisplay(subscription, usage) {
+    const charCounter = document.getElementById('charCounter');
+    if (charCounter) {
+        const maxLength = subscription.max_text_length || 1000;
+        const currentLength = document.getElementById('input')?.value.length || 0;
+        charCounter.textContent = `Количество символов ${currentLength}/${maxLength}`;
+
+        if (currentLength > maxLength) {
+            charCounter.style.color = '#ef4444';
+        } else {
+            charCounter.style.color = 'var(--text-secondary)';
+        }
+    }
+
+    // Можно добавить отображение оставшихся запросов
+    if (usage && usage.remaining_requests !== undefined) {
+        const remainingSpan = document.getElementById('remainingRequests');
+        if (remainingSpan) {
+            remainingSpan.textContent = `Осталось запросов: ${usage.remaining_requests}`;
+        }
+    }
+}
+
+// Обновляем существующую функцию updateUI, добавив вызов loadCurrentSubscription
+// Найдите существующую функцию updateUI и добавьте в неё вызов loadCurrentSubscription()
+function updateUI() {
+    const user = Auth.getUser();
+    const userNameSpan = document.getElementById('userName');
+    const authBtn = document.getElementById('authBtn');
+
+    if (user && Auth.isAuthenticated()) {
+        const displayName = user.email || 'Пользователь';
+        if (userNameSpan) {
+            userNameSpan.textContent = displayName;
+        }
+        if (authBtn) {
+            authBtn.textContent = 'Выйти';
+            authBtn.onclick = () => {
+                Auth.logout();
+                updateUI();
+            };
+        }
+
+        // Загружаем информацию о подписке после входа
+        loadCurrentSubscription();
+    } else {
+        if (userNameSpan) {
+            userNameSpan.textContent = '';
+        }
+        if (authBtn) {
+            authBtn.textContent = 'Войти';
+            authBtn.onclick = () => Auth.showAuthModal();
+        }
+
+        // Сбрасываем UI карточек, если не авторизован
+        const cards = document.querySelectorAll('.tariff-card');
+        cards.forEach(card => {
+            const plan = card.getAttribute('data-plan');
+            const btn = card.querySelector('.tariff-btn');
+
+            if (plan === 'free') {
+                btn.textContent = 'Текущий план';
+                btn.disabled = true;
+            } else {
+                btn.textContent = 'Выбрать тариф';
+                btn.disabled = false;
+                if (plan === 'premium') {
+                    btn.onclick = () => upgradeToPremium();
+                } else if (plan === 'pro') {
+                    btn.onclick = () => upgradeToPro();
+                }
+            }
+        });
+    }
+}
+
 // Делаем функции глобальными
 window.processPendingText = processPendingText;
 window.send = send;

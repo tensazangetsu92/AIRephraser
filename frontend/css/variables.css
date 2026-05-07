@@ -1,9 +1,9 @@
 /* Variables & Global Styles */
 :root {
-    --primary-gradient: linear-gradient(135deg, #6366f1, #10b981);
+    --primary-gradient: linear-gradient(135deg, #6366f1, #691a96);
     --primary-color: #6366f1;
     --secondary-color: #10b981;
-    --text-color: white;
+    --text-color: #f0f0f0;
     --text-light: rgba(0, 0, 0, 0.6);
     --border-color: #e0e0e0;
     --bg-white: #ffffff;

@@ -78,50 +78,89 @@
         <div class="control-group">
             <button class="main-btn" id="humanizeBtn">Очеловечить текст</button>
         </div>
-
     </div>
 
-    <!-- Buttons -->
+    <!-- Tariffs Section -->
+    <section class="tariffs">
+        <h2 class="tariffs-title">Выберите свой тариф</h2>
+        <p class="tariffs-subtitle">Премиум доступ к расширенным возможностям</p>
 
+        <div class="tariffs-grid">
+            <!-- Basic / Free Plan -->
+            <div class="tariff-card" data-plan="free">
+                <div class="tariff-badge">Бесплатно</div>
+                <h3 class="tariff-name">Basic</h3>
+                <div class="tariff-price">
+                    <span class="price">0</span>
+                    <span class="currency">₽</span>
+                    <span class="period">/месяц</span>
+                </div>
+                <p class="tariff-description">Базовый тариф для старта</p>
+                <ul class="tariff-features">
+                    <li>✅ 5 запросов всего</li>
+                    <li>✅ До 1000 символов за раз</li>
+                    <li>✅ Базовая обработка текста</li>
+                </ul>
+                <button class="tariff-btn tariff-btn-current" disabled>Текущий план</button>
+            </div>
 
+            <!-- Premium Plan -->
+            <div class="tariff-card recommended" data-plan="premium">
+                <div class="tariff-badge premium-badge">Рекомендуемый</div>
+                <h3 class="tariff-name">Premium</h3>
+                <div class="tariff-price">
+                    <span class="price">349</span>
+                    <span class="currency">₽</span>
+                    <span class="period">/месяц</span>
+                </div>
+                <p class="tariff-description">Оптимальный выбор для профессионалов</p>
+                <ul class="tariff-features">
+                    <li>✅ 300 запросов всего</li>
+                    <li>✅ До 50 запросов в день</li>
+                    <li>✅ До 5000 символов за раз</li>
+                    <li>✅ Расширенная обработка текста</li>
+                    <li>✅ Приоритетная обработка</li>
+                </ul>
+                <button class="tariff-btn" id="upgradePremiumBtn">Выбрать тариф</button>
+            </div>
+
+            <!-- Pro Plan -->
+            <div class="tariff-card" data-plan="pro">
+                <div class="tariff-badge pro-badge">Максимум</div>
+                <h3 class="tariff-name">Pro</h3>
+                <div class="tariff-price">
+                    <span class="price">699</span>
+                    <span class="currency">₽</span>
+                    <span class="period">/месяц</span>
+                </div>
+                <p class="tariff-description">Максимальные возможности</p>
+                <ul class="tariff-features">
+                    <li>✅ 1000 запросов всего</li>
+                    <li>✅ До 100 запросов в день</li>
+                    <li>✅ До 20000 символов за раз</li>
+                    <li>✅ Профессиональная обработка</li>
+                    <li>✅ Приоритетная поддержка 24/7</li>
+                </ul>
+                <button class="tariff-btn" id="upgradeProBtn">Выбрать тариф</button>
+            </div>
+        </div>
+    </section>
 </main>
 
 <!-- Единая форма входа/регистрации -->
 <div id="authModal" class="modal">
     <div class="modal-content">
-        <!-- Кнопка закрытия -->
         <span class="modal-close">&times;</span>
-
-        <!-- Заголовок меняется в зависимости от режима -->
         <h2 id="authTitle">🔐 Вход</h2>
-
-        <!-- Сообщения об ошибках -->
         <div id="authError" class="error-message" style="display: none;"></div>
-
-        <!-- Форма -->
         <div id="authForm">
-            <!-- Email -->
             <input type="email" id="authEmail" placeholder="Email" autocomplete="email" required>
-
-            <!-- Пароль -->
             <input type="password" id="authPassword" placeholder="Пароль" autocomplete="current-password" required>
-
-            <!-- Подтверждение пароля (только для регистрации) -->
             <input type="password" id="authConfirmPassword" placeholder="Подтвердите пароль" style="display: none;" autocomplete="new-password">
-
-            <!-- Кнопка действия (Войти/Зарегистрироваться) -->
             <button id="authSubmitBtn">Войти</button>
         </div>
-
-        <!-- Google вход -->
-        <button id="googleLoginBtn" class="google-btn">
-            🌐 Войти через Google
-        </button>
-
-        <!-- Переключение режима -->
-        <div class="modal-link" id="toggleAuthMode">
-            📝 Нет аккаунта? Зарегистрироваться
-        </div>
+        <button id="googleLoginBtn" class="google-btn">🌐 Войти через Google</button>
+        <div class="modal-link" id="toggleAuthMode">📝 Нет аккаунта? Зарегистрироваться</div>
     </div>
 </div>
 
