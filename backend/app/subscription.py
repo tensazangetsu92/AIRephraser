@@ -32,7 +32,7 @@ SUBSCRIPTION_PLANS = {
     "pro": {
         "total_requests": 1000,
         "daily_limit": 100,
-        "max_text_length": 20000,
+        "max_text_length": 30000,
         "price_monthly": 699,
         "price_yearly": 5990
     }
