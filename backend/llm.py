@@ -1,12 +1,10 @@
+# llm.py - оптимизированная версия с одним запросом
+
 from openai import AsyncOpenAI
 import asyncio
 
 from app.config import OPENROUTER_API_KEY, MODEL_NAME, TEMPERATURE
-from prompts import (
-    SYSTEM_PROMPT,
-    get_rewrite_prompt,
-    get_humanize_prompt
-)
+from prompts import SYSTEM_PROMPT, format_humanize_prompt
 
 client = AsyncOpenAI(
     api_key=OPENROUTER_API_KEY,
@@ -20,11 +18,21 @@ OPENROUTER_CONFIG = {
     "temperature": TEMPERATURE
 }
 
+# Словарь для разных моделей (можно выбрать лучшую)
+MODELS = {
+    "best": "anthropic/claude-3.5-sonnet",  # Лучший для русского языка
+    "good": "openai/gpt-4-turbo",  # Хороший, но дороже
+    "cheap": "meta-llama/llama-3-70b-instruct",  # Дешёвый
+    "fast": "google/gemini-2.0-flash-exp:free"  # Быстрый и бесплатный
+}
 
-async def ask_llm(prompt: str, text: str, temperature: float = None):
-    """Универсальная функция запроса к LLM"""
-    if temperature is None:
-        temperature = OPENROUTER_CONFIG["temperature"]
+
+async def ask_llm(text: str, intensity: str, tone: str, style: str, length: str, target_language: str,
+                  temperature: float = 0.7):
+    """Универсальный запрос к LLM с корректным промптом"""
+
+    # Форматируем промпт с текстом
+    prompt = format_humanize_prompt(text, intensity, tone, style, length, target_language)
 
     try:
         response = await client.chat.completions.create(
@@ -32,64 +40,120 @@ async def ask_llm(prompt: str, text: str, temperature: float = None):
             temperature=temperature,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": prompt + text}
+                {"role": "user", "content": prompt}
             ]
         )
-        return response.choices[0].message.content.strip()
+        result = response.choices[0].message.content.strip()
+        return result
     except Exception as e:
         print(f"Error in ask_llm: {e}")
+        return text  # Возвращаем исходный текст при ошибке
+
+
+# llm.py - добавьте эту функцию
+
+async def humanize_pipeline(text: str, intensity: str, tone: str, style: str, length: str, target_language: str = "ru"):
+    """Основной пайплайн обработки текста с проверкой длины"""
+
+    original_length = len(text)
+    print(f"Оригинал: {original_length} символов")
+
+    # Один запрос
+    prompt = format_humanize_prompt(text, intensity, tone, style, length, target_language)
+
+    try:
+        response = await client.chat.completions.create(
+            model=OPENROUTER_CONFIG["model"],
+            temperature=0.5,  # Низкая температура для точности
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        result = response.choices[0].message.content.strip()
+
+        # ПРОВЕРКА ДЛИНЫ
+        result_length = len(result)
+        print(f"Результат: {result_length} символов")
+
+        # Если результат слишком короткий - отправляем повторно с жестким требованием
+        if result_length < original_length * 0.7:
+            print(f"⚠️ Результат слишком короткий! Повторная попытка...")
+
+            fallback_prompt = f"""ТЫ НЕ ПРАВИЛЬНО ВЫПОЛНИЛ ЗАДАНИЕ!
+
+Ты сильно сократил текст. Было {original_length} символов, стало {result_length}.
+
+ПЕРЕДЕЛАЙ ТЕКСТ ЗАНОВО, СТРОГО СОБЛЮДАЯ ПРАВИЛА:
+
+1. КАЖДЫЙ абзац из оригинала должен быть в ответе
+2. КАЖДЫЙ заголовок - должен быть
+3. НИЧЕГО НЕ УДАЛЯЙ
+
+Вот исходный текст, который ты должен обработать:
+
+{text}
+
+Сделай так, чтобы длина результата была примерно {original_length} символов (плюс-минус 15%).
+
+ОТВЕТЬ ТОЛЬКО ГОТОВЫМ ТЕКСТОМ."""
+
+            response2 = await client.chat.completions.create(
+                model=OPENROUTER_CONFIG["model"],
+                temperature=0.3,
+                messages=[
+                    {"role": "system", "content": "Ты редактор. ОБЯЗАН сохранить всю информацию и структуру текста."},
+                    {"role": "user", "content": fallback_prompt}
+                ]
+            )
+            result = response2.choices[0].message.content.strip()
+            print(f"Результат после повторной попытки: {len(result)} символов")
+
+        return result
+
+    except Exception as e:
+        print(f"Error: {e}")
         return text
 
 
-async def humanize_pipeline(text: str, intensity: str, tone: str, style: str, length: str, target_language: str = "ru"):
-    """
-    Основной пайплайн обработки текста
+def get_available_models():
+    """Получить список доступных моделей"""
+    return MODELS
 
-    Args:
-        text: исходный текст
-        intensity: сила изменения (low, medium, high)
-        tone: тон (neutral, formal, casual, friendly, academic)
-        style: стиль (simple, creative, professional)
-        length: длина (same, shorter, longer)
-        target_language: целевой язык (ru, en)
 
-    Returns:
-        обработанный текст
-    """
-    print(
-        f"Processing text with params: intensity={intensity}, tone={tone}, style={style}, length={length}, lang={target_language}")
-
-    # Шаг 1: переписывание с учетом параметров
-    rewrite_prompt = get_rewrite_prompt(intensity, tone, style, length, target_language)
-    step1 = await ask_llm(rewrite_prompt, text)
-    print("Step 1 completed (rewrite)")
-
-    # Шаг 2: очеловечивание (финальный результат)
-    humanize_prompt = get_humanize_prompt(intensity, tone, style, length, target_language)
-    final = await ask_llm(humanize_prompt, step1)
-    print("Step 2 completed (humanize)")
-
-    return final
+def set_model(model_key: str):
+    """Сменить модель"""
+    if model_key in MODELS:
+        OPENROUTER_CONFIG["model"] = MODELS[model_key]
+        print(f"Model changed to: {MODELS[model_key]}")
+        return True
+    return False
 
 
 async def test():
     """Тестовая функция"""
-    question = """В глубинах океана скрывается мир, который человечество изучило хуже, чем поверхность Марса. 
+    test_text = """В глубинах океана скрывается мир, который человечество изучило хуже, чем поверхность Марса. 
     Температура там близка к нулю, а давление способно раздавить привычный батискаф, словно консервную банку. 
-    Несмотря на это, жизнь в бездне не только существует, но и процветает в самых неожиданных формах."""
+    Despite this, life in the abyss not only exists but thrives in the most unexpected forms."""
 
     print("=" * 50)
-    print("Тест: Слабая сила, дружелюбный тон, простой стиль, длиннее")
+    print("Тест обработки текста (один запрос)")
     print("=" * 50)
+
     result = await humanize_pipeline(
-        text=question,
-        intensity="high",
-        tone="friendly",
+        text=test_text,
+        intensity="medium",
+        tone="neutral",
         style="simple",
-        length="longer",
+        length="same",
         target_language="ru"
     )
+
+    print("\n📝 ОРИГИНАЛ:")
+    print(test_text)
+    print("\n✨ РЕЗУЛЬТАТ:")
     print(result)
+    print(f"\n📊 Статистика: {len(test_text)} → {len(result)} символов")
 
 
 if __name__ == "__main__":
