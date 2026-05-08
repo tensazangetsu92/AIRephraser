@@ -59,14 +59,14 @@
 
 /* Кнопка переключения языка */
 .lang-btn {
-    background: transparent;
+    background: rgba(18, 18, 18, 0.2);
     border: 1px solid transparent;
     border-radius: 20px;
-    padding: 7px 13px;
+    padding: 10px 15px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0.4rem;
     font-size: 1rem;
     transition: all 0.2s;
     color: var(--text-color);
@@ -76,7 +76,7 @@
     background: rgba(18, 18, 18, 0.3);
 }
 
-.lang-icon {
+.lang-btn i {
     font-size: 0.875rem;
 }
 

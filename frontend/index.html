@@ -6,6 +6,7 @@
     <title>Humary</title>
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
 
@@ -14,8 +15,7 @@
     <div class="logo" data-i18n="logo">Humary</div>
     <div class="user-info" id="userInfo">
         <button class="lang-btn" id="langToggle" aria-label="Switch language">
-
-            <span class="lang-icon"></span>
+            <i class="fas fa-globe"></i>
             <span class="lang-text">Русский</span>
         </button>
         <span class="user-name" id="userName"></span>
@@ -44,7 +44,10 @@
     <!-- Controls -->
     <div class="controls">
         <div class="control-group">
-            <label data-i18n="intensity_label">Сила изменения</label>
+            <div class="label-wrapper">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <label data-i18n="intensity_label">Сила изменения</label>
+            </div>
             <select id="intensity">
                 <option value="low" data-i18n="intensity_low">Слабая</option>
                 <option value="medium" selected data-i18n="intensity_medium">Нормальная</option>
@@ -53,7 +56,10 @@
         </div>
 
         <div class="control-group">
-            <label data-i18n="tone_label">Тон</label>
+            <div class="label-wrapper">
+                <i class="fa-solid fa-face-smile"></i>
+                <label data-i18n="tone_label">Тон</label>
+            </div>
             <select id="tone">
                 <option value="neutral" data-i18n="tone_neutral">Нейтральный</option>
                 <option value="formal" data-i18n="tone_formal">Формальный</option>
@@ -64,7 +70,10 @@
         </div>
 
         <div class="control-group">
-            <label data-i18n="style_label">Стиль</label>
+            <div class="label-wrapper">
+                <i class="fa-solid fa-pen-fancy"></i>
+                <label data-i18n="style_label">Стиль</label>
+            </div>
             <select id="style">
                 <option value="simple" data-i18n="style_simple">Простой</option>
                 <option value="creative" data-i18n="style_creative">Креативный</option>
@@ -73,13 +82,17 @@
         </div>
 
         <div class="control-group">
-            <label data-i18n="length_label">Длина</label>
+            <div class="label-wrapper">
+                <i class="fa-solid fa-ruler"></i>
+                <label data-i18n="length_label">Длина</label>
+            </div>
             <select id="length">
                 <option value="same" data-i18n="length_same">Оставить</option>
                 <option value="shorter" data-i18n="length_shorter">Короче</option>
                 <option value="longer" data-i18n="length_longer">Длиннее</option>
             </select>
         </div>
+
         <div class="control-group">
             <button class="main-btn" id="humanizeBtn" data-i18n="humanize_btn">Очеловечить текст</button>
         </div>
