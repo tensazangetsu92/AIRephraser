@@ -88,3 +88,7 @@ function init() {
 
 // Запуск
 init();
+
+if (typeof initLanguage === 'function') {
+    initLanguage();
+}

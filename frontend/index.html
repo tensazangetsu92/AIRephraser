@@ -11,137 +11,142 @@
 
 <!-- Navbar -->
 <nav class="navbar">
-    <div class="logo">Humary</div>
+    <div class="logo" data-i18n="logo">Humary</div>
     <div class="user-info" id="userInfo">
+        <button class="lang-btn" id="langToggle" aria-label="Switch language">
+
+            <span class="lang-icon"></span>
+            <span class="lang-text">Русский</span>
+        </button>
         <span class="user-name" id="userName"></span>
-        <button class="nav-btn" id="authBtn">Войти</button>
+        <button class="nav-btn" id="authBtn" data-i18n="login">Войти</button>
     </div>
 </nav>
 
 <!-- Main Content -->
 <main class="container">
-    <h1>Humary</h1>
-    <p class="subtitle">Превращаем ИИ-текст в живые слова</p>
+    <h1 data-i18n="title">Humary</h1>
+    <p class="subtitle" data-i18n="subtitle">Превращаем ИИ-текст в живые слова</p>
 
     <!-- Editor Section -->
     <div class="editor">
         <div class="col">
-            <h3>Ввод</h3>
-            <textarea id="input" placeholder="Вставьте текст для обработки..."></textarea>
+            <h3 data-i18n="input_label">Ввод</h3>
+            <textarea id="input" data-i18n="input_placeholder" placeholder="Вставьте текст для обработки..."></textarea>
             <div class="char-counter" id="charCounter">Количество символов 0/1000</div>
         </div>
         <div class="col">
-            <h3 class="out-text">Результат</h3>
-            <div id="result" class="output"></div>
+            <h3 class="out-text" data-i18n="result_label">Результат</h3>
+            <div id="result" class="output" data-i18n="result_placeholder">Результат появится здесь...</div>
         </div>
     </div>
 
     <!-- Controls -->
     <div class="controls">
         <div class="control-group">
-            <label>Сила изменения</label>
+            <label data-i18n="intensity_label">Сила изменения</label>
             <select id="intensity">
-                <option value="low">Слабая</option>
-                <option value="medium" selected>Нормальная</option>
-                <option value="high">Сильная</option>
+                <option value="low" data-i18n="intensity_low">Слабая</option>
+                <option value="medium" selected data-i18n="intensity_medium">Нормальная</option>
+                <option value="high" data-i18n="intensity_high">Сильная</option>
             </select>
         </div>
 
         <div class="control-group">
-            <label>Тон</label>
+            <label data-i18n="tone_label">Тон</label>
             <select id="tone">
-                <option value="neutral">Нейтральный</option>
-                <option value="formal">Формальный</option>
-                <option value="casual">Повседневный</option>
-                <option value="friendly">Дружелюбный</option>
-                <option value="academic">Академический</option>
+                <option value="neutral" data-i18n="tone_neutral">Нейтральный</option>
+                <option value="formal" data-i18n="tone_formal">Формальный</option>
+                <option value="casual" data-i18n="tone_casual">Повседневный</option>
+                <option value="friendly" data-i18n="tone_friendly">Дружелюбный</option>
+                <option value="academic" data-i18n="tone_academic">Академический</option>
             </select>
         </div>
 
         <div class="control-group">
-            <label>Стиль</label>
+            <label data-i18n="style_label">Стиль</label>
             <select id="style">
-                <option value="simple">Простой</option>
-                <option value="creative">Креативный</option>
-                <option value="professional">Профессиональный</option>
+                <option value="simple" data-i18n="style_simple">Простой</option>
+                <option value="creative" data-i18n="style_creative">Креативный</option>
+                <option value="professional" data-i18n="style_professional">Профессиональный</option>
             </select>
         </div>
 
         <div class="control-group">
-            <label>Длина</label>
+            <label data-i18n="length_label">Длина</label>
             <select id="length">
-                <option value="same">Оставить</option>
-                <option value="shorter">Короче</option>
-                <option value="longer">Длиннее</option>
+                <option value="same" data-i18n="length_same">Оставить</option>
+                <option value="shorter" data-i18n="length_shorter">Короче</option>
+                <option value="longer" data-i18n="length_longer">Длиннее</option>
             </select>
         </div>
         <div class="control-group">
-            <button class="main-btn" id="humanizeBtn">Очеловечить текст</button>
+            <button class="main-btn" id="humanizeBtn" data-i18n="humanize_btn">Очеловечить текст</button>
         </div>
     </div>
 
     <!-- Tariffs Section -->
     <section class="tariffs">
-        <h2 class="tariffs-title">Выберите свой тариф</h2>
-        <p class="tariffs-subtitle">Премиум доступ к расширенным возможностям</p>
+        <h2 class="tariffs-title" data-i18n="tariffs_title">Выберите свой тариф</h2>
+        <p class="tariffs-subtitle" data-i18n="tariffs_subtitle">Премиум доступ к расширенным возможностям</p>
 
         <div class="tariffs-grid">
             <!-- Basic / Free Plan -->
             <div class="tariff-card" data-plan="free">
-                <div class="tariff-badge">Бесплатно</div>
-                <h3 class="tariff-name">Basic</h3>
+                <div class="tariff-badge" data-i18n="plan_free">Бесплатно</div>
+                <h3 class="tariff-name" data-i18n="plan_basic">Basic</h3>
                 <div class="tariff-price">
                     <span class="price">0</span>
                     <span class="currency">₽</span>
-                    <span class="period">/месяц</span>
+                    <span class="period" data-i18n="per_month">/месяц</span>
                 </div>
-                <p class="tariff-description">Базовый тариф для старта</p>
+                <p class="tariff-description" data-i18n="plan_basic_desc">Базовый тариф для старта</p>
                 <ul class="tariff-features">
-                    <li>✅ 5 запросов всего</li>
-                    <li>✅ До 1000 символов за раз</li>
-                    <li>✅ Базовая обработка текста</li>
+                    <li>✅ 5 <span data-i18n="requests_total">запросов всего</span></li>
+                    <li>✅ <span data-i18n="up_to">До</span> 1000 <span data-i18n="chars_per_request">символов за раз</span></li>
+                    <li>✅ <span data-i18n="basic_processing">Базовая обработка текста</span></li>
                 </ul>
-                <button class="tariff-btn tariff-btn-current" disabled>Текущий план</button>
+                <button class="tariff-btn tariff-btn-current" disabled data-i18n="current_plan">Текущий план</button>
             </div>
 
             <!-- Premium Plan -->
             <div class="tariff-card recommended" data-plan="premium">
-                <div class="tariff-badge premium-badge">Рекомендуемый</div>
-                <h3 class="tariff-name">Premium</h3>
+                <div class="tariff-badge premium-badge" data-i18n="badge_recommended">Рекомендуемый</div>
+                <h3 class="tariff-name" data-i18n="plan_premium">Premium</h3>
                 <div class="tariff-price">
                     <span class="price">349</span>
                     <span class="currency">₽</span>
-                    <span class="period">/месяц</span>
+                    <span class="period" data-i18n="per_month">/месяц</span>
                 </div>
-                <p class="tariff-description">Оптимальный выбор для профессионалов</p>
+                <p class="tariff-description" data-i18n="plan_premium_desc">Оптимальный выбор для профессионалов</p>
                 <ul class="tariff-features">
-                    <li>✅ 300 запросов всего</li>
-                    <li>✅ До 50 запросов в день</li>
-                    <li>✅ До 5000 символов за раз</li>
-                    <li>✅ Расширенная обработка текста</li>
-                    <li>✅ Приоритетная обработка</li>
+                    <li>✅ 300 <span data-i18n="requests_total">запросов всего</span></li>
+                    <li>✅ <span data-i18n="up_to_daily">До</span> 50 <span data-i18n="requests_per_day">запросов в день</span></li>
+                    <li>✅ <span data-i18n="up_to">До</span> 5000 <span data-i18n="chars_per_request">символов за раз</span></li>
+                    <li>✅ <span data-i18n="extended_processing">Расширенная обработка текста</span></li>
+                    <li>✅ <span data-i18n="priority_processing">Приоритетная обработка</span></li>
                 </ul>
-                <button class="tariff-btn" id="upgradePremiumBtn">Выбрать тариф</button>
+                <button class="tariff-btn" id="upgradePremiumBtn" data-i18n="select_plan">Выбрать тариф</button>
             </div>
 
             <!-- Pro Plan -->
             <div class="tariff-card" data-plan="pro">
-                <div class="tariff-badge pro-badge">Максимум</div>
-                <h3 class="tariff-name">Pro</h3>
+                <div class="tariff-badge pro-badge" data-i18n="badge_maximum">Максимум</div>
+                <h3 class="tariff-name" data-i18n="plan_pro">Pro</h3>
                 <div class="tariff-price">
                     <span class="price">699</span>
                     <span class="currency">₽</span>
-                    <span class="period">/месяц</span>
+                    <span class="period" data-i18n="per_month">/месяц</span>
                 </div>
-                <p class="tariff-description">Максимальные возможности</p>
+                <p class="tariff-description" data-i18n="plan_pro_desc">Максимальные возможности</p>
                 <ul class="tariff-features">
-                    <li>✅ 1000 запросов всего</li>
-                    <li>✅ До 100 запросов в день</li>
-                    <li>✅ До 20000 символов за раз</li>
-                    <li>✅ Профессиональная обработка</li>
-                    <li>✅ Приоритетная поддержка 24/7</li>
+                    <li>✅ 1000 <span data-i18n="requests_total">запросов всего</span></li>
+                    <li>✅ <span data-i18n="up_to_daily">До</span> 100 <span data-i18n="requests_per_day">запросов в день</span></li>
+                    <li>✅ <span data-i18n="up_to">До</span> 20000 <span data-i18n="chars_per_request">символов за раз</span></li>
+                    <li>✅ <span data-i18n="pro_processing">Профессиональная обработка текста</span></li>
+                    <li>✅ <span data-i18n="priority_support">Приоритетная поддержка 24/7</span></li>
                 </ul>
-                <button class="tariff-btn" id="upgradeProBtn">Выбрать тариф</button>
+                <button class="tariff-btn" id="upgradeProBtn" data-i18n="select_plan">Выбрать тариф</button>
             </div>
         </div>
     </section>
@@ -151,22 +156,23 @@
 <div id="authModal" class="modal">
     <div class="modal-content">
         <span class="modal-close">&times;</span>
-        <h2 id="authTitle">🔐 Вход</h2>
+        <h2 id="authTitle" data-i18n="auth_login_title">🔐 Вход</h2>
         <div id="authError" class="error-message" style="display: none;"></div>
         <div id="authForm">
-            <input type="email" id="authEmail" placeholder="Email" autocomplete="email" required>
-            <input type="password" id="authPassword" placeholder="Пароль" autocomplete="current-password" required>
-            <input type="password" id="authConfirmPassword" placeholder="Подтвердите пароль" style="display: none;" autocomplete="new-password">
-            <button id="authSubmitBtn">Войти</button>
+            <input type="email" id="authEmail" data-i18n="auth_email_placeholder" placeholder="Email" autocomplete="email" required>
+            <input type="password" id="authPassword" data-i18n="auth_password_placeholder" placeholder="Пароль" autocomplete="current-password" required>
+            <input type="password" id="authConfirmPassword" data-i18n="auth_confirm_password_placeholder" placeholder="Подтвердите пароль" style="display: none;" autocomplete="new-password">
+            <button id="authSubmitBtn" data-i18n="auth_login_btn">Войти</button>
         </div>
-        <button id="googleLoginBtn" class="google-btn">🌐 Войти через Google</button>
-        <div class="modal-link" id="toggleAuthMode">📝 Нет аккаунта? Зарегистрироваться</div>
+        <button id="googleLoginBtn" class="google-btn" data-i18n="auth_google_btn">🌐 Войти через Google</button>
+        <div class="modal-link" id="toggleAuthMode" data-i18n="auth_toggle_register">📝 Нет аккаунта? Зарегистрироваться</div>
     </div>
 </div>
 
 <script src="/js/utils.js" defer></script>
 <script src="/js/api.js" defer></script>
 <script src="/js/auth.js" defer></script>
+<script src="/js/lang.js" defer></script>
 <script src="/js/subscription.js" defer></script>
 <script src="/js/humanize.js" defer></script>
 <script src="/js/ui.js" defer></script>

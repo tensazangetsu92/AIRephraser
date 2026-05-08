@@ -56,3 +56,30 @@
     background: linear-gradient(135deg, #10b981, #6366f1 );
     transform: translateY(-1px);
 }
+
+/* Кнопка переключения языка */
+.lang-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 20px;
+    padding: 7px 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 1rem;
+    transition: all 0.2s;
+    color: var(--text-color);
+}
+
+.lang-btn:hover {
+    background: rgba(18, 18, 18, 0.3);
+}
+
+.lang-icon {
+    font-size: 0.875rem;
+}
+
+.lang-text {
+    font-weight: 500;
+}
