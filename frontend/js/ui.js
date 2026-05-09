@@ -113,6 +113,111 @@ async function copyText() {
     }
 }
 
+// frontend/js/ui.js
+
+// Функция для получения аватарки из Gmail (через Gravatar)
+function getAvatarUrl(email) {
+    if (!email) return '';
+    // Кодируем email в MD5 для Gravatar
+    const md5 = CryptoJS.MD5(email.trim().toLowerCase()).toString();
+    return `https://www.gravatar.com/avatar/${md5}?s=96&d=identicon`;
+}
+
+// Отображение аватарки и меню
+function updateUserMenu() {
+    const user = Auth.getUser();
+    const userMenu = document.getElementById('userMenu');
+    const authBtn = document.getElementById('authBtn');
+    const avatarImg = document.getElementById('avatarImg');
+    const userEmailText = document.getElementById('userEmailText');
+
+    if (user && Auth.isAuthenticated()) {
+        // Пользователь авторизован - показываем меню, скрываем кнопку входа
+        userMenu.style.display = 'block';
+        if (authBtn) authBtn.style.display = 'none';
+
+        // Устанавливаем email
+        if (userEmailText) userEmailText.textContent = user.email;
+
+        // Устанавливаем аватарку
+        if (avatarImg) {
+            const avatarUrl = getAvatarUrl(user.email);
+            avatarImg.src = avatarUrl;
+            avatarImg.alt = user.email;
+        }
+    } else {
+        // Пользователь не авторизован - скрываем меню, показываем кнопку входа
+        if (userMenu) userMenu.style.display = 'none';
+        if (authBtn) authBtn.style.display = 'block';
+    }
+}
+
+// Инициализация выпадающего меню
+function initUserMenu() {
+    const userMenu = document.getElementById('userMenu');
+    const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+
+    if (!userMenu) return;
+
+    // Открытие/закрытие меню при клике на аватарку
+    userMenu.addEventListener('click', (e) => {
+        // Не закрываем меню при клике на кнопку выхода
+        if (e.target.closest('.dropdown-item.logout')) {
+            return;
+        }
+        userMenu.classList.toggle('open');
+        e.stopPropagation();
+    });
+
+    // Закрытие меню при клике вне его
+    document.addEventListener('click', () => {
+        userMenu.classList.remove('open');
+    });
+
+    // Кнопка выхода из меню
+    if (dropdownLogoutBtn) {
+        dropdownLogoutBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            Auth.logout();
+            updateUserMenu();
+            updateUI();
+            userMenu.classList.remove('open');
+        });
+    }
+}
+
+// Обновляем существующую функцию updateUI
+function updateUI() {
+    const user = Auth.getUser();
+    const userNameSpan = document.getElementById('userName');
+    const authBtn = document.getElementById('authBtn');
+
+    if (user && Auth.isAuthenticated()) {
+        // Обновляем меню с аватаркой
+        updateUserMenu();
+
+        // Загружаем информацию о подписке после входа
+        if (typeof loadCurrentSubscription === 'function') {
+            loadCurrentSubscription();
+        }
+    } else {
+        // Скрываем меню, показываем кнопку входа
+        const userMenu = document.getElementById('userMenu');
+        if (userMenu) userMenu.style.display = 'none';
+        if (authBtn) {
+            authBtn.style.display = 'block';
+            authBtn.textContent = t('login');
+            authBtn.onclick = () => Auth.showAuthModal();
+        }
+
+        // Сбрасываем UI карточек
+        if (typeof resetTariffCards === 'function') {
+            resetTariffCards();
+        }
+    }
+}
+
+
 // Делаем функции глобальными
 window.showLogin = showLogin;
 window.showRegister = showRegister;

@@ -11,6 +11,7 @@
 <body>
 
 <!-- Navbar -->
+<!-- Navbar -->
 <nav class="navbar">
     <div class="logo" data-i18n="logo">Humary</div>
     <div class="user-info" id="userInfo">
@@ -18,11 +19,30 @@
             <i class="fas fa-globe"></i>
             <span class="lang-text">Русский</span>
         </button>
-        <span class="user-name" id="userName"></span>
-        <button class="nav-btn" id="authBtn" data-i18n="login">Войти</button>
+
+        <!-- Блок для авторизованного пользователя (аватарка с меню) -->
+        <div class="user-menu" id="userMenu" style="display: none;">
+            <div class="user-avatar" id="userAvatar">
+                <img id="avatarImg" src="" alt="Avatar">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <div class="dropdown-item email" id="userEmailDisplay">
+                    <i class="fas fa-envelope"></i>
+                    <span id="userEmailText"></span>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item logout" id="dropdownLogoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span data-i18n="logout">Выйти</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Блок для неавторизованного пользователя -->
+        <button class="nav-btn" id="authBtn" data-i18n="login" style="display: block;">Войти</button>
     </div>
 </nav>
-
 <!-- Main Content -->
 <main class="container">
     <h1 data-i18n="title">Humary</h1>
@@ -37,7 +57,7 @@
         </div>
         <div class="col">
             <h3 class="out-text" data-i18n="result_label">Результат</h3>
-            <div id="result" class="output" data-i18n="result_placeholder">Результат появится здесь...</div>
+            <textarea id="result" class="output" data-i18n="result_placeholder" placeholder="Результат появится здесь..." rows="10"></textarea>
         </div>
     </div>
 
@@ -182,6 +202,7 @@
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <script src="/js/utils.js" defer></script>
 <script src="/js/api.js" defer></script>
 <script src="/js/auth.js" defer></script>

@@ -233,7 +233,7 @@ function switchLanguage() {
 function updateLanguageButton() {
     const langText = document.querySelector('.lang-text');
     if (langText) {
-        langText.textContent = currentLang === 'ru' ? 'English' : 'Русский';
+        langText.textContent = currentLang === 'ru' ?  'Русский' : 'English' ;
     }
 }
 

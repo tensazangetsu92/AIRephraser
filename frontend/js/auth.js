@@ -36,26 +36,25 @@ const Auth = {
     },
 
     async login(email, password) {
-    const result = await API.login(email, password);
-
-    if (result.ok) {
-        this.setToken(result.data.access_token);
-        this.setUser(result.data.user);
-        this.closeAuthModal();
-
-        if (typeof updateUI === 'function') {
-            updateUI();
+        const result = await API.login(email, password);
+        if (result.ok) {
+            this.setToken(result.data.access_token);
+            this.setUser(result.data.user);
+            this.closeAuthModal();
+            if (typeof updateUI === 'function') {
+                updateUI();
+            }
+            if (typeof updateUserMenu === 'function') {
+                updateUserMenu();
+            }
+            if (typeof window.processPendingText === 'function') {
+                window.processPendingText();
+            }
+            return { success: true, user: result.data.user };
+        } else {
+            return { success: false, error: result.data.detail || 'Ошибка входа' };
         }
-
-        if (typeof window.processPendingText === 'function') {
-            await window.processPendingText();
-        }
-
-        return { success: true, user: result.data.user };
-    } else {
-        return { success: false, error: result.data.detail || 'Ошибка входа' };
-    }
-}, // ← ВАЖНО: запятая, а не }
+    },
 
 
     async register(email, password) {
@@ -124,9 +123,12 @@ const Auth = {
         this.setToken(null);
         this.setUser(null);
         this.closeAuthModal();
-
-        // Перезагружаем страницу
-        window.location.reload();
+        if (typeof updateUI === 'function') {
+            updateUI();
+        }
+        if (typeof updateUserMenu === 'function') {
+            updateUserMenu();
+        }
     },
 
     isAuthenticated() {

@@ -60,7 +60,7 @@
 /* Кнопка переключения языка */
 .lang-btn {
     background: rgba(18, 18, 18, 0.2);
-    border: 1px solid transparent;
+    border: 2px solid #526ace;
     border-radius: 20px;
     padding: 10px 15px;
     cursor: pointer;
@@ -82,4 +82,112 @@
 
 .lang-text {
     font-weight: 500;
+}
+
+/* User Menu Styles */
+.user-menu {
+    position: relative;
+    cursor: pointer;
+}
+
+.user-avatar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem;
+    border-radius: 40px;
+    transition: all 0.2s;
+    background: var(--button-hover);
+}
+
+.user-avatar:hover {
+    background: var(--input-bg);
+    border-color: var(--gradient-start);
+}
+
+.user-avatar img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-avatar i {
+    font-size: 0.75rem;
+    color: var(--text-color);
+    transition: transform 0.2s;
+}
+
+.user-menu.open .user-avatar i {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    position: absolute;
+    top: 120%;
+    right: 0;
+    min-width: 220px;
+    background: rgba(18, 18, 18, 1);
+
+    border: 2px solid #526ace;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s;
+}
+
+.user-menu.open .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: var(--text-color);
+    transition: background 0.2s;
+}
+
+.dropdown-item i {
+    width: 18px;
+    font-size: 1rem;
+    color: var(--gradient-start);
+}
+
+.dropdown-item.email {
+    cursor: default;
+}
+
+.dropdown-item.email:hover {
+    background: transparent;
+}
+
+.dropdown-item.logout {
+    cursor: pointer;
+    color: #ef4444;
+}
+
+.dropdown-item.logout i {
+    color: #ef4444;
+}
+
+.dropdown-item.logout:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #526ace;
+    border: 1px solid #526ace;
+    margin: 0.25rem 0;
 }

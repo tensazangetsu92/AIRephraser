@@ -74,7 +74,12 @@ function init() {
     console.log('init called');
     initElements();
     initEventListeners();
-
+    if (typeof initUserMenu === 'function') {
+        initUserMenu();
+    }
+    if (typeof updateUserMenu === 'function') {
+        updateUserMenu();
+    }
     if (window.elements.input && window.elements.charCounter) {
         if (typeof window.updateCharCounter === 'function') {
             window.updateCharCounter();

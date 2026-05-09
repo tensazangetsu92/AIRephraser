@@ -54,7 +54,7 @@ async function processText(text) {
 
     if (elements.humanizeBtn) {
         elements.humanizeBtn.disabled = false;
-        elements.humanizeBtn.innerHTML = '🚀 Очеловечить текст';
+        elements.humanizeBtn.innerHTML = 'Очеловечить текст';
     }
 }
 
