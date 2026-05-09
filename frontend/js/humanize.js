@@ -59,10 +59,11 @@ async function processText(text) {
 }
 
 // Отправка текста на обработку
+// frontend/js/humanize.js - ИСПРАВИТЬ ФУНКЦИЮ send()
+
 async function send() {
     console.log('=== SEND FUNCTION CALLED ===');
 
-    // Получаем элементы глобально
     const elements = window.elements || {};
 
     if (!elements.input) {
@@ -71,7 +72,8 @@ async function send() {
     }
 
     const text = elements.input.value;
-    const textLength = text.length;
+    const wordCount = window.countWords ? window.countWords(text) : 0;
+    const maxWords = window.currentMaxWords || 200;
 
     // Проверка на пустой текст
     if (!text.trim()) {
@@ -79,14 +81,13 @@ async function send() {
         return;
     }
 
-    // Проверка лимита символов
-    if (typeof window.isWithinCharLimit === 'function' && !window.isWithinCharLimit(text)) {
-        const maxChars = window.MAX_CHARS || 1000;
-        const errorMessage = `❌ Превышен лимит символов! Максимум ${maxChars} символов. Сейчас ${textLength}/${maxChars}.`;
+    // ПРОВЕРКА ЛИМИТА СЛОВ
+    if (!window.isWithinWordLimit(text)) {
+        const errorMessage = `❌ Превышен лимит слов! Максимум ${maxWords} слов. Сейчас ${wordCount}/${maxWords}.`;
         if (elements.result) elements.result.innerText = errorMessage;
-        if (elements.charCounter) {
-            elements.charCounter.style.color = '#ef4444';
-            elements.charCounter.style.fontWeight = 'bold';
+        if (elements.wordCounter) {
+            elements.wordCounter.style.color = '#ef4444';
+            elements.wordCounter.style.fontWeight = 'bold';
         }
         return;
     }
@@ -107,14 +108,14 @@ async function processPendingText() {
     console.log('processPendingText called, pendingText:', pendingText);
 
     if (pendingText && Auth.isAuthenticated()) {
-        if (window.isWithinCharLimit && window.isWithinCharLimit(pendingText)) {
+        if (window.isWithinWordLimit && window.isWithinWordLimit(pendingText)) {
             const text = pendingText;
             pendingText = null;
             await processText(text);
         } else {
-            const maxChars = window.MAX_CHARS || 1000;
-            const textLength = pendingText.length;
-            const errorMessage = `❌ Превышен лимит символов! Максимум ${maxChars} символов. Сейчас ${textLength}/${maxChars}.`;
+            const maxWords = window.currentMaxWords || 200;
+            const wordCount = window.countWords ? window.countWords(pendingText) : 0;
+            const errorMessage = `❌ Превышен лимит слов! Максимум ${maxWords} слов. Сейчас ${wordCount}/${maxWords}.`;
             const elements = window.elements || {};
             if (elements.result) elements.result.innerText = errorMessage;
             pendingText = null;

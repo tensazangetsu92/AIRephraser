@@ -16,7 +16,7 @@ function initElements() {
         length: document.getElementById('length'),
         authBtn: document.getElementById('authBtn'),
         userName: document.getElementById('userName'),
-        charCounter: document.getElementById('charCounter'),
+        wordCounter: document.getElementById('wordCounter'),
     };
 
     console.log('Elements loaded:', {
@@ -31,7 +31,6 @@ function initEventListeners() {
     console.log('initEventListeners called');
 
     if (window.elements.humanizeBtn) {
-        // Убираем стрелочную функцию, вызываем send напрямую
         window.elements.humanizeBtn.addEventListener('click', () => {
             console.log('Humanize button clicked');
             if (typeof window.send === 'function') {
@@ -53,11 +52,16 @@ function initEventListeners() {
     }
 
     if (window.elements.input) {
+        // 👇 ИСПРАВЛЕНО: updateCharCounter → updateWordCounter
         window.elements.input.addEventListener('input', () => {
-            if (typeof window.updateCharCounter === 'function') {
-                window.updateCharCounter();
+            console.log('input event fired');  // Отладка
+            if (typeof window.updateWordCounter === 'function') {
+                window.updateWordCounter();
+            } else {
+                console.error('window.updateWordCounter is not defined!');
             }
         });
+
         window.elements.input.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter') {
                 if (typeof window.send === 'function') {
@@ -71,7 +75,6 @@ function initEventListeners() {
 
 // Инициализация
 function init() {
-    console.log('init called');
     initElements();
     initEventListeners();
     if (typeof initUserMenu === 'function') {
@@ -80,9 +83,12 @@ function init() {
     if (typeof updateUserMenu === 'function') {
         updateUserMenu();
     }
-    if (window.elements.input && window.elements.charCounter) {
-        if (typeof window.updateCharCounter === 'function') {
-            window.updateCharCounter();
+
+    // 👇 ЗАМЕНИТЬ charCounter НА wordCounter
+    if (window.elements.input && window.elements.wordCounter) {
+        if (typeof window.updateWordCounter === 'function') {
+            console.log("asd");
+            window.updateWordCounter();
         }
     }
 

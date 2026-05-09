@@ -12,9 +12,9 @@ async function updateSubscriptionUI(activePlan = null) {
                 activePlan = data.subscription.plan_type;
                 window.currentSubscription = data.subscription;
 
-                // 👇 ВАЖНО: обновляем лимит символов
-                if (typeof window.updateMaxCharsFromSubscription === 'function') {
-                    window.updateMaxCharsFromSubscription(data.subscription);
+                // 👇 Обновляем лимит слов
+                if (typeof window.updateMaxWordsFromSubscription === 'function') {
+                    window.updateMaxWordsFromSubscription(data.subscription);
                 }
 
                 if (typeof window.updateLimitsDisplay === 'function') {
@@ -82,9 +82,9 @@ async function upgradeToPremium() {
         if (response.ok) {
             alert('✅ Подписка Premium активирована!');
 
-            // Обновляем лимит символов
-            if (data.subscription && typeof window.updateMaxCharsFromSubscription === 'function') {
-                window.updateMaxCharsFromSubscription(data.subscription);
+            // Обновляем лимит слов
+            if (data.subscription && typeof window.updateMaxWordsFromSubscription === 'function') {
+                window.updateMaxWordsFromSubscription(data.subscription);
             }
 
             await updateSubscriptionUI('premium');
@@ -121,9 +121,9 @@ async function upgradeToPro() {
         if (response.ok) {
             alert('✅ Подписка Pro активирована!');
 
-            // 👇 ВАЖНО: обновляем лимит символов
-            if (data.subscription && typeof window.updateMaxCharsFromSubscription === 'function') {
-                window.updateMaxCharsFromSubscription(data.subscription);
+            // 👇 Обновляем лимит слов
+            if (data.subscription && typeof window.updateMaxWordsFromSubscription === 'function') {
+                window.updateMaxWordsFromSubscription(data.subscription);
             }
 
             await updateSubscriptionUI('pro');
@@ -148,9 +148,9 @@ async function loadCurrentSubscription() {
         const data = await response.json();
 
         if (data.success) {
-            // 👇 ВАЖНО: обновляем лимит символов
-            if (typeof window.updateMaxCharsFromSubscription === 'function') {
-                window.updateMaxCharsFromSubscription(data.subscription);
+            // 👇 Обновляем лимит слов
+            if (typeof window.updateMaxWordsFromSubscription === 'function') {
+                window.updateMaxWordsFromSubscription(data.subscription);
             }
 
             await updateSubscriptionUI(data.subscription.plan_type);
@@ -163,4 +163,3 @@ async function loadCurrentSubscription() {
         console.error('Failed to load subscription:', err);
     }
 }
-

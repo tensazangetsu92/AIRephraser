@@ -1,62 +1,71 @@
 // frontend/js/utils.js
 
-// Константа для максимального количества символов (по умолчанию для free)
-const DEFAULT_MAX_CHARS = 1000;
+// Константа для максимального количества слов (по умолчанию для free)
+const DEFAULT_MAX_WORDS = 200;
 
-// Глобальная переменная для текущего лимита
-let currentMaxChars = DEFAULT_MAX_CHARS;
+// Глобальная переменная для текущего лимита слов
+let currentMaxWords = DEFAULT_MAX_WORDS;
 
-// Проверка лимита символов
-function isWithinCharLimit(text) {
-    return text.length <= currentMaxChars;
+// Функция подсчёта слов в тексте
+function countWords(text) {
+    if (!text || !text.trim()) return 0;
+    return text.trim().split(/\s+/).length;
 }
 
-// Обновление лимита символов из подписки
-function updateMaxCharsFromSubscription(subscription) {
-    if (subscription && subscription.max_text_length) {
-        currentMaxChars = subscription.max_text_length;
-        console.log(`Max chars updated to: ${currentMaxChars}`);
+// Проверка лимита слов
+function isWithinWordLimit(text) {
+    const wordCount = countWords(text);
+    return wordCount <= currentMaxWords;
+}
+
+// Обновление лимита слов из подписки
+function updateMaxWordsFromSubscription(subscription) {
+    if (subscription && subscription.max_words) {
+        currentMaxWords = subscription.max_words;
+        // console.log(`Max words updated to: ${currentMaxWords}`); // 👈 ЗАКОММЕНТИРОВАТЬ ИЛИ УДАЛИТЬ
     } else {
-        currentMaxChars = DEFAULT_MAX_CHARS;
+        currentMaxWords = DEFAULT_MAX_WORDS;
     }
     // Обновляем отображение счетчика
-    if (typeof updateCharCounter === 'function') {
-        updateCharCounter();
+    if (typeof updateWordCounter === 'function') {
+        updateWordCounter();
     }
 }
 
-// Обновление счетчика символов
-function updateCharCounter() {
+// Обновление счетчика слов
+function updateWordCounter() {
     const elements = window.elements || {};
+    if (!elements.input || !elements.wordCounter) return;
 
-    if (!elements.input || !elements.charCounter) return;
+    const text = elements.input.value;
+    const currentWords = countWords(text);
+    const maxWords = currentMaxWords;
+    // Обновляем текст счетчика
+    elements.wordCounter.textContent = `Количество слов ${currentWords}/${maxWords}`;
 
-    const currentLength = elements.input.value.length;
-    const maxLength = currentMaxChars;
-
-    elements.charCounter.textContent = `Количество символов ${currentLength}/${maxLength}`;
-
-    if (currentLength > maxLength) {
-        elements.charCounter.style.color = '#ef4444';
-        elements.charCounter.style.fontWeight = 'bold';
-    } else if (currentLength > maxLength * 0.9) {
-        elements.charCounter.style.color = '#f59e0b';
-        elements.charCounter.style.fontWeight = 'normal';
+    // Меняем цвет
+    if (currentWords > maxWords) {
+        elements.wordCounter.style.color = '#ef4444';
+        elements.wordCounter.style.fontWeight = 'bold';
+    } else if (currentWords > maxWords * 0.9) {
+        elements.wordCounter.style.color = '#f59e0b';
+        elements.wordCounter.style.fontWeight = 'normal';
     } else {
-        elements.charCounter.style.color = '#f0f0f0';
-        elements.charCounter.style.fontWeight = 'normal';
+        elements.wordCounter.style.color = '#f0f0f0';
+        elements.wordCounter.style.fontWeight = 'normal';
     }
 }
 
-// Получить текущий лимит символов
-function getCurrentMaxChars() {
-    return currentMaxChars;
+// Получить текущий лимит слов
+function getCurrentMaxWords() {
+    return currentMaxWords;
 }
 
 // Делаем функции и переменные глобальными
-window.DEFAULT_MAX_CHARS = DEFAULT_MAX_CHARS;
-window.currentMaxChars = currentMaxChars;
-window.isWithinCharLimit = isWithinCharLimit;
-window.updateMaxCharsFromSubscription = updateMaxCharsFromSubscription;
-window.updateCharCounter = updateCharCounter;
-window.getCurrentMaxChars = getCurrentMaxChars;
+window.DEFAULT_MAX_WORDS = DEFAULT_MAX_WORDS;
+window.currentMaxWords = currentMaxWords;
+window.countWords = countWords;
+window.isWithinWordLimit = isWithinWordLimit;
+window.updateMaxWordsFromSubscription = updateMaxWordsFromSubscription;
+window.updateWordCounter = updateWordCounter;
+window.getCurrentMaxWords = getCurrentMaxWords;

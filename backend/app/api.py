@@ -73,10 +73,10 @@ async def humanize(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
-    # 1. ПРОВЕРКА ЛИМИТОВ - если лимит исчерпан, здесь выбросится ошибка
-    check_usage_limit(db, current_user.id, len(req.text))
+    # Проверяем лимиты (передаём текст целиком)
+    check_usage_limit(db, current_user.id, req.text)
 
-    # 2. Обработка текста
+    # Обработка текста
     result = await humanize_pipeline(
         req.text,
         req.intensity,
@@ -86,8 +86,9 @@ async def humanize(
         req.target_language
     )
 
-    # 3. Увеличиваем счётчик использований
-    increment_usage(db, current_user.id, len(req.text))
+    # Увеличиваем счётчик (передаём количество слов)
+    word_count = len(req.text.strip().split())
+    increment_usage(db, current_user.id, word_count)
 
     return {"success": True, "result": result}
 
@@ -117,9 +118,9 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: S
             "is_active": subscription.is_active,
             "start_date": subscription.start_date,
             "end_date": subscription.end_date,
-            "total_requests": subscription.total_requests,      # Исправлено
-            "daily_limit": subscription.daily_limit,            # Исправлено
-            "max_text_length": subscription.max_text_length
+            "total_requests": subscription.total_requests,
+            "daily_limit": subscription.daily_limit,
+            "max_words": subscription.max_words  # 👈 ИЗМЕНИТЬ: было max_text_length
         },
         "usage": usage_stats,
         "available_plans": SUBSCRIPTION_PLANS
@@ -145,9 +146,9 @@ async def upgrade_subscription_endpoint(
         "subscription": {
             "plan_type": subscription.plan_type,
             "end_date": subscription.end_date,
-            "total_requests": subscription.total_requests,      # Исправлено
-            "daily_limit": subscription.daily_limit,            # Исправлено
-            "max_text_length": subscription.max_text_length
+            "total_requests": subscription.total_requests,
+            "daily_limit": subscription.daily_limit,
+            "max_words": subscription.max_words  # 👈 ИЗМЕНИТЬ: было max_text_length
         }
     }
 

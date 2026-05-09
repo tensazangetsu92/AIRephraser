@@ -1,6 +1,5 @@
 // frontend/js/auth.js
 
-console.log("asd")
 const Auth = {
 
     token: localStorage.getItem('token'),

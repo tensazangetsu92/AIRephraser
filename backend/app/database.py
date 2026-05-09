@@ -46,7 +46,7 @@ class Subscription(Base):
     # Новые поля вместо requests_per_day/requests_per_month
     total_requests = Column(Integer, default=5)  # Всего запросов за всё время
     daily_limit = Column(Integer, nullable=True)  # Лимит в день (None = без лимита)
-    max_text_length = Column(Integer, default=1000)
+    max_words = Column(Integer, default=200)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
