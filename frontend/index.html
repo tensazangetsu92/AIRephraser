@@ -44,146 +44,167 @@
     </div>
 </nav>
 <!-- Main Content -->
-<main class="container">
-    <h1 data-i18n="title">Humary</h1>
-    <p class="subtitle" data-i18n="subtitle">Превращаем ИИ-текст в живые слова</p>
-
-    <!-- Editor Section -->
-    <div class="editor">
-        <div class="col">
-            <h3 data-i18n="input_label">Ввод</h3>
-            <textarea id="input" data-i18n="input_placeholder" placeholder="Вставьте текст для обработки..."></textarea>
-            <div class="word-counter" id="wordCounter">Количество слов 0/200</div>
+<div class="layout">
+    <!-- Сайдбар слева -->
+    <aside class="sidebar">
+        <div class="sidebar-item active" data-page="editor">
+            <i class="fas fa-pen-fancy"></i>
+            <span>Редактор</span>
         </div>
-        <div class="col">
-            <h3 class="out-text" data-i18n="result_label">Результат</h3>
-            <textarea id="result" class="output" data-i18n="result_placeholder" placeholder="Результат появится здесь..." rows="10"></textarea>
+        <div class="sidebar-item" data-page="tariffs">
+            <i class="fas fa-crown"></i>
+            <span>Тарифы</span>
         </div>
-    </div>
+        <div class="sidebar-item" data-page="history">
+            <i class="fas fa-history"></i>
+            <span>История</span>
+        </div>
+        <div class="sidebar-item" data-page="settings">
+            <i class="fas fa-cog"></i>
+            <span>Настройки</span>
+        </div>
+    </aside>
+    <main class="container">
+        <h1 data-i18n="title">Humary</h1>
+        <p class="subtitle" data-i18n="subtitle">Превращаем ИИ-текст в живые слова</p>
 
-    <!-- Controls -->
-    <div class="controls">
-        <div class="control-group">
-            <div class="label-wrapper">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>
-                <label data-i18n="intensity_label">Сила изменения</label>
+        <!-- Editor Section -->
+        <div class="editor">
+            <div class="col">
+                <h3 data-i18n="input_label">Ввод</h3>
+                <textarea id="input" data-i18n="input_placeholder" placeholder="Вставьте текст для обработки..."></textarea>
+                <div class="word-counter" id="wordCounter">Количество слов 0/200</div>
             </div>
-            <select id="intensity">
-                <option value="low" data-i18n="intensity_low">Слабая</option>
-                <option value="medium" selected data-i18n="intensity_medium">Нормальная</option>
-                <option value="high" data-i18n="intensity_high">Сильная</option>
-            </select>
-        </div>
-
-        <div class="control-group">
-            <div class="label-wrapper">
-                <i class="fa-solid fa-face-smile"></i>
-                <label data-i18n="tone_label">Тон</label>
+            <div class="col">
+                <h3 class="out-text" data-i18n="result_label">Результат</h3>
+                <textarea id="result" class="output" data-i18n="result_placeholder" placeholder="Результат появится здесь..." rows="10"></textarea>
             </div>
-            <select id="tone">
-                <option value="neutral" data-i18n="tone_neutral">Нейтральный</option>
-                <option value="formal" data-i18n="tone_formal">Формальный</option>
-                <option value="casual" data-i18n="tone_casual">Повседневный</option>
-                <option value="friendly" data-i18n="tone_friendly">Дружелюбный</option>
-                <option value="academic" data-i18n="tone_academic">Академический</option>
-            </select>
         </div>
 
-        <div class="control-group">
-            <div class="label-wrapper">
-                <i class="fa-solid fa-pen-fancy"></i>
-                <label data-i18n="style_label">Стиль</label>
-            </div>
-            <select id="style">
-                <option value="simple" data-i18n="style_simple">Простой</option>
-                <option value="creative" data-i18n="style_creative">Креативный</option>
-                <option value="professional" data-i18n="style_professional">Профессиональный</option>
-            </select>
-        </div>
-
-        <div class="control-group">
-            <div class="label-wrapper">
-                <i class="fa-solid fa-ruler"></i>
-                <label data-i18n="length_label">Длина</label>
-            </div>
-            <select id="length">
-                <option value="same" data-i18n="length_same">Оставить</option>
-                <option value="shorter" data-i18n="length_shorter">Короче</option>
-                <option value="longer" data-i18n="length_longer">Длиннее</option>
-            </select>
-        </div>
-
-        <div class="control-group">
-            <button class="main-btn" id="humanizeBtn" data-i18n="humanize_btn">Очеловечить текст</button>
-        </div>
-    </div>
-
-    <!-- Tariffs Section -->
-    <section class="tariffs">
-        <h2 class="tariffs-title" data-i18n="tariffs_title">Выберите свой тариф</h2>
-        <p class="tariffs-subtitle" data-i18n="tariffs_subtitle">Премиум доступ к расширенным возможностям</p>
-
-        <div class="tariffs-grid">
-            <!-- Basic / Free Plan -->
-            <div class="tariff-card" data-plan="free">
-                <div class="tariff-badge" data-i18n="plan_free">Бесплатно</div>
-                <h3 class="tariff-name" data-i18n="plan_basic">Basic</h3>
-                <div class="tariff-price">
-                    <span class="price">0</span>
-                    <span class="currency">₽</span>
-                    <span class="period" data-i18n="per_month">/месяц</span>
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <div class="label-wrapper">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <label data-i18n="intensity_label">Сила изменения</label>
                 </div>
-                <p class="tariff-description" data-i18n="plan_basic_desc">Базовый тариф для старта</p>
-                <ul class="tariff-features">
-                    <li>✅ 5 <span data-i18n="requests_total">запросов всего</span></li>
-                    <li>✅ <span data-i18n="up_to">До</span> 1000 <span data-i18n="chars_per_request">символов за раз</span></li>
-                    <li>✅ <span data-i18n="basic_processing">Базовая обработка текста</span></li>
-                </ul>
-                <button class="tariff-btn tariff-btn-current" disabled data-i18n="current_plan">Текущий план</button>
+                <select id="intensity">
+                    <option value="low" data-i18n="intensity_low">Слабая</option>
+                    <option value="medium" selected data-i18n="intensity_medium">Нормальная</option>
+                    <option value="high" data-i18n="intensity_high">Сильная</option>
+                </select>
             </div>
 
-            <!-- Premium Plan -->
-            <div class="tariff-card recommended" data-plan="premium">
-                <div class="tariff-badge premium-badge" data-i18n="badge_recommended">Рекомендуемый</div>
-                <h3 class="tariff-name" data-i18n="plan_premium">Premium</h3>
-                <div class="tariff-price">
-                    <span class="price">349</span>
-                    <span class="currency">₽</span>
-                    <span class="period" data-i18n="per_month">/месяц</span>
+            <div class="control-group">
+                <div class="label-wrapper">
+                    <i class="fa-solid fa-face-smile"></i>
+                    <label data-i18n="tone_label">Тон</label>
                 </div>
-                <p class="tariff-description" data-i18n="plan_premium_desc">Оптимальный выбор для профессионалов</p>
-                <ul class="tariff-features">
-                    <li>✅ 300 <span data-i18n="requests_total">запросов всего</span></li>
-                    <li>✅ <span data-i18n="up_to_daily">До</span> 50 <span data-i18n="requests_per_day">запросов в день</span></li>
-                    <li>✅ <span data-i18n="up_to">До</span> 5000 <span data-i18n="chars_per_request">символов за раз</span></li>
-                    <li>✅ <span data-i18n="extended_processing">Расширенная обработка текста</span></li>
-                    <li>✅ <span data-i18n="priority_processing">Приоритетная обработка</span></li>
-                </ul>
-                <button class="tariff-btn" id="upgradePremiumBtn" data-i18n="select_plan">Выбрать тариф</button>
+                <select id="tone">
+                    <option value="neutral" data-i18n="tone_neutral">Нейтральный</option>
+                    <option value="formal" data-i18n="tone_formal">Формальный</option>
+                    <option value="casual" data-i18n="tone_casual">Повседневный</option>
+                    <option value="friendly" data-i18n="tone_friendly">Дружелюбный</option>
+                    <option value="academic" data-i18n="tone_academic">Академический</option>
+                </select>
             </div>
 
-            <!-- Pro Plan -->
-            <div class="tariff-card" data-plan="pro">
-                <div class="tariff-badge pro-badge" data-i18n="badge_maximum">Максимум</div>
-                <h3 class="tariff-name" data-i18n="plan_pro">Pro</h3>
-                <div class="tariff-price">
-                    <span class="price">699</span>
-                    <span class="currency">₽</span>
-                    <span class="period" data-i18n="per_month">/месяц</span>
+            <div class="control-group">
+                <div class="label-wrapper">
+                    <i class="fa-solid fa-pen-fancy"></i>
+                    <label data-i18n="style_label">Стиль</label>
                 </div>
-                <p class="tariff-description" data-i18n="plan_pro_desc">Максимальные возможности</p>
-                <ul class="tariff-features">
-                    <li>✅ 1000 <span data-i18n="requests_total">запросов всего</span></li>
-                    <li>✅ <span data-i18n="up_to_daily">До</span> 100 <span data-i18n="requests_per_day">запросов в день</span></li>
-                    <li>✅ <span data-i18n="up_to">До</span> 20000 <span data-i18n="chars_per_request">символов за раз</span></li>
-                    <li>✅ <span data-i18n="pro_processing">Профессиональная обработка текста</span></li>
-                    <li>✅ <span data-i18n="priority_support">Приоритетная поддержка 24/7</span></li>
-                </ul>
-                <button class="tariff-btn" id="upgradeProBtn" data-i18n="select_plan">Выбрать тариф</button>
+                <select id="style">
+                    <option value="simple" data-i18n="style_simple">Простой</option>
+                    <option value="creative" data-i18n="style_creative">Креативный</option>
+                    <option value="professional" data-i18n="style_professional">Профессиональный</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <div class="label-wrapper">
+                    <i class="fa-solid fa-ruler"></i>
+                    <label data-i18n="length_label">Длина</label>
+                </div>
+                <select id="length">
+                    <option value="same" data-i18n="length_same">Оставить</option>
+                    <option value="shorter" data-i18n="length_shorter">Короче</option>
+                    <option value="longer" data-i18n="length_longer">Длиннее</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <button class="main-btn" id="humanizeBtn" data-i18n="humanize_btn">Очеловечить текст</button>
             </div>
         </div>
-    </section>
-</main>
+
+        <!-- Tariffs Section -->
+        <section class="tariffs">
+            <h2 class="tariffs-title" data-i18n="tariffs_title">Выберите свой тариф</h2>
+            <p class="tariffs-subtitle" data-i18n="tariffs_subtitle">Премиум доступ к расширенным возможностям</p>
+
+            <div class="tariffs-grid">
+                <!-- Basic / Free Plan -->
+                <div class="tariff-card" data-plan="free">
+                    <div class="tariff-badge" data-i18n="plan_free">Бесплатно</div>
+                    <h3 class="tariff-name" data-i18n="plan_basic">Basic</h3>
+                    <div class="tariff-price">
+                        <span class="price">0</span>
+                        <span class="currency">₽</span>
+                        <span class="period" data-i18n="per_month">/месяц</span>
+                    </div>
+                    <p class="tariff-description" data-i18n="plan_basic_desc">Базовый тариф для старта</p>
+                    <ul class="tariff-features">
+                        <li>✅ 5 <span data-i18n="requests_total">запросов всего</span></li>
+                        <li>✅ <span data-i18n="up_to">До</span> 1000 <span data-i18n="chars_per_request">символов за раз</span></li>
+                        <li>✅ <span data-i18n="basic_processing">Базовая обработка текста</span></li>
+                    </ul>
+                    <button class="tariff-btn tariff-btn-current" disabled data-i18n="current_plan">Текущий план</button>
+                </div>
+
+                <!-- Premium Plan -->
+                <div class="tariff-card recommended" data-plan="premium">
+                    <div class="tariff-badge premium-badge" data-i18n="badge_recommended">Рекомендуемый</div>
+                    <h3 class="tariff-name" data-i18n="plan_premium">Premium</h3>
+                    <div class="tariff-price">
+                        <span class="price">349</span>
+                        <span class="currency">₽</span>
+                        <span class="period" data-i18n="per_month">/месяц</span>
+                    </div>
+                    <p class="tariff-description" data-i18n="plan_premium_desc">Оптимальный выбор для профессионалов</p>
+                    <ul class="tariff-features">
+                        <li>✅ 300 <span data-i18n="requests_total">запросов всего</span></li>
+                        <li>✅ <span data-i18n="up_to_daily">До</span> 50 <span data-i18n="requests_per_day">запросов в день</span></li>
+                        <li>✅ <span data-i18n="up_to">До</span> 5000 <span data-i18n="chars_per_request">символов за раз</span></li>
+                        <li>✅ <span data-i18n="extended_processing">Расширенная обработка текста</span></li>
+                        <li>✅ <span data-i18n="priority_processing">Приоритетная обработка</span></li>
+                    </ul>
+                    <button class="tariff-btn" id="upgradePremiumBtn" data-i18n="select_plan">Выбрать тариф</button>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="tariff-card" data-plan="pro">
+                    <div class="tariff-badge pro-badge" data-i18n="badge_maximum">Максимум</div>
+                    <h3 class="tariff-name" data-i18n="plan_pro">Pro</h3>
+                    <div class="tariff-price">
+                        <span class="price">699</span>
+                        <span class="currency">₽</span>
+                        <span class="period" data-i18n="per_month">/месяц</span>
+                    </div>
+                    <p class="tariff-description" data-i18n="plan_pro_desc">Максимальные возможности</p>
+                    <ul class="tariff-features">
+                        <li>✅ 1000 <span data-i18n="requests_total">запросов всего</span></li>
+                        <li>✅ <span data-i18n="up_to_daily">До</span> 100 <span data-i18n="requests_per_day">запросов в день</span></li>
+                        <li>✅ <span data-i18n="up_to">До</span> 20000 <span data-i18n="chars_per_request">символов за раз</span></li>
+                        <li>✅ <span data-i18n="pro_processing">Профессиональная обработка текста</span></li>
+                        <li>✅ <span data-i18n="priority_support">Приоритетная поддержка 24/7</span></li>
+                    </ul>
+                    <button class="tariff-btn" id="upgradeProBtn" data-i18n="select_plan">Выбрать тариф</button>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
 
 <!-- Единая форма входа/регистрации -->
 <div id="authModal" class="modal">

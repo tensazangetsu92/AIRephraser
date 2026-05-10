@@ -37,28 +37,9 @@
     color: #f0f0f0;
 }
 
-.nav-btn {
-    height: 44px;
-    width: 100px;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-sm);
-    background: var(--primary-gradient);
-    border: 2px solid rgba(18, 18, 18, 0.4);
-    color: rgba(18, 18, 18, 0.9);
-    font-weight: 800;
-    opacity: 0.9;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.2s;
-}
-
-.nav-btn:hover {
-    background: linear-gradient(135deg, #10b981, #6366f1 );
-    transform: translateY(-1px);
-}
 
 /* Кнопка переключения языка */
-.lang-btn {
+.lang-btn, .nav-btn  {
     background: rgba(18, 18, 18, 0.2);
     border: 2px solid #526ace;
     border-radius: 20px;
@@ -72,8 +53,11 @@
     color: var(--text-color);
 }
 
-.lang-btn:hover {
+
+
+.lang-btn:hover, .nav-btn:hover {
     background: rgba(18, 18, 18, 0.3);
+     transform: translateY(-1px);
 }
 
 .lang-btn i {

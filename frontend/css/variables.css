@@ -1,6 +1,6 @@
 /* Variables & Global Styles */
 :root {
-    --primary-gradient: linear-gradient(135deg, #6366f1, #691a96);
+    --primary-gradient: linear-gradient(135deg, #526ace, #4b63ce);
     --primary-color: #6366f1;
     --secondary-color: #10b981;
     --text-color: #f0f0f0;
@@ -17,10 +17,4 @@
     --radius-xl: 1rem;
     --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
-}
-
-body {
-    background: radial-gradient(circle at top, rgba(99,102,241,0.25), transparent 40%),
-                radial-gradient(circle at bottom, rgba(16,185,129,0.15), transparent 50%),
-                #1C1C1C;
 }

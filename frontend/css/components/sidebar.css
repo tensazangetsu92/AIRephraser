@@ -1,0 +1,39 @@
+/* Навбар фиксированный сверху */
+
+
+/* Лайаут: сайдбар + контент */
+.layout {
+    display: flex;
+    margin-top: 60px; /* Отступ под навбар */
+    min-height: calc(100vh - 60px);
+}
+
+/* Сайдбар слева - фиксированный, под навбаром */
+.sidebar {
+    position: fixed; /* Фиксируем сайдбар */
+    left: 0;
+    top: 60px; /* Начинается сразу под навбаром */
+    width: 240px;
+    height: calc(100vh - 60px); /* Высота на всю оставшуюся страницу */
+    background-color: white;
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto; /* Скролл внутри сайдбара если нужно */
+    padding: 1rem 0;
+    z-index: 99;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border-color);
+}
+
+/* Контентная область - отступ слева под ширину сайдбара */
+.container {
+    margin-left: 250px; /* Отступ под ширину фиксированного сайдбара */
+    flex: 1;
+    max-width: calc(100% - 260px);
+    padding: 6rem 2rem 2rem;
+
+}
+
+
+
+
+
