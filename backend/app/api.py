@@ -1,12 +1,14 @@
 # app/api.py
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import FileResponse, HTMLResponse
 from datetime import timedelta, datetime
 from typing import Optional
 from sqlalchemy.orm import Session
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
 
 from app.models import UserLogin, UserRegister, Token, HumanizeRequest, SubscriptionCreate
-from app.config import FRONTEND_PATH
+from app.config import FRONTEND_PATH, FRONTEND_DIR
 from app.database import get_db, create_tables, User
 from auth import (
     authenticate_user,
@@ -27,13 +29,52 @@ from app.subscription import (
 
 router = APIRouter()
 
-# Создаем таблицы при старте
 create_tables()
 
-@router.get("/")
-async def serve_frontend():
-    """Отдача фронтенда"""
-    return FileResponse(FRONTEND_PATH)
+
+templates_dir = Path(__file__).parent.parent.parent / "frontend" / "html"
+templates = Jinja2Templates(directory=str(templates_dir))
+
+
+@router.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html"
+    )
+
+
+@router.get("/pricing", response_class=HTMLResponse)
+async def pricing(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="pricing.html"
+    )
+
+
+@router.get("/detector", response_class=HTMLResponse)
+async def detector(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="detector.html"
+    )
+
+
+@router.get("/paraphraser", response_class=HTMLResponse)
+async def paraphraser(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="paraphraser.html"
+    )
+
+
+@router.get("/grammar", response_class=HTMLResponse)
+async def grammar(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="grammar.html"
+    )
+
 
 @router.post("/register", response_model=dict)
 async def register(user_data: UserRegister, db: Session = Depends(get_db)):
@@ -52,6 +93,7 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при регистрации: {str(e)}")
+
 
 @router.post("/login", response_model=Token)
 async def login(user_data: UserLogin, db: Session = Depends(get_db)):
@@ -92,6 +134,7 @@ async def humanize(
 
     return {"success": True, "result": result}
 
+
 @router.get("/me")
 async def get_me(current_user: User = Depends(get_current_user)):
     """Получение информации о текущем пользователе"""
@@ -120,7 +163,7 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: S
             "end_date": subscription.end_date,
             "total_requests": subscription.total_requests,
             "daily_limit": subscription.daily_limit,
-            "max_words": subscription.max_words  # 👈 ИЗМЕНИТЬ: было max_text_length
+            "max_words": subscription.max_words
         },
         "usage": usage_stats,
         "available_plans": SUBSCRIPTION_PLANS
@@ -148,7 +191,7 @@ async def upgrade_subscription_endpoint(
             "end_date": subscription.end_date,
             "total_requests": subscription.total_requests,
             "daily_limit": subscription.daily_limit,
-            "max_words": subscription.max_words  # 👈 ИЗМЕНИТЬ: было max_text_length
+            "max_words": subscription.max_words
         }
     }
 

@@ -1,14 +1,22 @@
 /* Controls Styles */
 .controls {
     display: flex;
+    flex-direction: row;  /* Элементы в ряд */
+    flex-wrap: wrap;      /* Если не влезают - перенос */
     gap: 1rem;
     margin-bottom: 1.5rem;
-    flex-wrap: wrap;
+    align-items: flex-end; /* Выравнивание по нижнему краю */
 }
 
 .control-group {
-    flex: 1;
-    min-width: 150px;
+    flex: 1;              /* Равномерное распределение */
+    min-width: 140px;     /* Минимальная ширина */
+}
+
+/* Убираем лишнее у кнопки */
+.control-group:last-child {
+    flex: 0.5;            /* Кнопка может быть немного уже */
+    min-width: auto;
 }
 
 /* Обёртка для иконки и label */
@@ -21,14 +29,14 @@
 }
 
 .label-wrapper i {
-    font-size: 1 rem;
-    color: var(--primary-color);
+    font-size: 0.8rem;
+    color: #f0f0f0;
     width: 16px;
 }
 
 .label-wrapper label {
     display: block;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     color: #f0f0f0;
     text-transform: uppercase;
@@ -41,26 +49,52 @@
     width: 100%;
     padding: 0.6rem;
     background: rgba(18, 18, 18, 0.3);
-    border: 2px solid #526ace;
-    border-radius: var(--radius-sm);
+    border: var(--border-button-color);
+    border-radius: 12px;
     font-size: 0.875rem;
     cursor: pointer;
     transition: all 0.2s;
     color: #f0f0f0;
+    font-family: inherit;
 }
 
 .control-group select:hover {
-    border-color: var(--primary-color);
+    outline: none;
+    background: #303030;
 }
 
 .control-group select:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .control-group select option {
-    background: #1b1b1c;
-    color: var(--text-primary);
+    background: #121212;
+    color: #f0f0f0;
     padding: 10px;
+}
+
+
+/* Кнопка - в ряд с остальными */
+.main-btn {
+    width: 100%;
+    padding: 1rem 2rem;
+    background: #272727;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 23px; /* Чтобы выровнять с селектами по высоте */
+    white-space: nowrap;
+}
+
+.main-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.main-btn:active {
+    transform: scale(0.98);
 }

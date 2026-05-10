@@ -1,0 +1,67 @@
+{% extends "template.html" %}
+
+{% block title %}Тарифы{% endblock %}
+
+{% block content %}
+<section class="tariffs">
+    <h2 class="tariffs-title">Выберите свой тариф</h2>
+    <p class="tariffs-subtitle">Премиум доступ к расширенным возможностям</p>
+
+    <div class="tariffs-grid">
+        <div class="tariff-card" data-plan="free">
+            <div class="tariff-badge">Бесплатно</div>
+            <h3 class="tariff-name">Basic</h3>
+            <div class="tariff-price">
+                <span class="price">0</span>
+                <span class="currency">₽</span>
+                <span class="period">/месяц</span>
+            </div>
+            <ul class="tariff-features">
+                <li>✅ 5 запросов всего</li>
+                <li>✅ До 1000 символов за раз</li>
+                <li>✅ Базовая обработка</li>
+            </ul>
+            <button class="tariff-btn tariff-btn-current" disabled>Текущий план</button>
+        </div>
+
+        <div class="tariff-card recommended" data-plan="premium">
+            <div class="tariff-badge premium-badge">Рекомендуемый</div>
+            <h3 class="tariff-name">Premium</h3>
+            <div class="tariff-price">
+                <span class="price">349</span>
+                <span class="currency">₽</span>
+                <span class="period">/месяц</span>
+            </div>
+            <ul class="tariff-features">
+                <li>✅ 300 запросов всего</li>
+                <li>✅ До 50 запросов в день</li>
+                <li>✅ До 5000 символов</li>
+                <li>✅ Расширенная обработка</li>
+            </ul>
+            <button class="tariff-btn" id="upgradePremiumBtn">Выбрать тариф</button>
+        </div>
+
+        <div class="tariff-card" data-plan="pro">
+            <div class="tariff-badge pro-badge">Максимум</div>
+            <h3 class="tariff-name">Pro</h3>
+            <div class="tariff-price">
+                <span class="price">699</span>
+                <span class="currency">₽</span>
+                <span class="period">/месяц</span>
+            </div>
+            <ul class="tariff-features">
+                <li>✅ 1000 запросов всего</li>
+                <li>✅ До 100 запросов в день</li>
+                <li>✅ До 20000 символов</li>
+                <li>✅ Профессиональная обработка</li>
+                <li>✅ Поддержка 24/7</li>
+            </ul>
+            <button class="tariff-btn" id="upgradeProBtn">Выбрать тариф</button>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/js/subscription.js" defer></script>
+{% endblock %}

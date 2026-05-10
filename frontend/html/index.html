@@ -1,0 +1,77 @@
+{% extends "template.html" %}
+
+{% block title %}AI Humanizer{% endblock %}
+
+{% block content %}
+<h1>Humary</h1>
+<p class="subtitle">Превращаем ИИ-текст в живые слова</p>
+
+<div class="editor">
+    <div class="col">
+        <h3>Ваш текст</h3>
+        <textarea id="input" placeholder="Вставьте текст для обработки..."></textarea>
+        <div class="word-counter" id="wordCounter">Количество слов 0/200</div>
+    </div>
+    <div class="col">
+        <h3 class="out-text">Очеловеченый текст</h3>
+        <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10"></textarea>
+    </div>
+</div>
+
+<div class="controls">
+    <div class="control-group">
+        <div class="label-wrapper">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <label>Сила изменения</label>
+        </div>
+        <select id="intensity">
+            <option value="low">Слабая</option>
+            <option value="medium" selected>Нормальная</option>
+            <option value="high">Сильная</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <div class="label-wrapper">
+            <i class="fa-solid fa-face-smile"></i>
+            <label>Тон</label>
+        </div>
+        <select id="tone">
+            <option value="neutral">Нейтральный</option>
+            <option value="formal">Формальный</option>
+            <option value="casual">Повседневный</option>
+            <option value="friendly">Дружелюбный</option>
+            <option value="academic">Академический</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <div class="label-wrapper">
+            <i class="fa-solid fa-pen-fancy"></i>
+            <label>Стиль</label>
+        </div>
+        <select id="style">
+            <option value="simple">Простой</option>
+            <option value="creative">Креативный</option>
+            <option value="professional">Профессиональный</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <div class="label-wrapper">
+            <i class="fa-solid fa-ruler"></i>
+            <label>Длина</label>
+        </div>
+        <select id="length">
+            <option value="same">Оставить</option>
+            <option value="shorter">Короче</option>
+            <option value="longer">Длиннее</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <button class="main-btn" id="humanizeBtn">Очеловечить текст</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/js/humanize.js" defer></script>
+<script src="/js/main.js" defer></script>
+{% endblock %}

@@ -4,7 +4,7 @@
 /* Лайаут: сайдбар + контент */
 .layout {
     display: flex;
-    margin-top: 60px; /* Отступ под навбар */
+    margin-top: -15px; /* Отступ под навбар */
     min-height: calc(100vh - 60px);
 }
 
@@ -12,16 +12,13 @@
 .sidebar {
     position: fixed; /* Фиксируем сайдбар */
     left: 0;
-    top: 60px; /* Начинается сразу под навбаром */
-    width: 240px;
+    top: 70px; /* Начинается сразу под навбаром */
+    width: 220px;
     height: calc(100vh - 60px); /* Высота на всю оставшуюся страницу */
-    background-color: white;
-    border-right: 1px solid var(--border-color);
+    background-color: #0f0f0f;
     overflow-y: auto; /* Скролл внутри сайдбара если нужно */
     padding: 1rem 0;
     z-index: 99;
-    background: var(--bg-card);
-    border-right: 1px solid var(--border-color);
 }
 
 /* Контентная область - отступ слева под ширину сайдбара */
@@ -34,6 +31,45 @@
 }
 
 
+/* Sidebar Buttons Styles */
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    margin: 6px 12px;
+    background: rgba(18, 18, 18, 0.3);
+    border: var(--border-button-color);    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #f0f0f0;
+    font-size: 1rem;
+    font-weight: 500;
+}
 
+.sidebar-item i {
+    width: 20px;
+    font-size: 1.1rem;
+}
+
+.sidebar-item:hover {
+    transform: translateY(-2px);
+}
+
+.sidebar-item:active {
+    transform: translateY(0);
+}
+
+.sidebar-item.active {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(168, 85, 247, 0.2));
+    border-color: #7c3aed;
+    color: #a855f7;
+    box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
+}
+
+/* Иконка в активном состоянии */
+.sidebar-item.active i {
+    color: #a855f7;
+}
 
 

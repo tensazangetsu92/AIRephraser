@@ -184,16 +184,16 @@ const Auth = {
 
         if (this.isRegisterMode) {
             // Режим регистрации
-            if (title) title.textContent = '📝 Регистрация';
+            if (title) title.textContent = 'Регистрация';
             if (submitBtn) submitBtn.textContent = 'Зарегистрироваться';
             if (confirmField) confirmField.style.display = 'block';
-            if (toggleLink) toggleLink.innerHTML = '🔐 Уже есть аккаунт? Войти';
+            if (toggleLink) toggleLink.innerHTML = 'Уже есть аккаунт? Войти';
         } else {
             // Режим входа
-            if (title) title.textContent = '🔐 Вход';
+            if (title) title.textContent = 'Вход';
             if (submitBtn) submitBtn.textContent = 'Войти';
             if (confirmField) confirmField.style.display = 'none';
-            if (toggleLink) toggleLink.innerHTML = '📝 Нет аккаунта? Зарегистрироваться';
+            if (toggleLink) toggleLink.innerHTML = 'Нет аккаунта? Зарегистрироваться';
         }
     },
 

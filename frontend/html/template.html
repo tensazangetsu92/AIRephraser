@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Humary - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="logo">Humary</div>
+    <div class="user-info" id="userInfo">
+        <button class="lang-btn" id="langToggle">
+            <i class="fas fa-globe"></i>
+            <span class="lang-text">Русский</span>
+        </button>
+
+        <div class="user-menu" id="userMenu" style="display: none;">
+            <div class="user-avatar" id="userAvatar">
+                <img id="avatarImg" src="" alt="Avatar">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <div class="dropdown-item email" id="userEmailDisplay">
+                    <i class="fas fa-envelope"></i>
+                    <span id="userEmailText"></span>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item logout" id="dropdownLogoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Выйти</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="nav-btn" id="authBtn">Войти</button>
+    </div>
+</nav>
+
+<!-- Layout с сайдбаром -->
+<div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/pricing" class="sidebar-item" data-page="tariffs">
+            <i class="fas fa-crown"></i>
+            <span>Тарифы</span>
+        </a>
+        <a href="/" class="sidebar-item" data-page="editor">
+            <i class="fas fa-pen-fancy"></i>
+            <span>AI Humanizer</span>
+        </a>
+        <a href="/detector" class="sidebar-item" data-page="detector">
+            <i class="fas fa-search"></i>
+            <span>AI Detector</span>
+        </a>
+        <a href="/paraphraser" class="sidebar-item" data-page="paraphraser">
+            <i class="fas fa-exchange-alt"></i>
+            <span>Paraphraser</span>
+        </a>
+        <a href="/grammar" class="sidebar-item" data-page="grammar">
+            <i class="fas fa-spell-check"></i>
+            <span>Grammar Checker</span>
+        </a>
+    </aside>
+
+    <!-- Контент -->
+    <main class="container">
+        {% block content %}
+        {% endblock %}
+    </main>
+</div>
+
+<!-- Модальное окно -->
+<div id="authModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2><i class="fa-solid fa-unlock"></i><div id="authTitle">Вход</div></h2>
+        <div id="authError" class="error-message" style="display: none;"></div>
+        <div id="authForm">
+            <input type="email" id="authEmail" placeholder="Email" autocomplete="email" required>
+            <input type="password" id="authPassword" placeholder="Пароль" autocomplete="current-password" required>
+            <input type="password" id="authConfirmPassword" placeholder="Подтвердите пароль" style="display: none;" autocomplete="new-password">
+            <button id="authSubmitBtn">Войти</button>
+        </div>
+        <button id="googleLoginBtn" class="google-btn"><i class="fab fa-google"></i>Войти через Google</button>
+        <div class="modal-link" id="toggleAuthMode">Нет аккаунта? Зарегистрироваться</div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="/js/utils.js" defer></script>
+<script src="/js/api.js" defer></script>
+<script src="/js/auth.js" defer></script>
+<script src="/js/lang.js" defer></script>
+<script src="/js/subscription.js" defer></script>
+<script src="/js/ui.js" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
