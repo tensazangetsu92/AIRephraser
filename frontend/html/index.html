@@ -10,8 +10,11 @@
     <div class="col">
         <h3>Ваш текст</h3>
         <textarea id="input" placeholder="Вставьте текст для обработки..."></textarea>
-        <div class="word-counter" id="wordCounter">Количество слов 0/200</div>
+        <div class="word-counter-wrapper">
+            <span class="word-count" id="wordCount">0/1000</span>
+            <span class="word-warning" id="wordWarning"></span>
     </div>
+</div>
     <div class="col">
         <h3 class="out-text">Очеловеченый текст</h3>
         <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10"></textarea>
