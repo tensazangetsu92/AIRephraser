@@ -49,6 +49,9 @@ if (frontend_path / "css").exists():
 if (frontend_path / "js").exists():
     app.mount("/js", StaticFiles(directory=str(frontend_path / "js")), name="js")
 
+if (frontend_path / "images").exists():
+    app.mount("/images", StaticFiles(directory=str(frontend_path / "images")), name="images")
+
 # Подключаем все роуты
 app.include_router(router)
 

@@ -15,7 +15,7 @@ from auth import (
     create_access_token,
     create_user,
     get_current_user,
-    get_user_by_email
+    get_user_by_email, get_hash_password
 )
 from llm import humanize_pipeline
 from app.subscription import (
@@ -26,6 +26,8 @@ from app.subscription import (
     increment_usage,
     SUBSCRIPTION_PLANS
 )
+from app.email_utils import verify_code
+from auth import create_pending_user, verify_and_create_user
 
 router = APIRouter()
 
@@ -202,4 +204,57 @@ async def get_subscription_plans():
     return {
         "success": True,
         "plans": SUBSCRIPTION_PLANS
+    }
+
+
+@router.post("/auth/send-verification")
+async def send_verification(user_data: UserRegister, db: Session = Depends(get_db)):
+    """Отправляет код подтверждения на email"""
+    print("sdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    try:
+        # Проверяем, не зарегистрирован ли уже пользователь
+        existing_user = get_user_by_email(db, user_data.email)
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email уже зарегистрирован")
+
+        # Хешируем пароль
+        hashed_password = get_hash_password(user_data.password)
+
+        # Отправляем код подтверждения
+        code = create_pending_user(user_data.email, hashed_password)
+
+        return {
+            "success": True,
+            "message": f"Код подтверждения отправлен на {user_data.email}",
+            "email": user_data.email
+        }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка: {str(e)}")
+
+
+@router.post("/auth/verify-code")
+async def verify_registration_code(data: dict, db: Session = Depends(get_db)):
+    """Подтверждает код и завершает регистрацию"""
+    email = data.get("email")
+    code = data.get("code")
+
+    if not email or not code:
+        raise HTTPException(status_code=400, detail="Email и код обязательны")
+
+    user, error = await verify_and_create_user(db, email, code)
+
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+
+    # Создаем токен
+    access_token = create_access_token(data={"sub": user.email})
+
+    return {
+        "success": True,
+        "message": "Регистрация успешно завершена",
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {"email": user.email, "id": user.id}
     }

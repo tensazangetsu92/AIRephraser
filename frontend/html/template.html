@@ -4,67 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Humary - {% block title %}{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="/images/logo1.svg">
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
 
-<!-- Navbar -->
-<nav class="navbar">
-    <div class="logo">Humary</div>
-    <div class="user-info" id="userInfo">
-        <button class="lang-btn" id="langToggle">
-            <i class="fas fa-globe"></i>
-            <span class="lang-text">Русский</span>
-        </button>
-
-        <div class="user-menu" id="userMenu" style="display: none;">
-            <div class="user-avatar" id="userAvatar">
-                <img id="avatarImg" src="" alt="Avatar">
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="dropdown-menu" id="dropdownMenu">
-                <div class="dropdown-item email" id="userEmailDisplay">
-                    <i class="fas fa-envelope"></i>
-                    <span id="userEmailText"></span>
-                </div>
-                <div class="dropdown-divider"></div>
-                <div class="dropdown-item logout" id="dropdownLogoutBtn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Выйти</span>
-                </div>
-            </div>
-        </div>
-
-        <button class="nav-btn" id="authBtn">Войти</button>
-    </div>
-</nav>
-
-<!-- Layout с сайдбаром -->
+<!-- Layout с сайдбаром (без navbar) -->
 <div class="layout">
     <!-- Sidebar -->
     <aside class="sidebar">
-        <a href="/pricing" class="sidebar-item" data-page="tariffs">
-            <i class="fas fa-crown"></i>
-            <span>Тарифы</span>
-        </a>
-        <a href="/" class="sidebar-item" data-page="editor">
-            <i class="fas fa-pen-fancy"></i>
-            <span>AI Humanizer</span>
-        </a>
-        <a href="/detector" class="sidebar-item" data-page="detector">
-            <i class="fas fa-search"></i>
-            <span>AI Detector</span>
-        </a>
-        <a href="/paraphraser" class="sidebar-item" data-page="paraphraser">
-            <i class="fas fa-exchange-alt"></i>
-            <span>Paraphraser</span>
-        </a>
-        <a href="/grammar" class="sidebar-item" data-page="grammar">
-            <i class="fas fa-spell-check"></i>
-            <span>Grammar Checker</span>
-        </a>
+        <!-- Лого вверху сайдбара -->
+        <div class="sidebar-logo">
+            <div class="logo">Humary</div>
+        </div>
+
+
+        <!-- Основные пункты меню -->
+        <div class="sidebar-menu">
+            <a href="/pricing" class="sidebar-item" data-page="tariffs">
+                <i class="fas fa-crown"></i>
+                <span>Тарифы</span>
+            </a>
+            <a href="/" class="sidebar-item" data-page="editor">
+                <i class="fas fa-pen-fancy"></i>
+                <span>AI Humanizer</span>
+            </a>
+            <a href="/detector" class="sidebar-item" data-page="detector">
+                <i class="fas fa-search"></i>
+                <span>AI Detector</span>
+            </a>
+            <a href="/paraphraser" class="sidebar-item" data-page="paraphraser">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Paraphraser</span>
+            </a>
+            <a href="/grammar" class="sidebar-item" data-page="grammar">
+                <i class="fas fa-spell-check"></i>
+                <span>Grammar Checker</span>
+            </a>
+        </div>
+
+        <!-- Кнопки внизу сайдбара -->
+        <div class="sidebar-footer">
+            <button class="sidebar-footer-btn" id="langToggle">
+                <i class="fas fa-globe"></i>
+                <span class="lang-text">Русский</span>
+            </button>
+
+            <div class="user-menu" id="userMenu" style="display: none;">
+                <div class="user-avatar" id="userAvatar">
+                    <img id="avatarImg" src="" alt="Avatar">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <div class="dropdown-item email" id="userEmailDisplay">
+                        <i class="fas fa-envelope"></i>
+                        <span id="userEmailText"></span>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item logout" id="dropdownLogoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Выйти</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="sidebar-footer-btn" id="authBtn">Войти</button>
+        </div>
     </aside>
 
     <!-- Контент -->
@@ -88,6 +95,19 @@
         </div>
         <button id="googleLoginBtn" class="google-btn"><i class="fab fa-google"></i>Войти через Google</button>
         <div class="modal-link" id="toggleAuthMode">Нет аккаунта? Зарегистрироваться</div>
+    </div>
+</div>
+
+<!-- Модальное окно для ввода кода -->
+<div id="verificationModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeVerificationModal()">&times;</span>
+        <h2>📧 Подтверждение email</h2>
+        <p id="verificationEmail"></p>
+        <div id="verificationError" class="error-message" style="display: none;"></div>
+        <input type="text" id="verificationCode" placeholder="Введите код из письма" maxlength="6">
+        <button onclick="verifyCode()">Подтвердить регистрацию</button>
+        <button onclick="resendCode()" class="google-btn">Отправить код повторно</button>
     </div>
 </div>
 

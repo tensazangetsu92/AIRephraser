@@ -1,35 +1,91 @@
-/* Навбар фиксированный сверху */
-
-
 /* Лайаут: сайдбар + контент */
 .layout {
     display: flex;
-    margin-top: -15px; /* Отступ под навбар */
-    min-height: calc(100vh - 60px);
+    min-height: 100vh;
 }
 
-/* Сайдбар слева - фиксированный, под навбаром */
+/* Сайдбар - фиксированный, на всю высоту */
 .sidebar {
-    position: fixed; /* Фиксируем сайдбар */
+    position: fixed;
     left: 0;
-    top: 70px; /* Начинается сразу под навбаром */
-    width: 220px;
-    height: calc(100vh - 60px); /* Высота на всю оставшуюся страницу */
-    background-color: #0f0f0f;
-    overflow-y: auto; /* Скролл внутри сайдбара если нужно */
-    padding: 1rem 0;
-    z-index: 99;
+    top: 0;
+    width: 260px;
+    height: 100vh;
+    background-color: var(--sidebar-background-color);
+    border: var(--sidebar-border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow-y: auto;
+    z-index: 100;
 }
 
-/* Контентная область - отступ слева под ширину сайдбара */
-.container {
-    margin-left: 250px; /* Отступ под ширину фиксированного сайдбара */
+/* Лого в сайдбаре */
+.sidebar-logo {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.sidebar-logo .logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: #5787d9;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-align: center;
+}
+
+.subtitle {
+    margin-bottom: 2rem;
+    color: #f0f0f0;
+    opacity: 0.9;
+    padding: 0 15px;
+}
+
+/* Основное меню */
+.sidebar-menu {
     flex: 1;
-    max-width: calc(100% - 260px);
-    padding: 6rem 2rem 2rem;
-
 }
 
+/* Кнопки внизу сайдбара */
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sidebar-footer-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    background: rgba(18, 18, 18, 0.2);
+    border: var(--border-button-color);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    color: var(--text-color);
+}
+
+.sidebar-footer-btn:hover {
+    background: rgba(18, 18, 18, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Контентная область */
+.container {
+    margin-left: 260px;
+    flex: 1;
+    padding: 2rem;
+    min-height: 100vh;
+}
 
 /* Sidebar Buttons Styles */
 .sidebar-item {
@@ -39,12 +95,14 @@
     padding: 12px 20px;
     margin: 6px 12px;
     background: rgba(18, 18, 18, 0.3);
-    border: var(--border-button-color);    border-radius: 12px;
+    border: var(--border-button-color);
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
     color: #f0f0f0;
     font-size: 1rem;
     font-weight: 500;
+    text-decoration: none;
 }
 
 .sidebar-item i {
@@ -67,9 +125,111 @@
     box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
 }
 
-/* Иконка в активном состоянии */
 .sidebar-item.active i {
     color: #a855f7;
 }
 
+/* User Menu Styles для сайдбара */
+.user-menu {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+}
 
+.user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 40px;
+    transition: all 0.2s;
+    background: var(--button-hover);
+}
+
+.user-avatar img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-avatar i {
+    font-size: 0.75rem;
+    color: var(--text-color);
+    transition: transform 0.2s;
+}
+
+.user-menu.open .user-avatar i {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    min-width: 200px;
+    background: rgba(18, 18, 18, 1);
+    border: 2px solid #526ace;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s;
+    margin-bottom: 8px;
+}
+
+.user-menu.open .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: var(--text-color);
+    transition: background 0.2s;
+}
+
+.dropdown-item i {
+    width: 18px;
+    font-size: 1rem;
+    color: var(--gradient-start);
+}
+
+.dropdown-item.email {
+    cursor: default;
+}
+
+.dropdown-item.email:hover {
+    background: transparent;
+}
+
+.dropdown-item.logout {
+    cursor: pointer;
+    color: #ef4444;
+}
+
+.dropdown-item.logout i {
+    color: #ef4444;
+}
+
+.dropdown-item.logout:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #526ace;
+    border: 1px solid #526ace;
+    margin: 0.25rem 0;
+}

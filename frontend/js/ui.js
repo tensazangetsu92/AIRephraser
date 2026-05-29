@@ -46,10 +46,16 @@ async function handleRegister() {
         return;
     }
 
-    const result = await Auth.register(email, password);
+    if (password.length < 4) {
+        alert('Пароль должен содержать минимум 4 символа');
+        return;
+    }
+
+    // Отправляем запрос на отправку кода
+    const result = await Auth.sendVerification(email, password);
+
     if (result.success) {
-        alert('✅ Регистрация успешна! Теперь войдите.');
-        Auth.toggleMode();
+        Auth.showVerificationModal(result.email);
     } else {
         alert(result.error);
     }
@@ -217,6 +223,40 @@ function updateUI() {
     }
 }
 
+window.verifyCode = async function() {
+    const codeInput = document.getElementById('verificationCode');
+    const code = codeInput?.value.trim();
+    const errorDiv = document.getElementById('verificationError');
+
+    if (!code || code.length !== 6) {
+        if (errorDiv) {
+            errorDiv.textContent = 'Введите 6-значный код';
+            errorDiv.style.display = 'block';
+        }
+        return;
+    }
+
+    const result = await Auth.verifyCode(code);
+
+    if (result.success) {
+        alert('✅ Регистрация успешно завершена!');
+        Auth.closeVerificationModal();
+        Auth.closeAuthModal();
+    } else {
+        if (errorDiv) {
+            errorDiv.textContent = result.error;
+            errorDiv.style.display = 'block';
+        }
+    }
+};
+
+window.resendCode = async function() {
+    await Auth.resendVerificationCode();
+};
+
+window.closeVerificationModal = function() {
+    Auth.closeVerificationModal();
+};
 
 // Делаем функции глобальными
 window.showLogin = showLogin;

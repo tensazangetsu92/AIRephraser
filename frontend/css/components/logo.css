@@ -4,10 +4,15 @@
     opacity: 0.9;
     -webkit-background-clip: text;
     background-clip: text;
-    color: #f0f0f0;
+    text-align: center;
+    margin-bottom: 0.5rem;
 }
 
 .container .subtitle {
-    color: #f0f0f0;
-    opacity: 0.9;
+    color: #5787d9;
+    opacity: 1;
+}
+
+.logo {
+    color: #076565;
 }

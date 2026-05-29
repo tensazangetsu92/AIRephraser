@@ -52,3 +52,13 @@ if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
 # Проверка обязательных переменных
 if not OPENROUTER_API_KEY:
     raise ValueError("OPENROUTER_API_KEY не задан в .env файле!")
+
+# app/config.py - добавьте в конец файла
+
+# ===== НАСТРОЙКИ SMTP (Mailtrap) =====
+SMTP_HOST = os.getenv("SMTP_HOST", "sandbox.smtp.mailtrap.io")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 2525))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "noreply@humary.com")
+SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "Humary")

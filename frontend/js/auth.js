@@ -76,6 +76,8 @@ const Auth = {
     },
 
     // Обработка Google токена из URL
+    // frontend/js/auth.js - исправленный handleGoogleCallback
+
     async handleGoogleCallback() {
         const urlParams = new URLSearchParams(window.location.search);
         const googleToken = urlParams.get('token');
@@ -92,17 +94,25 @@ const Auth = {
                 });
 
                 console.log('/me response status:', response.status);
-
                 const data = await response.json();
                 console.log('/me response data:', data);
 
                 if (data.success && data.user) {
                     this.setUser(data.user);
+
+                    // Убираем токен из URL без перезагрузки
                     window.history.replaceState({}, document.title, window.location.pathname);
-                    this.closeAuthModal();
+
+                    // Принудительно обновляем интерфейс
                     if (typeof updateUI === 'function') {
                         updateUI();
                     }
+
+                    // ✅ ВАЖНО: перезагружаем страницу, чтобы всё сбросилось
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+
                     alert('✅ Вход через Google выполнен успешно!');
                 } else {
                     console.error('No user data in response:', data);
@@ -128,6 +138,7 @@ const Auth = {
         if (typeof updateUserMenu === 'function') {
             updateUserMenu();
         }
+        window.location.reload();
     },
 
     isAuthenticated() {
@@ -245,7 +256,7 @@ const Auth = {
         }
 
         if (this.isRegisterMode) {
-            // РЕГИСТРАЦИЯ
+            // ========== РЕГИСТРАЦИЯ С ВЕРИФИКАЦИЕЙ ==========
             const confirmPassword = document.getElementById('authConfirmPassword')?.value;
 
             if (password.length < 4) {
@@ -258,36 +269,29 @@ const Auth = {
                 return;
             }
 
-            // Показываем индикатор загрузки
             const submitBtn = document.getElementById('authSubmitBtn');
             const originalText = submitBtn?.textContent;
             if (submitBtn) {
-                submitBtn.textContent = '⏳ Регистрация...';
+                submitBtn.textContent = '⏳ Отправка кода...';
                 submitBtn.disabled = true;
             }
 
-            const result = await this.register(email, password);
+            // 👇 ВЫЗЫВАЕМ ОТПРАВКУ КОДА
+            const result = await this.sendVerification(email, password);
 
-            // Восстанавливаем кнопку
             if (submitBtn) {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
             }
 
             if (result.success) {
-                alert('✅ Регистрация успешна! Теперь вы можете войти.');
-                this.toggleMode(); // Переключаем на режим входа
-                // Очищаем поля паролей
-                const passwordField = document.getElementById('authPassword');
-                const confirmField = document.getElementById('authConfirmPassword');
-                if (passwordField) passwordField.value = '';
-                if (confirmField) confirmField.value = '';
+                this.showVerificationModal(result.email);
             } else {
                 this.showError(result.error);
             }
+            // ===============================================
         } else {
-            // ВХОД
-            // Показываем индикатор загрузки
+            // ========== ВХОД ==========
             const submitBtn = document.getElementById('authSubmitBtn');
             const originalText = submitBtn?.textContent;
             if (submitBtn) {
@@ -297,7 +301,6 @@ const Auth = {
 
             const result = await this.login(email, password);
 
-            // Восстанавливаем кнопку
             if (submitBtn) {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
@@ -322,7 +325,70 @@ const Auth = {
                 }
             }, 5000);
         }
-    }
+    },
+
+    async sendVerification(email, password) {
+        const result = await API.sendVerification(email, password);
+        if (result.ok) {
+            // Сохраняем email для последующей верификации
+            this.pendingEmail = email;
+            this.pendingPassword = password;
+            return { success: true, email: result.data.email };
+        } else {
+            return { success: false, error: result.data.detail || 'Ошибка отправки кода' };
+        }
+    },
+
+    async verifyCode(code) {
+        const result = await API.verifyCode(this.pendingEmail, code);
+        if (result.ok) {
+            this.setToken(result.data.access_token);
+            this.setUser(result.data.user);
+            this.closeVerificationModal();
+            if (typeof updateUI === 'function') {
+                updateUI();
+            }
+            if (typeof updateUserMenu === 'function') {
+                updateUserMenu();
+            }
+            return { success: true };
+        } else {
+            return { success: false, error: result.data.detail || 'Неверный код' };
+        }
+    },
+
+    showVerificationModal(email) {
+        const modal = document.getElementById('verificationModal');
+        const emailSpan = document.getElementById('verificationEmail');
+        const codeInput = document.getElementById('verificationCode');
+        const errorDiv = document.getElementById('verificationError');
+
+        if (modal && emailSpan) {
+            emailSpan.textContent = `Код отправлен на ${email}`;
+            modal.style.display = 'flex';
+            if (codeInput) codeInput.value = '';
+            if (errorDiv) errorDiv.style.display = 'none';
+        }
+    },
+
+    closeVerificationModal() {
+        const modal = document.getElementById('verificationModal');
+        if (modal) modal.style.display = 'none';
+    },
+
+    async resendVerificationCode() {
+        if (!this.pendingEmail || !this.pendingPassword) {
+            this.showError('Ошибка: email не найден');
+            return;
+        }
+
+        const result = await API.sendVerification(this.pendingEmail, this.pendingPassword);
+        if (result.ok) {
+            alert('✅ Код отправлен повторно!');
+        } else {
+            alert('❌ Ошибка: ' + (result.error || 'Не удалось отправить код'));
+        }
+    },
 };
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========

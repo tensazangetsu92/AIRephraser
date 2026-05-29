@@ -56,5 +56,13 @@ const API = {
             length,
             target_language: targetLanguage
         }, true);
-    }
+    },
+
+    sendVerification(email, password) {
+        return this.request('/auth/send-verification', 'POST', { email, password });
+    },
+
+    verifyCode(email, code) {
+        return this.request('/auth/verify-code', 'POST', { email, code });
+    },
 };

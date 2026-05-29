@@ -10,6 +10,8 @@ import os
 from app.database import get_db, User
 from app.config import SECRET_KEY
 from app.subscription import get_user_subscription
+from app.email_utils import generate_verification_code, send_verification_email, store_verification_code, verify_code
+
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
@@ -77,3 +79,48 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         return user
     except JWTError:
         raise HTTPException(status_code=401, detail="Неверный токен")
+
+
+# Временное хранение данных пользователя до подтверждения
+pending_users = {}
+
+
+def create_pending_user(email: str, password_hash: str):
+    """Сохраняет пользователя до подтверждения email"""
+    code = generate_verification_code()
+    pending_users[email] = {
+        "password_hash": password_hash,
+        "verification_code": code,
+        "expires_at": datetime.now() + timedelta(minutes=10)
+    }
+    send_verification_email(email, code)
+    return code
+
+
+def verify_and_create_user(db: Session, email: str, code: str):
+    """Подтверждает email и создает пользователя"""
+    if email not in pending_users:
+        return None, "Код не найден или истек"
+
+    pending = pending_users[email]
+    if datetime.now() > pending["expires_at"]:
+        del pending_users[email]
+        return None, "Код подтверждения истек"
+
+    if pending["verification_code"] != code:
+        return None, "Неверный код подтверждения"
+
+    # Создаем пользователя
+    db_user = User(
+        email=email,
+        password_hash=pending["password_hash"],
+        is_active=True
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    # Удаляем из временного хранилища
+    del pending_users[email]
+
+    return db_user, None

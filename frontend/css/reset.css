@@ -10,7 +10,7 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
-    background-color: #0f0f0f;
+    background-color: var(--body-background-color);
     color: #f1f1f1;
     position: relative;
     overflow-x: hidden;
