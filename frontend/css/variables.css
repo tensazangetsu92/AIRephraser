@@ -1,15 +1,17 @@
 /* Variables & Global Styles */
 :root {
+    --text-color: #dfded8;
+    --main-color: #5787d9;
     --body-background-color: #1f1f1e;
     --navbar-background-color: #1f1f1d;
     --navbar-border: 1px solid #303030;
     --sidebar-background-color: #1f1f1d;
     --sidebar-border: 1px solid #303030;
+    --sidebar-border-color: #303030;
 
     --primary-gradient: linear-gradient(135deg, #526ace, #4b63ce);
     --primary-color: #6366f1;
     --secondary-color: #10b981;
-    --text-color: #f0f0f0;
     --text-light: rgba(0, 0, 0, 0.6);
     --border-button-color: 2px solid #303030;
     --bg-white: #ffffff;

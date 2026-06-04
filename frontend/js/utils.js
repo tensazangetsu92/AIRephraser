@@ -58,7 +58,6 @@ function updateWordCounter() {
             wordCountSpan.style.color = '#ef4444';
             wordCountSpan.style.fontWeight = 'bold';
         } else if (currentWords < minWords) {
-            wordCountSpan.style.color = '#ef4444';
             wordCountSpan.style.fontWeight = 'bold';
         } else if (currentWords > maxWords * 0.9) {
             wordCountSpan.style.color = '#f59e0b';

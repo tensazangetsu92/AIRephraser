@@ -1,4 +1,17 @@
 /* Editor Styles */
+
+/* Контентная область */
+.container {
+    margin-left: 260px;
+    flex: 1;
+    padding: 2rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+
 .editor {
     display: flex;
     gap: 2rem;
@@ -22,7 +35,6 @@
     opacity: 0.9;
 }
 
-
 textarea, .output {
     background: transparent;
     border: transparent;
@@ -35,7 +47,7 @@ textarea, .output {
     resize: vertical;
     transition: border-color 0.2s, box-shadow 0.2s;
     padding: 0 10px 0 0;
-    color: #f0f0f0;
+    color: var(--text-color);
     resize: none;
 }
 

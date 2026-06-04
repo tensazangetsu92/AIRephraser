@@ -9,26 +9,35 @@
     position: fixed;
     left: 0;
     top: 0;
-    width: 260px;
+    width: 240px;
     height: 100vh;
     background-color: var(--sidebar-background-color);
-    border: var(--sidebar-border);
+    border-right: 1px solid var(--sidebar-border-color);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     overflow-y: auto;
+    overflow-x: hidden;
     z-index: 100;
+    align-items: flex-start;
+    transition: width 0.3s ease;  /* Плавная анимация */
 }
 
 /* Лого в сайдбаре */
 .sidebar-logo {
-    padding: 24px 20px;
-    border-bottom: 1px solid var(--border-color);
+    height: 60px;
+    padding: 24px 15px;
+    border-bottom: 1px solid var(--sidebar-border-color);
     margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    position: relative;
 }
 
 .sidebar-logo .logo {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 700;
     background: #5787d9;
     -webkit-background-clip: text;
@@ -37,22 +46,23 @@
     text-align: center;
 }
 
-.subtitle {
-    margin-bottom: 2rem;
-    color: #f0f0f0;
-    opacity: 0.9;
-    padding: 0 15px;
+.sidebar-logo img {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
 }
 
 /* Основное меню */
 .sidebar-menu {
     flex: 1;
+    width: 100%;
+    padding: 0px 6px;
 }
 
 /* Кнопки внизу сайдбара */
 .sidebar-footer {
-    padding: 20px;
-    border-top: 1px solid var(--border-color);
+    width: 100%;
+    border-top: 1px solid var(--sidebar-border-color);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -63,15 +73,16 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    width: 100%;
+    width: 90%;
     padding: 10px;
     background: rgba(18, 18, 18, 0.2);
     border: var(--border-button-color);
-    border-radius: 20px;
+    border- radius: 20px;
     cursor: pointer;
     font-size: 0.9rem;
     transition: all 0.2s;
     color: var(--text-color);
+    margin: 8px auto;
 }
 
 .sidebar-footer-btn:hover {
@@ -79,28 +90,28 @@
     transform: translateY(-1px);
 }
 
-/* Контентная область */
-.container {
-    margin-left: 260px;
-    flex: 1;
-    padding: 2rem;
-    min-height: 100vh;
+.sidebar-menu-name {
+    display: flex;
+    align-items: left;
+    font-size: 14px;
+    padding: 10px 0px 14px 20px;
+    color: var(--text-color);
+    opacity: 0.6;
 }
 
 /* Sidebar Buttons Styles */
 .sidebar-item {
     display: flex;
-    align-items: center;
+    align-items: left;
     gap: 12px;
-    padding: 12px 20px;
-    margin: 6px 12px;
-    background: rgba(18, 18, 18, 0.3);
-    border: var(--border-button-color);
+    padding: 9px 0px 9px 20px;
+    margin: 5px 0;
+    background: transparent;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
-    color: #f0f0f0;
-    font-size: 1rem;
+    color: var(--text-color);
+    font-size: 14px;
     font-weight: 500;
     text-decoration: none;
 }
@@ -110,8 +121,13 @@
     font-size: 1.1rem;
 }
 
+.sidebar-item span {
+    padding-left: 3px;
+}
+
 .sidebar-item:hover {
     transform: translateY(-2px);
+    background: rgba(18, 18, 18, 0.3);
 }
 
 .sidebar-item:active {
@@ -119,27 +135,31 @@
 }
 
 .sidebar-item.active {
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(168, 85, 247, 0.2));
-    border-color: #7c3aed;
-    color: #a855f7;
-    box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
+    color: var(--main-color);
+    background: rgba(18, 18, 18, 0.3);
+
 }
 
 .sidebar-item.active i {
-    color: #a855f7;
+    color: var(--main-color);
 }
 
 /* User Menu Styles для сайдбара */
 .user-menu {
-    position: relative;
-    width: 100%;
+    /* Убираем стандартные стили кнопки */
+    background: none;
+    border: none;
     cursor: pointer;
+    width: 100%;
+    padding: 10px;
+    text-align: left;
+    /* Остальное оставляем как было */
 }
 
 .user-avatar {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 8px;
     padding: 8px;
     border-radius: 40px;
@@ -152,84 +172,36 @@
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
-}
-
-.user-avatar i {
-    font-size: 0.75rem;
-    color: var(--text-color);
-    transition: transform 0.2s;
+    flex-shrink: 0;
 }
 
 .user-menu.open .user-avatar i {
     transform: rotate(180deg);
 }
 
-/* Dropdown Menu */
-.dropdown-menu {
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    right: 0;
-    min-width: 200px;
-    background: rgba(18, 18, 18, 1);
-    border: 2px solid #526ace;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+.user-avatar > div {
+    flex: 1;
+    min-width: 0; /* БЕЗ ЭТОГО overflow НЕ РАБОТАЕТ */
     overflow: hidden;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.2s;
-    margin-bottom: 8px;
+    margin: 0;
+    padding: 0;
 }
 
-.user-menu.open .dropdown-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
+#userEmailText {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 15px;
+    opacity: 0.9;
     color: var(--text-color);
-    transition: background 0.2s;
+    margin: 0;
+    padding: 0;
 }
 
-.dropdown-item i {
-    width: 18px;
-    font-size: 1rem;
-    color: var(--gradient-start);
-}
-
-.dropdown-item.email {
-    cursor: default;
-}
-
-.dropdown-item.email:hover {
-    background: transparent;
-}
-
-.dropdown-item.logout {
-    cursor: pointer;
-    color: #ef4444;
-}
-
-.dropdown-item.logout i {
-    color: #ef4444;
-}
-
-.dropdown-item.logout:hover {
-    background: rgba(239, 68, 68, 0.1);
-}
-
-.dropdown-divider {
-    height: 1px;
-    background: #526ace;
-    border: 1px solid #526ace;
-    margin: 0.25rem 0;
+.subscribe-type {
+    display: block;
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0.6;
 }

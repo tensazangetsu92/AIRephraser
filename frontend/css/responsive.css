@@ -1,8 +1,11 @@
 
 
 .subtitle {
-    text-align: center;
+    text-align: left;
+    margin-left: 20px;
     color: var(--text-light);
+    font-size: 20px;
+    font-weight: 700;
     margin-bottom: 2rem;
 }
 

@@ -1,7 +1,6 @@
 /* ========== TARIFFS SECTION ========== */
 .tariffs {
     margin-top: 0;
-    padding: 2rem 0;
 }
 
 .tariffs-title {
@@ -14,7 +13,7 @@
 .tariffs-subtitle {
     text-align: center;
     color: #f0f0f0;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
 }
 
 .tariffs-grid {

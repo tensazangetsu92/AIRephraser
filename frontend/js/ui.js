@@ -258,6 +258,35 @@ window.closeVerificationModal = function() {
     Auth.closeVerificationModal();
 };
 
+
+// frontend/js/ui.js - добавь в конец файла
+
+// Сворачивание боковой панели
+function initSidebarToggle() {
+    const sidebar = document.querySelector('.sidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+
+    if (!sidebar || !toggleBtn) return;
+
+    // Проверяем сохранённое состояние
+    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isCollapsed) {
+        sidebar.classList.add('collapsed');
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+
+        // Сохраняем состояние в localStorage
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    });
+}
+
+// Вызов в init() или DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    initSidebarToggle();
+});
+
 // Делаем функции глобальными
 window.showLogin = showLogin;
 window.showRegister = showRegister;

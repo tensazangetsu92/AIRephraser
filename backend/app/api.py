@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
+from starlette.responses import RedirectResponse
+
 from app.models import UserLogin, UserRegister, Token, HumanizeRequest, SubscriptionCreate
 from app.config import FRONTEND_PATH, FRONTEND_DIR
 from app.database import get_db, create_tables, User
@@ -37,14 +39,17 @@ create_tables()
 templates_dir = Path(__file__).parent.parent.parent / "frontend" / "html"
 templates = Jinja2Templates(directory=str(templates_dir))
 
+@router.get("/")
+async def home():
+    """Постоянный редирект на страницу humanizer"""
+    return RedirectResponse(url="/humanizer", status_code=301)
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("/humanizer", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse(
         request=request,
-        name="index.html"
+        name="humanizer.html"
     )
-
 
 @router.get("/pricing", response_class=HTMLResponse)
 async def pricing(request: Request):
@@ -53,7 +58,6 @@ async def pricing(request: Request):
         name="pricing.html"
     )
 
-
 @router.get("/detector", response_class=HTMLResponse)
 async def detector(request: Request):
     return templates.TemplateResponse(
@@ -61,14 +65,12 @@ async def detector(request: Request):
         name="detector.html"
     )
 
-
 @router.get("/paraphraser", response_class=HTMLResponse)
 async def paraphraser(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="paraphraser.html"
     )
-
 
 @router.get("/grammar", response_class=HTMLResponse)
 async def grammar(request: Request):
@@ -210,7 +212,6 @@ async def get_subscription_plans():
 @router.post("/auth/send-verification")
 async def send_verification(user_data: UserRegister, db: Session = Depends(get_db)):
     """Отправляет код подтверждения на email"""
-    print("sdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     try:
         # Проверяем, не зарегистрирован ли уже пользователь
         existing_user = get_user_by_email(db, user_data.email)

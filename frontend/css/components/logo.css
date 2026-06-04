@@ -9,7 +9,7 @@
 }
 
 .container .subtitle {
-    color: #5787d9;
+    color: var(--main-color);
     opacity: 1;
 }
 

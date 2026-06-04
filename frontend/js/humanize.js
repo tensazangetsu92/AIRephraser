@@ -106,6 +106,13 @@ async function send() {
     if (wordCount < minWords) {
         const errorMessage = `❌ Минимальное количество слов: ${minWords}.`;
         showWarning(errorMessage, true);
+
+        // ДЕЛАЕМ СЧЕТЧИК КРАСНЫМ
+        const wordCountSpan = document.getElementById('wordCount');
+        if (wordCountSpan) {
+            wordCountSpan.style.color = '#ef4444';
+            wordCountSpan.style.fontWeight = 'bold';
+        }
         return;
     }
     // ===========================================

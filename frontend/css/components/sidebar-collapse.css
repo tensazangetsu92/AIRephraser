@@ -1,0 +1,118 @@
+/* ========================================
+   СВОРАЧИВАНИЕ БОКОВОЙ ПАНЕЛИ
+   ======================================== */
+
+
+
+/* Свёрнутый сайдбар */
+.sidebar.collapsed {
+    width: 70px;
+}
+
+/* Кнопка сворачивания */
+.sidebar-toggle-btn {
+    border-radius: 8px;
+    border: none;
+    color: var(--text-color);
+    opacity: 0.8;
+    background: transparent;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.1s;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.sidebar-toggle-btn img {
+    font-size: 1.0rem;
+    width: 22px;
+    height: 22px;
+    color: #a855f7;
+}
+
+.sidebar-toggle-btn:hover {
+    background: rgba(18, 18, 18, 0.5);
+    transform: scale(1.05);
+}
+
+/* ===== Свёрнутый сайдбар ===== */
+
+/* Скрываем текст */
+.sidebar.collapsed .logo,
+.sidebar.collapsed .logo-img,
+.sidebar.collapsed .sidebar-item span,
+.sidebar.collapsed .lang-text,
+.sidebar.collapsed #userEmailText,
+.sidebar.collapsed .subscribe-type {
+    display: none;
+}
+.sidebar.collapsed .sidebar-menu-name {
+    visibility: hidden;
+    opacity: 0;
+    /* padding и высота остаются прежними */
+}
+
+/* Выравниваем иконки по центру */
+.sidebar.collapsed .sidebar-item {
+    padding: 9px 0px 9px 18px;
+}
+
+.sidebar.collapsed .sidebar-item i {
+    margin: 0;
+}
+
+/* Логотип */
+.sidebar.collapsed .sidebar-logo {
+    justify-content: center;
+    padding: 24px 0;
+}
+
+.sidebar.collapsed .sidebar-logo img {
+    margin: 0;
+}
+
+/* Стрелка */
+.sidebar.collapsed .sidebar-toggle-btn i {
+    transform: rotate(180deg);
+}
+
+.sidebar.collapsed .sidebar-toggle-btn {
+    margin-left: 0;
+}
+
+/* Кнопки внизу */
+.sidebar.collapsed .sidebar-footer-btn {
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.sidebar.collapsed .sidebar-footer-btn span {
+    display: none;
+}
+
+/* Аватарка */
+.sidebar.collapsed .user-avatar {
+    justify-content: center;
+    padding: 8px;
+}
+
+.sidebar.collapsed .user-avatar > div {
+    display: none;
+}
+
+/* ===== Контентная область ===== */
+.container {
+    margin-left: 240px;
+    flex: 1;
+    padding: 2rem;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
+
+/* Когда сайдбар свёрнут - контент смещается */
+.sidebar.collapsed + .container {
+    margin-left: 70px;
+}
