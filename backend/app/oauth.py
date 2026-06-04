@@ -114,7 +114,7 @@ async def google_auth_callback(request: Request, code: str = None, db: Session =
 
         # Редирект на фронт
         frontend_url = os.getenv("FRONTEND_URL", "http://localhost:8000")
-        redirect_url = f"{frontend_url}/?token={jwt_token}"
+        redirect_url = f"{frontend_url}/humanizer?token={jwt_token}"
 
         return RedirectResponse(url=redirect_url)
 

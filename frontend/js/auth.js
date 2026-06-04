@@ -26,8 +26,7 @@ const Auth = {
 
     setUser(user) {
         if (user) {
-            // Убедитесь, что сохраняется email
-            console.log('Saving user to localStorage:', user); // Проверьте, что приходит
+            console.log('Saving user to localStorage:', user);
             localStorage.setItem('user', JSON.stringify(user));
         } else {
             localStorage.removeItem('user');
@@ -55,13 +54,9 @@ const Auth = {
         }
     },
 
-
     async register(email, password) {
-        // Отправляем email и password
         const result = await API.register(email, password);
-
         if (result.ok) {
-            // После успешной регистрации переключаемся на режим входа
             this.isRegisterMode = false;
             this.updateUIMode();
             return { success: true, message: result.data.message };
@@ -70,14 +65,11 @@ const Auth = {
         }
     },
 
-    // Google OAuth
     loginWithGoogle() {
         window.location.href = '/auth/google/login';
     },
 
-    // Обработка Google токена из URL
-    // frontend/js/auth.js - исправленный handleGoogleCallback
-
+    // Исправленный обработчик Google токена
     async handleGoogleCallback() {
         const urlParams = new URLSearchParams(window.location.search);
         const googleToken = urlParams.get('token');
@@ -100,18 +92,17 @@ const Auth = {
                 if (data.success && data.user) {
                     this.setUser(data.user);
 
-                    // Убираем токен из URL без перезагрузки
-                    window.history.replaceState({}, document.title, window.location.pathname);
+                    // Очищаем URL от токена БЕЗ перезагрузки
+                    const cleanUrl = window.location.origin + window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
 
-                    // Принудительно обновляем интерфейс
+                    // Обновляем интерфейс
                     if (typeof updateUI === 'function') {
                         updateUI();
                     }
-
-                    // ✅ ВАЖНО: перезагружаем страницу, чтобы всё сбросилось
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
+                    if (typeof updateUserMenu === 'function') {
+                        updateUserMenu();
+                    }
 
                     alert('✅ Вход через Google выполнен успешно!');
                 } else {
@@ -138,25 +129,21 @@ const Auth = {
         if (typeof updateUserMenu === 'function') {
             updateUserMenu();
         }
-        window.location.reload();
+        // Обновляем страницу без перезагрузки
+        if (typeof window.updateUI === 'function') {
+            window.updateUI();
+        }
     },
 
     isAuthenticated() {
         return !!this.token;
     },
 
-    // ========== РАБОТА С МОДАЛЬНЫМ ОКНОМ ==========
-
     showAuthModal() {
         const modal = document.getElementById('authModal');
-
         if (modal) {
             modal.style.display = 'flex';
-
-            // Сбрасываем форму
             this.resetForm();
-
-            // Фокус на поле email
             setTimeout(() => {
                 const emailInput = document.getElementById('authEmail');
                 if (emailInput) emailInput.focus();
@@ -166,20 +153,16 @@ const Auth = {
 
     closeAuthModal() {
         const modal = document.getElementById('authModal');
-
         if (modal) modal.style.display = 'none';
         this.resetForm();
     },
 
     resetForm() {
-        // Очищаем все поля
         const fields = ['authEmail', 'authPassword', 'authConfirmPassword'];
         fields.forEach(fieldId => {
             const field = document.getElementById(fieldId);
             if (field) field.value = '';
         });
-
-        // Скрываем ошибки
         const errorDiv = document.getElementById('authError');
         if (errorDiv) {
             errorDiv.style.display = 'none';
@@ -194,13 +177,11 @@ const Auth = {
         const toggleLink = document.getElementById('toggleAuthMode');
 
         if (this.isRegisterMode) {
-            // Режим регистрации
             if (title) title.textContent = 'Регистрация';
             if (submitBtn) submitBtn.textContent = 'Зарегистрироваться';
             if (confirmField) confirmField.style.display = 'block';
             if (toggleLink) toggleLink.innerHTML = 'Уже есть аккаунт? Войти';
         } else {
-            // Режим входа
             if (title) title.textContent = 'Вход';
             if (submitBtn) submitBtn.textContent = 'Войти';
             if (confirmField) confirmField.style.display = 'none';
@@ -212,8 +193,6 @@ const Auth = {
         this.isRegisterMode = !this.isRegisterMode;
         this.updateUIMode();
         this.resetForm();
-
-        // Меняем autocomplete для поля пароля
         const passwordField = document.getElementById('authPassword');
         if (passwordField) {
             if (this.isRegisterMode) {
@@ -231,19 +210,16 @@ const Auth = {
         const password = document.getElementById('authPassword')?.value;
         const errorDiv = document.getElementById('authError');
 
-        // Очищаем предыдущую ошибку
         if (errorDiv) {
             errorDiv.style.display = 'none';
             errorDiv.textContent = '';
         }
 
-        // Валидация email
         if (!email) {
             this.showError('Введите email');
             return;
         }
 
-        // Проверка формата email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             this.showError('Введите корректный email');
@@ -256,7 +232,6 @@ const Auth = {
         }
 
         if (this.isRegisterMode) {
-            // ========== РЕГИСТРАЦИЯ С ВЕРИФИКАЦИЕЙ ==========
             const confirmPassword = document.getElementById('authConfirmPassword')?.value;
 
             if (password.length < 4) {
@@ -276,7 +251,6 @@ const Auth = {
                 submitBtn.disabled = true;
             }
 
-            // 👇 ВЫЗЫВАЕМ ОТПРАВКУ КОДА
             const result = await this.sendVerification(email, password);
 
             if (submitBtn) {
@@ -289,9 +263,7 @@ const Auth = {
             } else {
                 this.showError(result.error);
             }
-            // ===============================================
         } else {
-            // ========== ВХОД ==========
             const submitBtn = document.getElementById('authSubmitBtn');
             const originalText = submitBtn?.textContent;
             if (submitBtn) {
@@ -317,8 +289,6 @@ const Auth = {
         if (errorDiv) {
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
-
-            // Автоматически скрываем ошибку через 5 секунд
             setTimeout(() => {
                 if (errorDiv.style.display === 'block') {
                     errorDiv.style.display = 'none';
@@ -330,7 +300,6 @@ const Auth = {
     async sendVerification(email, password) {
         const result = await API.sendVerification(email, password);
         if (result.ok) {
-            // Сохраняем email для последующей верификации
             this.pendingEmail = email;
             this.pendingPassword = password;
             return { success: true, email: result.data.email };
@@ -381,7 +350,6 @@ const Auth = {
             this.showError('Ошибка: email не найден');
             return;
         }
-
         const result = await API.sendVerification(this.pendingEmail, this.pendingPassword);
         if (result.ok) {
             alert('✅ Код отправлен повторно!');
@@ -393,27 +361,51 @@ const Auth = {
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 
-// Функции для вызова из onclick (глобальные)
 window.showAuthModal = () => Auth.showAuthModal();
 window.closeAuthModal = () => Auth.closeAuthModal();
 
-// Инициализация при загрузке
+// Обработка Google токена ПРИ ЗАГРУЗКЕ
+(function handleTokenOnLoad() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    if (token && !Auth.getToken()) {
+        console.log('Found token in URL on load, saving...');
+        Auth.setToken(token);
+
+        // Убираем токен из URL
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+
+        // Получаем данные пользователя
+        fetch('/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.user) {
+                Auth.setUser(data.user);
+                if (typeof updateUI === 'function') updateUI();
+                if (typeof updateUserMenu === 'function') updateUserMenu();
+                alert('✅ Вход через Google выполнен успешно!');
+            }
+        })
+        .catch(err => console.error('Token validation error:', err));
+    }
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded - initializing auth');
 
-    // Обработка Google callback
     Auth.handleGoogleCallback();
 
-    // Настройка модального окна
     initAuthModal();
 
-    // Настройка кнопки входа в навбаре
     const authBtn = document.getElementById('authBtn');
     if (authBtn) {
         authBtn.addEventListener('click', () => Auth.showAuthModal());
     }
 
-    // Обновляем UI если пользователь уже авторизован
     if (typeof updateUI === 'function') {
         updateUI();
     }
@@ -424,16 +416,13 @@ function initAuthModal() {
 
     if (!modal) return;
 
-    // Настройка UI режима
     Auth.updateUIMode();
 
-    // Обработчик отправки формы
     const submitBtn = document.getElementById('authSubmitBtn');
     if (submitBtn) {
         submitBtn.addEventListener('click', () => Auth.handleSubmit());
     }
 
-    // Обработчик Enter
     const inputs = ['authEmail', 'authPassword', 'authConfirmPassword'];
     inputs.forEach(inputId => {
         const input = document.getElementById(inputId);
@@ -447,7 +436,6 @@ function initAuthModal() {
         }
     });
 
-    // Переключение режима
     const toggleLink = document.getElementById('toggleAuthMode');
     if (toggleLink) {
         toggleLink.addEventListener('click', (e) => {
@@ -456,37 +444,28 @@ function initAuthModal() {
         });
     }
 
-    // Google вход
     const googleBtn = document.getElementById('googleLoginBtn');
     if (googleBtn) {
         googleBtn.addEventListener('click', () => Auth.loginWithGoogle());
     }
 
-    // ========== ЛОГИКА ЗАКРЫТИЯ ==========
-
     let mouseDownOnOverlay = false;
 
-    // Нажатие на фоне
     modal.addEventListener('mousedown', (e) => {
         if (e.target === modal) {
             mouseDownOnOverlay = true;
-            console.log('mousedown on overlay'); // отладка
         } else {
             mouseDownOnOverlay = false;
         }
     });
 
-    // Отпускание на фоне
     modal.addEventListener('mouseup', (e) => {
-        console.log('mouseup on:', e.target === modal ? 'overlay' : 'content', 'mouseDownOnOverlay:', mouseDownOnOverlay); // отладка
         if (e.target === modal && mouseDownOnOverlay === true) {
-            console.log('closing modal'); // отладка
             Auth.closeAuthModal();
         }
         mouseDownOnOverlay = false;
     });
 
-    // Закрытие по крестику
     const closeBtn = modal.querySelector('.modal-close');
     if (closeBtn) {
         closeBtn.addEventListener('click', (e) => {
@@ -495,7 +474,6 @@ function initAuthModal() {
         });
     }
 
-    // Предотвращаем закрытие при клике на содержимое
     const modalContent = modal.querySelector('.modal-content');
     if (modalContent) {
         modalContent.addEventListener('mousedown', (e) => {
@@ -507,7 +485,6 @@ function initAuthModal() {
         });
     }
 
-    // Закрытие по ESC
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.style.display === 'flex') {
             Auth.closeAuthModal();

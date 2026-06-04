@@ -40,12 +40,14 @@ templates_dir = Path(__file__).parent.parent.parent / "frontend" / "html"
 templates = Jinja2Templates(directory=str(templates_dir))
 
 @router.get("/")
-async def home():
-    """Постоянный редирект на страницу humanizer"""
-    return RedirectResponse(url="/humanizer", status_code=301)
+async def root(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="humanizer.html"
+    )
 
-@router.get("/humanizer", response_class=HTMLResponse)
-async def home(request: Request):
+@router.get("/humanizer")
+async def humanizer_page(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="humanizer.html"

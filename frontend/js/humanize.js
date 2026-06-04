@@ -157,6 +157,42 @@ async function processPendingText() {
     }
 }
 
+
+// frontend/js/humanize.js - добавь в конец файла
+
+// Вставка текста из буфера обмена
+async function pasteFromClipboard() {
+    const textarea = document.getElementById('input');
+    const pasteBtn = document.getElementById('pasteBtn');
+
+    try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+            textarea.value = text;
+            // Триггерим событие input для обновления счетчика
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            // Скрываем кнопку
+            if (pasteBtn) pasteBtn.style.display = 'none';
+        } else {
+            alert('Буфер обмена пуст');
+        }
+    } catch (err) {
+        console.error('Failed to read clipboard:', err);
+        alert('Не удалось получить доступ к буферу обмена. Разрешите доступ в настройках браузера.');
+    }
+}
+
+// Делаем функцию глобальной
+window.pasteFromClipboard = pasteFromClipboard;
+
+// Инициализация кнопки
+document.addEventListener('DOMContentLoaded', () => {
+    const pasteBtn = document.getElementById('pasteBtn');
+    if (pasteBtn) {
+        pasteBtn.addEventListener('click', pasteFromClipboard);
+    }
+});
+
 // Делаем функции глобальными
 window.processPendingText = processPendingText;
 window.send = send;

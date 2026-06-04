@@ -6,13 +6,21 @@
 
 <div class="editor">
     <div class="col">
-        <textarea id="input" placeholder="Вставьте текст для очеловечивания..."></textarea>
+        <div class="textarea-wrapper">
+            <div class="editor-name">Ваш текст</div>
+            <textarea id="input" placeholder="Вставьте текст для очеловечивания..."></textarea>
+            <button class="paste-btn" id="pasteBtn">
+                <i class="fas fa-paste"></i>
+                Вставить текст
+            </button>
+        </div>
         <div class="word-counter-wrapper">
             <span class="word-count" id="wordCount"></span>
             <span class="word-warning" id="wordWarning"></span>
+        </div>
     </div>
-</div>
     <div class="col">
+        <div class="editor-name">Результат</div>
         <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10"></textarea>
     </div>
 </div>

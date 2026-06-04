@@ -35,6 +35,14 @@
     opacity: 0.9;
 }
 
+.editor-name {
+    margin-top: 5px;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #313130;
+    font-weight: 500;
+}
+
 textarea, .output {
     background: transparent;
     border: transparent;
@@ -100,4 +108,53 @@ textarea::-webkit-scrollbar-track {
 .word-warning {
     font-size: 0.75rem;
     transition: color 0.2s;
+}
+
+/* Обёртка для textarea и кнопки */
+.textarea-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.paste-btn {
+    position: absolute;
+    width: 150px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(18, 18, 18, 0.2);
+    border: transparent;
+    border-radius: 10px;
+    padding: 10px 20px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    z-index: 10;
+    white-space: nowrap;
+    opacity: 0.7;
+}
+
+.paste-btn:hover {
+    transform: translate(-50%, -50%) scale(1.03);
+    opacity: 0.9;
+}
+
+.paste-btn:active {
+    transform: translate(-50%, -50%) scale(0.95);
+}
+
+/* Когда textarea не пустой - скрываем кнопку */
+.textarea-wrapper textarea:not(:placeholder-shown) ~ .paste-btn {
+    display: none;
+}
+
+/* Или скрываем когда есть фокус */
+.textarea-wrapper textarea:focus ~ .paste-btn {
+    opacity: 0;
+    visibility: hidden;
 }
