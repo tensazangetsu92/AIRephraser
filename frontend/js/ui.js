@@ -1,6 +1,7 @@
 // frontend/js/ui.js
 
-// Функции модальных окон
+// ========== МОДАЛЬНЫЕ ОКНА ==========
+
 function showLogin() {
     Auth.showAuthModal();
 }
@@ -15,45 +16,24 @@ function closeModals() {
     Auth.closeAuthModal();
 }
 
-// Функции авторизации (обёртки)
+// ========== ОБЁРТКИ АВТОРИЗАЦИИ ==========
+
 async function handleLogin() {
     const email = document.getElementById('authEmail')?.value;
     const password = document.getElementById('authPassword')?.value;
-
-    if (!email || !password) {
-        alert('Заполните все поля');
-        return;
-    }
-
+    if (!email || !password) { alert('Заполните все поля'); return; }
     const result = await Auth.login(email, password);
-    if (!result.success) {
-        alert(result.error);
-    }
+    if (!result.success) alert(result.error);
 }
 
 async function handleRegister() {
     const email = document.getElementById('authEmail')?.value;
     const password = document.getElementById('authPassword')?.value;
     const confirmPassword = document.getElementById('authConfirmPassword')?.value;
-
-    if (!email || !password) {
-        alert('Заполните все поля');
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        alert('Пароли не совпадают');
-        return;
-    }
-
-    if (password.length < 4) {
-        alert('Пароль должен содержать минимум 4 символа');
-        return;
-    }
-
-    // Отправляем запрос на отправку кода
+    if (!email || !password) { alert('Заполните все поля'); return; }
+    if (password !== confirmPassword) { alert('Пароли не совпадают'); return; }
+    if (password.length < 4) { alert('Пароль должен содержать минимум 4 символа'); return; }
     const result = await Auth.sendVerification(email, password);
-
     if (result.success) {
         Auth.showVerificationModal(result.email);
     } else {
@@ -69,67 +49,58 @@ function handleLogout() {
     Auth.logout();
 }
 
-// Обновление интерфейса (шапка, кнопки)
-function updateUI() {
-    const user = Auth.getUser();
-    const userNameSpan = document.getElementById('userName');
-    const authBtn = document.getElementById('authBtn');
+// ========== АВАТАРКА ==========
 
-    if (user && Auth.isAuthenticated()) {
-        const displayName = user.email || 'Пользователь';
-        if (userNameSpan) userNameSpan.textContent = displayName;
-        if (authBtn) {
-            authBtn.textContent = 'Выйти';
-            authBtn.onclick = () => {
-                Auth.logout();
-                updateUI();
-            };
-        }
-        // Загружаем информацию о подписке
-        if (typeof loadCurrentSubscription === 'function') {
-            loadCurrentSubscription();
-        }
-    } else {
-        if (userNameSpan) userNameSpan.textContent = '';
-        if (authBtn) {
-            authBtn.textContent = 'Войти';
-            authBtn.onclick = () => Auth.showAuthModal();
-        }
-        // Сбрасываем UI карточек
-        if (typeof resetTariffCards === 'function') {
-            resetTariffCards();
-        }
-    }
-}
-
-// Копирование текста
-async function copyText() {
-    const elements = window.elements || {};
-    const text = elements.result?.innerText;
-
-    if (!text || text === 'Результат появится здесь...' || text.includes('⚠️') || text.includes('❌') || text.includes('🔄')) {
-        alert('Нет текста для копирования');
-        return;
-    }
-    try {
-        await navigator.clipboard.writeText(text);
-        alert('✅ Текст скопирован в буфер обмена');
-    } catch (err) {
-        alert('❌ Не удалось скопировать текст');
-    }
-}
-
-// frontend/js/ui.js
-
-// Функция для получения аватарки из Gmail (через Gravatar)
 function getAvatarUrl(email) {
     if (!email) return '';
-    // Кодируем email в MD5 для Gravatar
     const md5 = CryptoJS.MD5(email.trim().toLowerCase()).toString();
     return `https://www.gravatar.com/avatar/${md5}?s=96&d=identicon`;
 }
 
-// Отображение аватарки и меню
+// ========== USER MENU + ПОПАП ==========
+
+let userMenuInited = false;
+
+function initUserMenu() {
+    if (userMenuInited) return;
+
+    const userMenu = document.getElementById('userMenu');
+    const userPopup = document.getElementById('userPopup');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const langToggle = document.getElementById('langToggle');
+
+    if (!userMenu || !userPopup) return;
+
+    userMenuInited = true;
+
+    userMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userPopup.classList.toggle('open');
+    });
+
+    document.addEventListener('click', () => {
+        userPopup.classList.remove('open');
+    });
+
+    userPopup.addEventListener('click', (e) => e.stopPropagation());
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            userPopup.classList.remove('open');
+            Auth.logout();
+            updateUserMenu();
+            updateUI();
+        });
+    }
+
+    if (langToggle) {
+        langToggle.addEventListener('click', () => {
+            // userPopup.classList.remove('open');  ← удали эту строку
+            if (typeof toggleLang === 'function') toggleLang();
+        });
+    }
+}
+
 function updateUserMenu() {
     const user = Auth.getUser();
     const userMenu = document.getElementById('userMenu');
@@ -138,90 +109,82 @@ function updateUserMenu() {
     const userEmailText = document.getElementById('userEmailText');
 
     if (user && Auth.isAuthenticated()) {
-        // Пользователь авторизован - показываем меню, скрываем кнопку входа
-        userMenu.style.display = 'block';
+        if (userMenu) userMenu.style.display = 'block';
         if (authBtn) authBtn.style.display = 'none';
-
-        // Устанавливаем email
         if (userEmailText) userEmailText.textContent = user.email;
-
-        // Устанавливаем аватарку
         if (avatarImg) {
-            const avatarUrl = getAvatarUrl(user.email);
-            avatarImg.src = avatarUrl;
+            avatarImg.src = getAvatarUrl(user.email);
             avatarImg.alt = user.email;
         }
+        initUserMenu(); // вызываем здесь — когда меню точно в DOM и видимо
     } else {
-        // Пользователь не авторизован - скрываем меню, показываем кнопку входа
         if (userMenu) userMenu.style.display = 'none';
         if (authBtn) authBtn.style.display = 'block';
     }
 }
 
-// Инициализация выпадающего меню
-function initUserMenu() {
-    const userMenu = document.getElementById('userMenu');
-    const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+// ========== ОБНОВЛЕНИЕ UI ==========
 
-    if (!userMenu) return;
-
-    // Открытие/закрытие меню при клике на аватарку
-    userMenu.addEventListener('click', (e) => {
-        // Не закрываем меню при клике на кнопку выхода
-        if (e.target.closest('.dropdown-item.logout')) {
-            return;
-        }
-        userMenu.classList.toggle('open');
-        e.stopPropagation();
-    });
-
-    // Закрытие меню при клике вне его
-    document.addEventListener('click', () => {
-        userMenu.classList.remove('open');
-    });
-
-    // Кнопка выхода из меню
-    if (dropdownLogoutBtn) {
-        dropdownLogoutBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            Auth.logout();
-            updateUserMenu();
-            updateUI();
-            userMenu.classList.remove('open');
-        });
-    }
-}
-
-// Обновляем существующую функцию updateUI
 function updateUI() {
     const user = Auth.getUser();
-    const userNameSpan = document.getElementById('userName');
     const authBtn = document.getElementById('authBtn');
 
     if (user && Auth.isAuthenticated()) {
-        // Обновляем меню с аватаркой
         updateUserMenu();
-
-        // Загружаем информацию о подписке после входа
-        if (typeof loadCurrentSubscription === 'function') {
-            loadCurrentSubscription();
-        }
+        if (typeof loadCurrentSubscription === 'function') loadCurrentSubscription();
     } else {
-        // Скрываем меню, показываем кнопку входа
         const userMenu = document.getElementById('userMenu');
         if (userMenu) userMenu.style.display = 'none';
         if (authBtn) {
             authBtn.style.display = 'block';
-            authBtn.textContent = t('login');
+            authBtn.textContent = typeof t === 'function' ? t('login') : 'Войти';
             authBtn.onclick = () => Auth.showAuthModal();
         }
-
-        // Сбрасываем UI карточек
-        if (typeof resetTariffCards === 'function') {
-            resetTariffCards();
-        }
+        if (typeof resetTariffCards === 'function') resetTariffCards();
     }
 }
+
+// ========== КОПИРОВАНИЕ ==========
+
+async function copyText() {
+    const elements = window.elements || {};
+    const text = elements.result?.innerText;
+    if (!text || text === 'Результат появится здесь...' || text.includes('⚠️') || text.includes('❌') || text.includes('🔄')) {
+        alert('Нет текста для копирования');
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(text);
+        alert('✅ Текст скопирован в буфер обмена');
+    } catch {
+        alert('❌ Не удалось скопировать текст');
+    }
+}
+
+// ========== СВОРАЧИВАНИЕ САЙДБАРА ==========
+
+function initSidebarToggle() {
+    const sidebar = document.querySelector('.sidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const container = document.querySelector('.container');
+
+    if (!sidebar || !toggleBtn) return;
+
+    const applyCollapsed = (collapsed) => {
+        sidebar.classList.toggle('collapsed', collapsed);
+        if (container) container.style.marginLeft = collapsed ? '60px' : '240px';
+    };
+
+    applyCollapsed(localStorage.getItem('sidebarCollapsed') === 'true');
+
+    toggleBtn.addEventListener('click', () => {
+        const collapsed = !sidebar.classList.contains('collapsed');
+        applyCollapsed(collapsed);
+        localStorage.setItem('sidebarCollapsed', collapsed);
+    });
+}
+
+// ========== ВЕРИФИКАЦИЯ ==========
 
 window.verifyCode = async function() {
     const codeInput = document.getElementById('verificationCode');
@@ -229,24 +192,17 @@ window.verifyCode = async function() {
     const errorDiv = document.getElementById('verificationError');
 
     if (!code || code.length !== 6) {
-        if (errorDiv) {
-            errorDiv.textContent = 'Введите 6-значный код';
-            errorDiv.style.display = 'block';
-        }
+        if (errorDiv) { errorDiv.textContent = 'Введите 6-значный код'; errorDiv.style.display = 'block'; }
         return;
     }
 
     const result = await Auth.verifyCode(code);
-
     if (result.success) {
         alert('✅ Регистрация успешно завершена!');
         Auth.closeVerificationModal();
         Auth.closeAuthModal();
     } else {
-        if (errorDiv) {
-            errorDiv.textContent = result.error;
-            errorDiv.style.display = 'block';
-        }
+        if (errorDiv) { errorDiv.textContent = result.error; errorDiv.style.display = 'block'; }
     }
 };
 
@@ -258,36 +214,15 @@ window.closeVerificationModal = function() {
     Auth.closeVerificationModal();
 };
 
+// ========== ИНИЦИАЛИЗАЦИЯ ==========
 
-// frontend/js/ui.js - добавь в конец файла
-
-// Сворачивание боковой панели
-function initSidebarToggle() {
-    const sidebar = document.querySelector('.sidebar');
-    const toggleBtn = document.getElementById('sidebarToggle');
-
-    if (!sidebar || !toggleBtn) return;
-
-    // Проверяем сохранённое состояние
-    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-    if (isCollapsed) {
-        sidebar.classList.add('collapsed');
-    }
-
-    toggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('collapsed');
-
-        // Сохраняем состояние в localStorage
-        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-    });
-}
-
-// Вызов в init() или DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
     initSidebarToggle();
+    // initUserMenu вызывается из updateUserMenu когда пользователь авторизован
 });
 
-// Делаем функции глобальными
+// ========== ГЛОБАЛЬНЫЕ ФУНКЦИИ ==========
+
 window.showLogin = showLogin;
 window.showRegister = showRegister;
 window.closeModals = closeModals;
@@ -297,3 +232,4 @@ window.handleGoogleLogin = handleGoogleLogin;
 window.handleLogout = handleLogout;
 window.updateUI = updateUI;
 window.copyText = copyText;
+window.updateUserMenu = updateUserMenu;

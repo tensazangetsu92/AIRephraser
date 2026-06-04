@@ -123,16 +123,7 @@ const Auth = {
         this.setToken(null);
         this.setUser(null);
         this.closeAuthModal();
-        if (typeof updateUI === 'function') {
-            updateUI();
-        }
-        if (typeof updateUserMenu === 'function') {
-            updateUserMenu();
-        }
-        // Обновляем страницу без перезагрузки
-        if (typeof window.updateUI === 'function') {
-            window.updateUI();
-        }
+        window.location.reload();
     },
 
     isAuthenticated() {

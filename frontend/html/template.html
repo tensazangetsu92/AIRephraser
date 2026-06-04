@@ -50,15 +50,21 @@
             </a>
         </div>
 
-        <!-- Кнопки внизу сайдбара -->
-        <div class="sidebar-footer">
-            <!--
-            <button class="sidebar-footer-btn" id="langToggle">
-                <i class="fas fa-globe"></i>
-                <span class="lang-text">Русский</span>
-            </button>
-            -->
 
+        <div class="sidebar-footer">
+
+            <!-- ДОБАВЬ ЭТОТ БЛОК -->
+            <div class="user-popup" id="userPopup">
+                <button class="user-popup-item" id="langToggle">
+                    <i class="fas fa-globe"></i>
+                    <span class="lang-text">Русский</span>
+                </button>
+                <div class="user-popup-divider"></div>
+                <button class="user-popup-item user-popup-logout" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Выйти</span>
+                </button>
+            </div>
 
             <button class="user-menu" id="userMenu" style="display: none;">
                 <div class="user-avatar" id="userAvatar">
