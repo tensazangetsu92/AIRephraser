@@ -12,22 +12,23 @@ from app.config import SECRET_KEY
 from app.subscription import get_user_subscription
 from app.email_utils import generate_verification_code, send_verification_email, store_verification_code, verify_code
 
-
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 security = HTTPBearer()
+
 
 def get_hash_password(password: str) -> str:
     """Хеширование пароля"""
     salt = "humary_salt_2024"
     return hashlib.sha256((password + salt).encode()).hexdigest()
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return get_hash_password(plain_password) == hashed_password
 
+
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
-
 
 
 def create_user(db: Session, email: str, password: str):
@@ -46,6 +47,7 @@ def create_user(db: Session, email: str, password: str):
 
     return db_user
 
+
 def authenticate_user(db: Session, email: str, password: str):
     user = get_user_by_email(db, email)
     if not user:
@@ -53,6 +55,7 @@ def authenticate_user(db: Session, email: str, password: str):
     if not verify_password(password, user.password_hash):
         return None
     return user
+
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
@@ -63,6 +66,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     token = credentials.credentials
@@ -85,8 +89,24 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 pending_users = {}
 
 
+def cleanup_expired_pending_users():
+    """Удаляет истёкшие коды из временного хранилища"""
+    now = datetime.now()
+    expired = [
+        email for email, data in pending_users.items()
+        if now > data["expires_at"]
+    ]
+    for email in expired:
+        del pending_users[email]
+    if expired:
+        print(f"🧹 Cleaned up {len(expired)} expired pending users")
+
+
 def create_pending_user(email: str, password_hash: str):
     """Сохраняет пользователя до подтверждения email"""
+    # Очищаем истекшие коды перед созданием нового
+    cleanup_expired_pending_users()
+
     code = generate_verification_code()
     pending_users[email] = {
         "password_hash": password_hash,
@@ -99,6 +119,9 @@ def create_pending_user(email: str, password_hash: str):
 
 def verify_and_create_user(db: Session, email: str, code: str):
     """Подтверждает email и создает пользователя"""
+    # Очищаем истекшие коды перед проверкой
+    cleanup_expired_pending_users()
+
     if email not in pending_users:
         return None, "Код не найден или истек"
 

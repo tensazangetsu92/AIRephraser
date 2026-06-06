@@ -17,7 +17,7 @@ from auth import (
     create_access_token,
     create_user,
     get_current_user,
-    get_user_by_email, get_hash_password
+    get_user_by_email, get_hash_password, pending_users
 )
 from llm import humanize_pipeline
 from app.subscription import (
@@ -246,18 +246,42 @@ async def verify_registration_code(data: dict, db: Session = Depends(get_db)):
     if not email or not code:
         raise HTTPException(status_code=400, detail="Email и код обязательны")
 
-    user, error = await verify_and_create_user(db, email, code)
+    if email not in pending_users:
+        raise HTTPException(status_code=400, detail="Код не найден. Запросите новый код")
 
-    if error:
-        raise HTTPException(status_code=400, detail=error)
+    pending = pending_users[email]
 
-    # Создаем токен
-    access_token = create_access_token(data={"sub": user.email})
+    if datetime.now() > pending["expires_at"]:
+        del pending_users[email]
+        raise HTTPException(status_code=400, detail="Код подтверждения истек. Запросите новый")
+
+    if pending["verification_code"] != code:
+        raise HTTPException(status_code=400, detail="Неверный код подтверждения")
+
+    existing_user = db.query(User).filter(User.email == email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Пользователь с таким email уже зарегистрирован")
+
+    db_user = User(
+        email=email,
+        password_hash=pending["password_hash"],
+        is_active=True
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    del pending_users[email]
+
+    from app.subscription import get_user_subscription
+    get_user_subscription(db, db_user.id)
+
+    access_token = create_access_token(data={"sub": db_user.email})
 
     return {
         "success": True,
         "message": "Регистрация успешно завершена",
         "access_token": access_token,
         "token_type": "bearer",
-        "user": {"email": user.email, "id": user.id}
+        "user": {"email": db_user.email, "id": db_user.id}
     }

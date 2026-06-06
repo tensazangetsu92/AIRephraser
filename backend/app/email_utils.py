@@ -72,7 +72,7 @@ def send_verification_email(email: str, code: str) -> bool:
                 <p style="color: #555; text-align: center;">Код действителен в течение 10 минут.</p>
                 <p style="color: #555; font-size: 14px;">Если вы не регистрировались в Humary, просто проигнорируйте это письмо.</p>
                 <div class="footer">
-                    <p>© 2024 Humary. Все права защищены.</p>
+                    <p>© 2026 Humary. Все права защищены.</p>
                 </div>
             </div>
         </body>
