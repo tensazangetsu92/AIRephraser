@@ -20,7 +20,7 @@
     overflow-x: hidden;
     z-index: 100;
     align-items: flex-start;
-    transition: width 0.3s ease;  /* Плавная анимация */
+    transition: width 0.3s ease;
 }
 
 /* Лого в сайдбаре */
@@ -66,6 +66,7 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    position: relative;
 }
 
 .sidebar-footer-btn {
@@ -77,7 +78,7 @@
     padding: 10px;
     background: rgba(18, 18, 18, 0.2);
     border: var(--border-button-color);
-    border- radius: 20px;
+    border-radius: 20px;
     cursor: pointer;
     font-size: 0.9rem;
     transition: all 0.2s;
@@ -137,7 +138,6 @@
 .sidebar-item.active {
     color: var(--main-color);
     background: rgba(18, 18, 18, 0.3);
-
 }
 
 .sidebar-item.active i {
@@ -146,14 +146,13 @@
 
 /* User Menu Styles для сайдбара */
 .user-menu {
-    /* Убираем стандартные стили кнопки */
     background: none;
     border: none;
     cursor: pointer;
     width: 100%;
     padding: 10px;
     text-align: left;
-    /* Остальное оставляем как было */
+    position: relative;
 }
 
 .user-avatar {
@@ -181,7 +180,7 @@
 
 .user-avatar > div {
     flex: 1;
-    min-width: 0; /* БЕЗ ЭТОГО overflow НЕ РАБОТАЕТ */
+    min-width: 0;
     overflow: hidden;
     margin: 0;
     padding: 0;
@@ -206,10 +205,7 @@
     opacity: 0.6;
 }
 
-.sidebar-footer {
-    position: relative;
-}
-
+/* Всплывающее окно над user-menu */
 .user-popup {
     display: none;
     position: absolute;
@@ -262,7 +258,6 @@
     margin: 4px 0;
 }
 
-
 /* Блок баланса */
 .balance-block {
     padding: 12px 16px;
@@ -307,4 +302,9 @@
 /* Свёрнутый сайдбар - скрываем баланс */
 .sidebar.collapsed .balance-block {
     display: none;
+}
+
+.user-menu-wrapper {
+    position: relative;
+    width: 100%;
 }

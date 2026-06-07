@@ -51,7 +51,6 @@
 
 
         <div class="sidebar-footer">
-
             <div class="balance-block" id="balanceBlock" style="display: none;">
                 <div class="balance-title">Баланс</div>
                 <div class="balance-bar-container">
@@ -60,28 +59,34 @@
                 <div class="balance-text" id="balanceText"></div>
             </div>
 
-            <!-- ДОБАВЬ ЭТОТ БЛОК -->
-            <div class="user-popup" id="userPopup">
-                <button class="user-popup-item" id="langToggle">
-                    <i class="fas fa-globe"></i>
-                    <span class="lang-text">Русский</span>
-                </button>
-                <div class="user-popup-divider"></div>
-                <button class="user-popup-item user-popup-logout" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Выйти</span>
-                </button>
-            </div>
-
-            <button class="user-menu" id="userMenu" style="display: none;">
-                <div class="user-avatar" id="userAvatar">
-                    <img id="avatarImg" src="" alt="Avatar">
-                    <div>
-                        <span id="userEmailText"></span>
-                        <span class="subscribe-type">Бесплатная подписка</span>
+            <!-- Кнопка user-menu (аватарка) -->
+            <div class="user-menu-wrapper">
+                <button class="user-menu" id="userMenu" style="display: none;">
+                    <div class="user-avatar" id="userAvatar">
+                        <img id="avatarImg" src="" alt="Avatar">
+                        <div>
+                            <span id="userEmailText"></span>
+                            <span class="subscribe-type" id="subscribeTypeText">Бесплатная подписка</span>
+                        </div>
                     </div>
+                </button>
+
+                <div class="user-popup" id="userPopup">
+                    <button class="user-popup-item" id="profileBtn">
+                        <i class="fas fa-user"></i>
+                        <span>Профиль</span>
+                    </button>
+                    <button class="user-popup-item" id="langToggle">
+                        <i class="fas fa-globe"></i>
+                        <span class="lang-text">Русский</span>
+                    </button>
+                    <div class="user-popup-divider"></div>
+                    <button class="user-popup-item user-popup-logout" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Выйти</span>
+                    </button>
                 </div>
-            </button>
+            </div>
 
             <button class="sidebar-footer-btn" id="authBtn">Войти</button>
         </div>

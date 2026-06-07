@@ -137,7 +137,6 @@ async function upgradeToPro() {
     }
 }
 
-// Загрузка текущей подписки
 async function loadCurrentSubscription() {
     if (!Auth.isAuthenticated()) return;
 
@@ -148,7 +147,7 @@ async function loadCurrentSubscription() {
         const data = await response.json();
 
         if (data.success) {
-            // 👇 Обновляем лимит слов
+            // Обновляем лимит слов
             if (typeof window.updateMaxWordsFromSubscription === 'function') {
                 window.updateMaxWordsFromSubscription(data.subscription);
             }
@@ -157,6 +156,25 @@ async function loadCurrentSubscription() {
 
             if (typeof window.updateLimitsDisplay === 'function') {
                 window.updateLimitsDisplay(data.subscription, data.usage);
+            }
+
+            // 👇 ОБНОВЛЯЕМ ТЕКСТ ТИПА ПОДПИСКИ В UI
+            const subscribeTypeText = document.getElementById('subscribeTypeText');
+            if (subscribeTypeText) {
+                const planType = data.subscription.plan_type;
+                let planText = '';
+                switch (planType) {
+                    case 'free': planText = 'Базовая подписка'; break;
+                    case 'premium': planText = 'Premium подписка'; break;
+                    case 'pro': planText = 'Pro подписка'; break;
+                    default: planText = 'Подписка';
+                }
+                subscribeTypeText.textContent = planText;
+            }
+
+            // 👇 ОБНОВЛЯЕМ БАЛАНС
+            if (typeof updateBalanceDisplay === 'function') {
+                updateBalanceDisplay();
             }
         }
     } catch (err) {
