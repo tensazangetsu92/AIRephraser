@@ -41,6 +41,11 @@
     user-select: none;
 }
 
+.modal-content p {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    }
+
 @keyframes modalFadeIn {
     from {
         opacity: 0;

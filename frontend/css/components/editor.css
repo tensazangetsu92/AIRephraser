@@ -158,3 +158,30 @@ textarea::-webkit-scrollbar-track {
     opacity: 0;
     visibility: hidden;
 }
+
+.copy-text-btn {
+    background: transparent;
+    border: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-color);
+    font-size: 0.75rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.copy-text-btn:hover {
+    background: rgba(18, 18, 18, 0.4);
+    transform: translateY(-1px);
+}
+
+.copy-text-btn:active {
+    transform: translateY(0);
+}
+
+.copy-text-btn i {
+    font-size: 24px;
+}

@@ -21,7 +21,6 @@ function loadTextFromLocalStorage() {
 
     if (elements.input && savedInput) {
         elements.input.value = savedInput;
-        // Обновляем счетчик слов
         if (typeof window.updateWordCounter === 'function') {
             window.updateWordCounter();
         }
@@ -29,6 +28,75 @@ function loadTextFromLocalStorage() {
 
     if (elements.result && savedResult) {
         elements.result.value = savedResult;
+    }
+}
+
+async function copyInputText() {
+    const elements = window.elements || {};
+    const inputTextarea = elements.input;
+
+    if (!inputTextarea) return;
+
+    const text = inputTextarea.value;
+
+    if (!text || !text.trim()) {
+        alert('Нет текста для копирования');
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(text);
+
+        const copyBtn = document.getElementById('copyInputBtn');
+        if (copyBtn) {
+            console.log('Changing icon to check');
+            // Сохраняем исходное содержимое
+            const originalHtml = copyBtn.innerHTML;
+            // Меняем на галочку
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            // Возвращаем через 1.5 секунды
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHtml;
+            }, 1500);
+        }
+
+        alert('✅ Текст из поля ввода скопирован');
+    } catch (err) {
+        console.error('Copy failed:', err);
+        alert('❌ Не удалось скопировать текст');
+    }
+}
+
+// Копирование текста из поля результата
+async function copyResultText() {
+    const elements = window.elements || {};
+    const resultTextarea = elements.result;
+
+    if (!resultTextarea) return;
+
+    const text = resultTextarea.value;
+
+    if (!text || text === 'Результат появится здесь...' || text.includes('⚠️') || text.includes('❌') || text.includes('🔄')) {
+        alert('Нет текста для копирования');
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(text);
+
+        const copyBtn = document.getElementById('copyResultBtn');
+        if (copyBtn) {
+            const originalHtml = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHtml;
+            }, 1500);
+        }
+
+        alert('✅ Текст из поля результата скопирован');
+    } catch (err) {
+        console.error('Copy failed:', err);
+        alert('❌ Не удалось скопировать текст');
     }
 }
 
@@ -66,7 +134,6 @@ async function processText(text) {
 
         if (response.ok) {
             if (elements.result) elements.result.value = data.result;
-            // Сохраняем результат в localStorage
             localStorage.setItem('saved_result_text', data.result);
             clearWarning();
         } else if (response.status === 401) {
@@ -190,7 +257,6 @@ async function pasteFromClipboard() {
         if (text) {
             textarea.value = text;
             textarea.dispatchEvent(new Event('input', { bubbles: true }));
-            // Сохраняем в localStorage
             localStorage.setItem('saved_input_text', text);
             if (pasteBtn) pasteBtn.style.display = 'none';
         } else {
@@ -227,17 +293,26 @@ window.clearWarning = clearWarning;
 window.pasteFromClipboard = pasteFromClipboard;
 window.loadTextFromLocalStorage = loadTextFromLocalStorage;
 window.initAutoSave = initAutoSave;
+window.copyInputText = copyInputText;
+window.copyResultText = copyResultText;
 
-// Инициализация кнопки и загрузка сохранённого текста
+// Инициализация кнопок и загрузка сохранённого текста
 document.addEventListener('DOMContentLoaded', () => {
     const pasteBtn = document.getElementById('pasteBtn');
     if (pasteBtn) {
         pasteBtn.addEventListener('click', pasteFromClipboard);
     }
 
-    // Загружаем сохранённый текст
-    loadTextFromLocalStorage();
+    const copyInputBtn = document.getElementById('copyInputBtn');
+    if (copyInputBtn) {
+        copyInputBtn.addEventListener('click', copyInputText);
+    }
 
-    // Включаем автосохранение
+    const copyResultBtn = document.getElementById('copyResultBtn');
+    if (copyResultBtn) {
+        copyResultBtn.addEventListener('click', copyResultText);
+    }
+
+    loadTextFromLocalStorage();
     initAutoSave();
 });

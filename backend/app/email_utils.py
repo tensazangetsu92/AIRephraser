@@ -27,6 +27,13 @@ def send_verification_email(email: str, code: str) -> bool:
         msg['To'] = email
         msg['Subject'] = "Подтверждение регистрации в Humary"
 
+        msg['X-Priority'] = '3'  # Обычный приоритет
+        msg['Importance'] = 'Normal'  # Нормальная важность
+        msg['X-Mailer'] = 'Humary/1.0'  # Идентификация приложения
+        msg['Auto-Submitted'] = 'auto-generated'  # Автоматическое письмо
+        msg['X-Auto-Response-Suppress'] = 'OOF, DR, RN, NRN'  # Не отвечать автоматически
+        msg['Precedence'] = 'bulk'  # Массовая рассылка
+
         # HTML содержимое письма
         html_body = f"""
         <!DOCTYPE html>
