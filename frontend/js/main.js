@@ -83,6 +83,22 @@ function init() {
     if (typeof updateUserMenu === 'function') {
         updateUserMenu();
     }
+    if (typeof loadTextFromLocalStorage === 'function') {
+        loadTextFromLocalStorage();
+    }
+    if (typeof initAutoSave === 'function') {
+        initAutoSave();
+    }
+
+    if (window.elements.input && window.elements.wordCounter) {
+        if (typeof window.updateWordCounter === 'function') {
+            window.updateWordCounter();
+        }
+    }
+
+    if (typeof window.updateUI === 'function') {
+        window.updateUI();
+    }
 
     // 👇 ЗАМЕНИТЬ charCounter НА wordCounter
     if (window.elements.input && window.elements.wordCounter) {

@@ -2,6 +2,36 @@
 
 let pendingText = null;
 
+// Сохранение текста в localStorage
+function saveTextToLocalStorage() {
+    const elements = window.elements || {};
+    if (elements.input) {
+        localStorage.setItem('saved_input_text', elements.input.value);
+    }
+    if (elements.result) {
+        localStorage.setItem('saved_result_text', elements.result.value);
+    }
+}
+
+// Загрузка сохранённого текста из localStorage
+function loadTextFromLocalStorage() {
+    const elements = window.elements || {};
+    const savedInput = localStorage.getItem('saved_input_text');
+    const savedResult = localStorage.getItem('saved_result_text');
+
+    if (elements.input && savedInput) {
+        elements.input.value = savedInput;
+        // Обновляем счетчик слов
+        if (typeof window.updateWordCounter === 'function') {
+            window.updateWordCounter();
+        }
+    }
+
+    if (elements.result && savedResult) {
+        elements.result.value = savedResult;
+    }
+}
+
 // Обработка текста (основная логика)
 async function processText(text) {
     const elements = window.elements || {};
@@ -18,7 +48,7 @@ async function processText(text) {
         elements.humanizeBtn.disabled = true;
         elements.humanizeBtn.innerHTML = '<span class="loading"></span> Обработка...';
     }
-    if (elements.result) elements.result.innerText = '🔄 Обработка текста...';
+    if (elements.result) elements.result.value = '🔄 Обработка текста...';
 
     const token = Auth.getToken();
 
@@ -35,22 +65,23 @@ async function processText(text) {
         const data = await response.json();
 
         if (response.ok) {
-            if (elements.result) elements.result.innerText = data.result;
-            // Очищаем предупреждение при успехе
+            if (elements.result) elements.result.value = data.result;
+            // Сохраняем результат в localStorage
+            localStorage.setItem('saved_result_text', data.result);
             clearWarning();
         } else if (response.status === 401) {
-            if (elements.result) elements.result.innerText = '❌ Сессия истекла. Пожалуйста, войдите заново.';
+            if (elements.result) elements.result.value = '❌ Сессия истекла. Пожалуйста, войдите заново.';
             Auth.logout();
             if (typeof window.updateUI === 'function') window.updateUI();
             setTimeout(() => Auth.showAuthModal(), 1500);
         } else if (response.status === 429) {
-            if (elements.result) elements.result.innerText = '❌ ' + (data.detail || 'Лимит запросов исчерпан');
+            if (elements.result) elements.result.value = '❌ ' + (data.detail || 'Лимит запросов исчерпан');
         } else {
-            if (elements.result) elements.result.innerText = '❌ Ошибка: ' + (data.detail || 'Неизвестная ошибка');
+            if (elements.result) elements.result.value = '❌ Ошибка: ' + (data.detail || 'Неизвестная ошибка');
         }
     } catch (err) {
         console.error('Humanize error:', err);
-        if (elements.result) elements.result.innerText = '❌ Ошибка соединения с сервером';
+        if (elements.result) elements.result.value = '❌ Ошибка соединения с сервером';
     }
 
     if (elements.humanizeBtn) {
@@ -92,22 +123,17 @@ async function send() {
     const maxWords = window.currentMaxWords || 1000;
     const minWords = window.currentMinWords || 50;
 
-    // Очищаем предыдущее предупреждение
     clearWarning();
 
-    // Проверка на пустой текст
     if (!text.trim()) {
         showWarning('⚠️ Пожалуйста, введите текст для обработки', false);
-        if (elements.result) elements.result.innerText = '⚠️ Пожалуйста, введите текст для обработки';
+        if (elements.result) elements.result.value = '⚠️ Пожалуйста, введите текст для обработки';
         return;
     }
 
-    // ========== ПРОВЕРКА МИНИМУМА СЛОВ ==========
     if (wordCount < minWords) {
         const errorMessage = `❌ Минимальное количество слов: ${minWords}.`;
         showWarning(errorMessage, true);
-
-        // ДЕЛАЕМ СЧЕТЧИК КРАСНЫМ
         const wordCountSpan = document.getElementById('wordCount');
         if (wordCountSpan) {
             wordCountSpan.style.color = '#ef4444';
@@ -115,20 +141,17 @@ async function send() {
         }
         return;
     }
-    // ===========================================
 
-    // Проверка лимита слов (максимум)
     if (!window.isWithinWordLimit(text)) {
         const errorMessage = `❌ Максимальное количество слов: ${maxWords}.`;
         showWarning(errorMessage, true);
         return;
     }
 
-    // Проверка авторизации
     if (!Auth.isAuthenticated()) {
         pendingText = text;
         showWarning('🔐 Для использования сервиса необходимо войти в аккаунт', false);
-        if (elements.result) elements.result.innerText = '🔐 Для использования сервиса необходимо войти в аккаунт';
+        if (elements.result) elements.result.value = '🔐 Для использования сервиса необходимо войти в аккаунт';
         Auth.showAuthModal();
         return;
     }
@@ -150,15 +173,12 @@ async function processPendingText() {
             const wordCount = window.countWords ? window.countWords(pendingText) : 0;
             const errorMessage = `❌ Максимальное количество слов: ${maxWords}. Сейчас ${wordCount} слов.`;
             const elements = window.elements || {};
-            if (elements.result) elements.result.innerText = errorMessage;
+            if (elements.result) elements.result.value = errorMessage;
             showWarning(errorMessage, true);
             pendingText = null;
         }
     }
 }
-
-
-// frontend/js/humanize.js - добавь в конец файла
 
 // Вставка текста из буфера обмена
 async function pasteFromClipboard() {
@@ -169,9 +189,9 @@ async function pasteFromClipboard() {
         const text = await navigator.clipboard.readText();
         if (text) {
             textarea.value = text;
-            // Триггерим событие input для обновления счетчика
             textarea.dispatchEvent(new Event('input', { bubbles: true }));
-            // Скрываем кнопку
+            // Сохраняем в localStorage
+            localStorage.setItem('saved_input_text', text);
             if (pasteBtn) pasteBtn.style.display = 'none';
         } else {
             alert('Буфер обмена пуст');
@@ -182,19 +202,42 @@ async function pasteFromClipboard() {
     }
 }
 
-// Делаем функцию глобальной
-window.pasteFromClipboard = pasteFromClipboard;
+// Сохраняем текст при вводе
+function initAutoSave() {
+    const elements = window.elements || {};
 
-// Инициализация кнопки
-document.addEventListener('DOMContentLoaded', () => {
-    const pasteBtn = document.getElementById('pasteBtn');
-    if (pasteBtn) {
-        pasteBtn.addEventListener('click', pasteFromClipboard);
+    if (elements.input) {
+        elements.input.addEventListener('input', () => {
+            localStorage.setItem('saved_input_text', elements.input.value);
+        });
     }
-});
+
+    if (elements.result) {
+        elements.result.addEventListener('input', () => {
+            localStorage.setItem('saved_result_text', elements.result.value);
+        });
+    }
+}
 
 // Делаем функции глобальными
 window.processPendingText = processPendingText;
 window.send = send;
 window.showWarning = showWarning;
 window.clearWarning = clearWarning;
+window.pasteFromClipboard = pasteFromClipboard;
+window.loadTextFromLocalStorage = loadTextFromLocalStorage;
+window.initAutoSave = initAutoSave;
+
+// Инициализация кнопки и загрузка сохранённого текста
+document.addEventListener('DOMContentLoaded', () => {
+    const pasteBtn = document.getElementById('pasteBtn');
+    if (pasteBtn) {
+        pasteBtn.addEventListener('click', pasteFromClipboard);
+    }
+
+    // Загружаем сохранённый текст
+    loadTextFromLocalStorage();
+
+    // Включаем автосохранение
+    initAutoSave();
+});
