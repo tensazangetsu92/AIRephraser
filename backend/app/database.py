@@ -32,6 +32,8 @@ class User(Base):
 
 # app/database.py - обновлённая модель Subscription
 
+# app/database.py - обновлённая модель Subscription (убрал daily_limit)
+
 class Subscription(Base):
     __tablename__ = "subscriptions"
 
@@ -43,10 +45,8 @@ class Subscription(Base):
     end_date = Column(DateTime(timezone=True), nullable=True)
     payment_id = Column(String(255), nullable=True)
 
-    # Новые поля вместо requests_per_day/requests_per_month
-    total_requests = Column(Integer, default=5)  # Всего запросов за всё время
-    daily_limit = Column(Integer, nullable=True)  # Лимит в день (None = без лимита)
-    max_words = Column(Integer, default=200)
+    total_requests = Column(Integer, default=5)
+    max_words = Column(Integer, default=300)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

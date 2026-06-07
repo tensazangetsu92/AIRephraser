@@ -19,21 +19,18 @@ def get_current_datetime():
 SUBSCRIPTION_PLANS = {
     "free": {
         "total_requests": 5,
-        "daily_limit": None,
-        "max_words": 200,  # 👈 200 слов
+        "max_words": 300,
         "price_monthly": 0
     },
     "premium": {
         "total_requests": 300,
-        "daily_limit": 50,
-        "max_words": 1000,  # 👈 1000 слов
-        "price_monthly": 349
+        "max_words": 20000,
+        "price_monthly": 169
     },
     "pro": {
         "total_requests": 1000,
-        "daily_limit": 100,
-        "max_words": 5000,  # 👈 5000 слов
-        "price_monthly": 699
+        "max_words": 50000,
+        "price_monthly": 319
     }
 }
 
@@ -43,13 +40,13 @@ def get_user_subscription(db: Session, user_id: int) -> Subscription:
     subscription = db.query(Subscription).filter(Subscription.user_id == user_id).first()
 
     if not subscription:
+        plan = SUBSCRIPTION_PLANS["free"]
         subscription = Subscription(
             user_id=user_id,
             plan_type="free",
             is_active=True,
-            total_requests=SUBSCRIPTION_PLANS["free"]["total_requests"],
-            daily_limit=SUBSCRIPTION_PLANS["free"]["daily_limit"],
-            max_words=SUBSCRIPTION_PLANS["free"]["max_words"]  # 👈 max_words
+            total_requests=plan["total_requests"],
+            max_words=plan["max_words"]
         )
         db.add(subscription)
         db.commit()
@@ -73,8 +70,7 @@ def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: 
     subscription.end_date = end_date
     subscription.payment_id = payment_id
     subscription.total_requests = plan["total_requests"]
-    subscription.daily_limit = plan["daily_limit"]
-    subscription.max_words = plan["max_words"]  # 👈 max_words
+    subscription.max_words = plan["max_words"]
 
     db.commit()
     db.refresh(subscription)
@@ -90,8 +86,7 @@ def downgrade_to_free(db: Session, user_id: int):
     subscription.plan_type = "free"
     subscription.end_date = None
     subscription.total_requests = free_plan["total_requests"]
-    subscription.daily_limit = free_plan["daily_limit"]
-    subscription.max_words = free_plan["max_words"]  # 👈 max_words
+    subscription.max_words = free_plan["max_words"]
 
     db.commit()
     return subscription
@@ -129,12 +124,11 @@ def check_usage_limit(db: Session, user_id: int, text: str = "") -> bool:
     check_subscription_expired(db, user_id)
 
     plan_type = subscription.plan_type
-    plan = SUBSCRIPTION_PLANS[plan_type]
 
     # Подсчитываем количество слов
     word_count = count_words(text)
 
-    # Проверяем лимит слов
+    # Проверяем лимит слов за раз
     if word_count > subscription.max_words:
         raise HTTPException(
             status_code=400,
@@ -144,7 +138,7 @@ def check_usage_limit(db: Session, user_id: int, text: str = "") -> bool:
     # Получаем общее количество запросов за всё время
     total_requests = get_total_requests_count(db, user_id)
 
-    # Проверяем общий лимит
+    # Проверяем общий лимит запросов
     if total_requests >= subscription.total_requests:
         if plan_type == "free":
             raise HTTPException(
@@ -155,33 +149,6 @@ def check_usage_limit(db: Session, user_id: int, text: str = "") -> bool:
             raise HTTPException(
                 status_code=429,
                 detail=f"Достигнут лимит вашего тарифа — {subscription.total_requests} запросов. Пожалуйста, перейдите на следующий тариф, чтобы продолжить."
-            )
-
-    # Проверяем дневной лимит (только для premium и pro)
-    if subscription.daily_limit is not None:
-        today = date.today()
-
-        stats_today = db.query(UsageStats).filter(
-            UsageStats.user_id == user_id,
-            UsageStats.request_date == today
-        ).first()
-
-        if not stats_today:
-            stats_today = UsageStats(
-                user_id=user_id,
-                request_date=today,
-                requests_count=0,
-                total_chars_processed=0
-            )
-            db.add(stats_today)
-            db.commit()
-
-        requests_today = stats_today.requests_count if stats_today else 0
-
-        if requests_today >= subscription.daily_limit:
-            raise HTTPException(
-                status_code=429,
-                detail=f"Достигнут дневной лимит. Максимум {subscription.daily_limit} запросов в день для вашего тарифа"
             )
 
     return True
@@ -206,7 +173,7 @@ def increment_usage(db: Session, user_id: int, word_count: int):
         db.add(stats)
 
     stats.requests_count += 1
-    stats.total_chars_processed += word_count  # Сохраняем количество слов
+    stats.total_chars_processed += word_count
     db.commit()
 
 
@@ -216,23 +183,14 @@ def get_usage_stats(db: Session, user_id: int) -> dict:
 
     today = date.today()
 
-    # Статистика за сегодня
     stats_today = db.query(UsageStats).filter(
         UsageStats.user_id == user_id,
         UsageStats.request_date == today
     ).first()
 
     requests_today = stats_today.requests_count if stats_today else 0
-
-    # Общее количество запросов за всё время
     total_requests = get_total_requests_count(db, user_id)
-
-    # Оставшиеся запросы
     remaining_requests = max(0, subscription.total_requests - total_requests)
-
-    # Оставшиеся запросы на сегодня
-    remaining_today = max(0,
-                          subscription.daily_limit - requests_today) if subscription.daily_limit is not None else None
 
     return {
         "plan_type": subscription.plan_type,
@@ -240,8 +198,6 @@ def get_usage_stats(db: Session, user_id: int) -> dict:
         "total_requests_limit": subscription.total_requests,
         "remaining_requests": remaining_requests,
         "requests_today": requests_today,
-        "daily_limit": subscription.daily_limit,
-        "remaining_today": remaining_today,
-        "max_words": subscription.max_words,  # 👈 возвращаем max_words
+        "max_words": subscription.max_words,
         "end_date": subscription.end_date.isoformat() if subscription.end_date else None
     }

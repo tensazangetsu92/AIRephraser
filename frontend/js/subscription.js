@@ -163,3 +163,60 @@ async function loadCurrentSubscription() {
         console.error('Failed to load subscription:', err);
     }
 }
+
+// frontend/js/subscription.js - добавь в конец файла
+
+// Обновление блока баланса в сайдбаре
+async function updateBalanceDisplay() {
+    if (!Auth.isAuthenticated()) return;
+
+    try {
+        const response = await fetch('/subscription', {
+            headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            const balanceBlock = document.getElementById('balanceBlock');
+            const balanceBarFill = document.getElementById('balanceBarFill');
+            const balanceText = document.getElementById('balanceText');
+
+            if (!balanceBlock || !balanceBarFill || !balanceText) return;
+
+            const used = data.usage.total_requests_used;
+            const limit = data.usage.total_requests_limit;
+            const remaining = data.usage.remaining_requests;
+
+            // Показываем блок
+            balanceBlock.style.display = 'block';
+
+            // Вычисляем процент ОСТАВШИХСЯ запросов (не использованных)
+            const percentRemaining = (remaining / limit) * 100;
+            balanceBarFill.style.width = `${percentRemaining}%`;
+
+            // Меняем цвет при малом остатке
+            if (percentRemaining <= 10) {
+                balanceBarFill.style.background = 'linear-gradient(90deg, #ef4444, #f59e0b)';
+            } else if (percentRemaining <= 30) {
+                balanceBarFill.style.background = 'linear-gradient(90deg, #f59e0b, #eab308)';
+            } else {
+                balanceBarFill.style.background = 'linear-gradient(90deg, #5787d9, #7c3aed)';
+            }
+
+            // Текст баланса
+            balanceText.innerHTML = `${remaining} / ${limit} токенов осталось`;
+        }
+    } catch (err) {
+        console.error('Failed to update balance:', err);
+    }
+}
+
+// Также вызываем при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    if (Auth.isAuthenticated()) {
+        updateBalanceDisplay();
+    }
+});
+
+// Делаем функцию глобальной
+window.updateBalanceDisplay = updateBalanceDisplay;

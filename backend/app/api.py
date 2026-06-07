@@ -168,7 +168,6 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: S
             "start_date": subscription.start_date,
             "end_date": subscription.end_date,
             "total_requests": subscription.total_requests,
-            "daily_limit": subscription.daily_limit,
             "max_words": subscription.max_words
         },
         "usage": usage_stats,
@@ -196,7 +195,6 @@ async def upgrade_subscription_endpoint(
             "plan_type": subscription.plan_type,
             "end_date": subscription.end_date,
             "total_requests": subscription.total_requests,
-            "daily_limit": subscription.daily_limit,
             "max_words": subscription.max_words
         }
     }

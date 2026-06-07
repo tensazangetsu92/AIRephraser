@@ -73,29 +73,38 @@ function initUserMenu() {
 
     userMenuInited = true;
 
-    userMenu.addEventListener('click', (e) => {
+    // Убираем старые обработчики, чтобы не дублировать
+    const newUserMenu = userMenu.cloneNode(true);
+    userMenu.parentNode.replaceChild(newUserMenu, userMenu);
+
+    const newUserPopup = userPopup.cloneNode(true);
+    userPopup.parentNode.replaceChild(newUserPopup, userPopup);
+
+    const finalUserMenu = document.getElementById('userMenu');
+    const finalUserPopup = document.getElementById('userPopup');
+    const finalLogoutBtn = document.getElementById('logoutBtn');
+    const finalLangToggle = document.getElementById('langToggle');
+
+    finalUserMenu.addEventListener('click', (e) => {
         e.stopPropagation();
-        userPopup.classList.toggle('open');
+        finalUserPopup.classList.toggle('open');
     });
 
     document.addEventListener('click', () => {
-        userPopup.classList.remove('open');
+        finalUserPopup.classList.remove('open');
     });
 
-    userPopup.addEventListener('click', (e) => e.stopPropagation());
+    finalUserPopup.addEventListener('click', (e) => e.stopPropagation());
 
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            userPopup.classList.remove('open');
+    if (finalLogoutBtn) {
+        finalLogoutBtn.addEventListener('click', () => {
+            finalUserPopup.classList.remove('open');
             Auth.logout();
-            updateUserMenu();
-            updateUI();
         });
     }
 
-    if (langToggle) {
-        langToggle.addEventListener('click', () => {
-            // userPopup.classList.remove('open');  ← удали эту строку
+    if (finalLangToggle) {
+        finalLangToggle.addEventListener('click', () => {
             if (typeof toggleLang === 'function') toggleLang();
         });
     }
@@ -108,17 +117,26 @@ function updateUserMenu() {
     const avatarImg = document.getElementById('avatarImg');
     const userEmailText = document.getElementById('userEmailText');
 
+    console.log('updateUserMenu called, user:', user); // Отладка
+
     if (user && Auth.isAuthenticated()) {
-        if (userMenu) userMenu.style.display = 'block';
+        if (userMenu) {
+            userMenu.style.display = 'block';
+            console.log('userMenu displayed');
+        }
         if (authBtn) authBtn.style.display = 'none';
         if (userEmailText) userEmailText.textContent = user.email;
         if (avatarImg) {
             avatarImg.src = getAvatarUrl(user.email);
             avatarImg.alt = user.email;
         }
-        initUserMenu(); // вызываем здесь — когда меню точно в DOM и видимо
+        // Инициализируем меню ПОСЛЕ того как оно стало видимым
+        initUserMenu();
     } else {
-        if (userMenu) userMenu.style.display = 'none';
+        if (userMenu) {
+            userMenu.style.display = 'none';
+            console.log('userMenu hidden');
+        }
         if (authBtn) authBtn.style.display = 'block';
     }
 }
@@ -129,9 +147,12 @@ function updateUI() {
     const user = Auth.getUser();
     const authBtn = document.getElementById('authBtn');
 
+    console.log('updateUI called, user:', user); // Отладка
+
     if (user && Auth.isAuthenticated()) {
         updateUserMenu();
         if (typeof loadCurrentSubscription === 'function') loadCurrentSubscription();
+        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
     } else {
         const userMenu = document.getElementById('userMenu');
         if (userMenu) userMenu.style.display = 'none';
@@ -141,6 +162,34 @@ function updateUI() {
             authBtn.onclick = () => Auth.showAuthModal();
         }
         if (typeof resetTariffCards === 'function') resetTariffCards();
+        const balanceBlock = document.getElementById('balanceBlock');
+        if (balanceBlock) balanceBlock.style.display = 'none';
+    }
+}
+
+// ========== ОБНОВЛЕНИЕ UI ==========
+
+function updateUI() {
+    const user = Auth.getUser();
+    const authBtn = document.getElementById('authBtn');
+
+    console.log('updateUI called, user:', user); // Отладка
+
+    if (user && Auth.isAuthenticated()) {
+        updateUserMenu();
+        if (typeof loadCurrentSubscription === 'function') loadCurrentSubscription();
+        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+    } else {
+        const userMenu = document.getElementById('userMenu');
+        if (userMenu) userMenu.style.display = 'none';
+        if (authBtn) {
+            authBtn.style.display = 'block';
+            authBtn.textContent = typeof t === 'function' ? t('login') : 'Войти';
+            authBtn.onclick = () => Auth.showAuthModal();
+        }
+        if (typeof resetTariffCards === 'function') resetTariffCards();
+        const balanceBlock = document.getElementById('balanceBlock');
+        if (balanceBlock) balanceBlock.style.display = 'none';
     }
 }
 
@@ -218,7 +267,12 @@ window.closeVerificationModal = function() {
 
 document.addEventListener('DOMContentLoaded', () => {
     initSidebarToggle();
-    // initUserMenu вызывается из updateUserMenu когда пользователь авторизован
+    // Принудительно обновляем UI после загрузки
+    setTimeout(() => {
+        if (typeof updateUI === 'function') {
+            updateUI();
+        }
+    }, 100);
 });
 
 // ========== ГЛОБАЛЬНЫЕ ФУНКЦИИ ==========

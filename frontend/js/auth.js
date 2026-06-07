@@ -39,19 +39,18 @@ const Auth = {
             this.setToken(result.data.access_token);
             this.setUser(result.data.user);
             this.closeAuthModal();
+
+            // 👇 ДОЛЖЕН БЫТЬ ВЫЗОВ
             if (typeof updateUI === 'function') {
                 updateUI();
             }
             if (typeof updateUserMenu === 'function') {
                 updateUserMenu();
             }
-            if (typeof window.processPendingText === 'function') {
-                window.processPendingText();
-            }
+
             return { success: true, user: result.data.user };
-        } else {
-            return { success: false, error: result.data.detail || 'Ошибка входа' };
         }
+        return { success: false, error: result.data.detail || 'Ошибка входа' };
     },
 
     async register(email, password) {
@@ -386,10 +385,7 @@ window.closeAuthModal = () => Auth.closeAuthModal();
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOMContentLoaded - initializing auth');
-
     Auth.handleGoogleCallback();
-
     initAuthModal();
 
     const authBtn = document.getElementById('authBtn');
@@ -397,9 +393,10 @@ document.addEventListener('DOMContentLoaded', () => {
         authBtn.addEventListener('click', () => Auth.showAuthModal());
     }
 
-    if (typeof updateUI === 'function') {
-        updateUI();
-    }
+    // Даём время загрузиться ui.js
+    setTimeout(() => {
+        if (typeof updateUI === 'function') updateUI();
+    }, 0);
 });
 
 function initAuthModal() {
