@@ -129,6 +129,8 @@
     </div>
 </div>
 
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <script src="/js/utils.js" defer></script>
 <script src="/js/api.js" defer></script>
@@ -137,5 +139,15 @@
 <script src="/js/subscription.js" defer></script>
 <script src="/js/ui.js" defer></script>
 {% block scripts %}{% endblock %}
+
+
+<div id="notificationToast" class="notification-toast">
+    <div class="notification-content">
+        <i class="notification-icon" id="notificationIcon"></i>
+        <span id="notificationMessage"></span>
+    </div>
+    <button class="notification-close" onclick="closeNotification()">×</button>
+</div>
+
 </body>
 </html>

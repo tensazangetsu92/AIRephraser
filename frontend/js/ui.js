@@ -21,23 +21,23 @@ function closeModals() {
 async function handleLogin() {
     const email = document.getElementById('authEmail')?.value;
     const password = document.getElementById('authPassword')?.value;
-    if (!email || !password) { alert('Заполните все поля'); return; }
+    if (!email || !password) { showNotification('Заполните все поля', 'warning'); return; }
     const result = await Auth.login(email, password);
-    if (!result.success) alert(result.error);
+    if (!result.success) showNotification(result.error, 'error');
 }
 
 async function handleRegister() {
     const email = document.getElementById('authEmail')?.value;
     const password = document.getElementById('authPassword')?.value;
     const confirmPassword = document.getElementById('authConfirmPassword')?.value;
-    if (!email || !password) { alert('Заполните все поля'); return; }
-    if (password !== confirmPassword) { alert('Пароли не совпадают'); return; }
-    if (password.length < 4) { alert('Пароль должен содержать минимум 4 символа'); return; }
+    if (!email || !password) { showNotification('Заполните все поля', 'warning'); return; }
+    if (password !== confirmPassword) { showNotification('Пароли не совпадают', 'warning'); return; }
+    if (password.length < 4) { showNotification('Пароль должен содержать минимум 4 символа', 'warning'); return; }
     const result = await Auth.sendVerification(email, password);
     if (result.success) {
         Auth.showVerificationModal(result.email);
     } else {
-        alert(result.error);
+        showNotification(result.error, 'error');
     }
 }
 
@@ -68,6 +68,7 @@ function initUserMenu() {
     const userPopup = document.getElementById('userPopup');
     const logoutBtn = document.getElementById('logoutBtn');
     const langToggle = document.getElementById('langToggle');
+    const profileBtn = document.getElementById('profileBtn');
 
     if (!userMenu || !userPopup) return;
 
@@ -84,6 +85,7 @@ function initUserMenu() {
     const finalUserPopup = document.getElementById('userPopup');
     const finalLogoutBtn = document.getElementById('logoutBtn');
     const finalLangToggle = document.getElementById('langToggle');
+    const finalProfileBtn = document.getElementById('profileBtn');
 
     finalUserMenu.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -108,6 +110,13 @@ function initUserMenu() {
             if (typeof toggleLang === 'function') toggleLang();
         });
     }
+
+    if (finalProfileBtn) {
+        finalProfileBtn.addEventListener('click', () => {
+            finalUserPopup.classList.remove('open');
+            window.location.href = '/profile';
+        });
+    }
 }
 
 function updateUserMenu() {
@@ -117,12 +126,9 @@ function updateUserMenu() {
     const avatarImg = document.getElementById('avatarImg');
     const userEmailText = document.getElementById('userEmailText');
 
-    console.log('updateUserMenu called, user:', user); // Отладка
-
     if (user && Auth.isAuthenticated()) {
         if (userMenu) {
             userMenu.style.display = 'block';
-            console.log('userMenu displayed');
         }
         if (authBtn) authBtn.style.display = 'none';
         if (userEmailText) userEmailText.textContent = user.email;
@@ -130,12 +136,10 @@ function updateUserMenu() {
             avatarImg.src = getAvatarUrl(user.email);
             avatarImg.alt = user.email;
         }
-        // Инициализируем меню ПОСЛЕ того как оно стало видимым
         initUserMenu();
     } else {
         if (userMenu) {
             userMenu.style.display = 'none';
-            console.log('userMenu hidden');
         }
         if (authBtn) authBtn.style.display = 'block';
     }
@@ -146,34 +150,6 @@ function updateUserMenu() {
 function updateUI() {
     const user = Auth.getUser();
     const authBtn = document.getElementById('authBtn');
-
-    console.log('updateUI called, user:', user); // Отладка
-
-    if (user && Auth.isAuthenticated()) {
-        updateUserMenu();
-        if (typeof loadCurrentSubscription === 'function') loadCurrentSubscription();
-        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-    } else {
-        const userMenu = document.getElementById('userMenu');
-        if (userMenu) userMenu.style.display = 'none';
-        if (authBtn) {
-            authBtn.style.display = 'block';
-            authBtn.textContent = typeof t === 'function' ? t('login') : 'Войти';
-            authBtn.onclick = () => Auth.showAuthModal();
-        }
-        if (typeof resetTariffCards === 'function') resetTariffCards();
-        const balanceBlock = document.getElementById('balanceBlock');
-        if (balanceBlock) balanceBlock.style.display = 'none';
-    }
-}
-
-// ========== ОБНОВЛЕНИЕ UI ==========
-
-function updateUI() {
-    const user = Auth.getUser();
-    const authBtn = document.getElementById('authBtn');
-
-    console.log('updateUI called, user:', user); // Отладка
 
     if (user && Auth.isAuthenticated()) {
         updateUserMenu();
@@ -199,14 +175,14 @@ async function copyText() {
     const elements = window.elements || {};
     const text = elements.result?.innerText;
     if (!text || text === 'Результат появится здесь...' || text.includes('⚠️') || text.includes('❌') || text.includes('🔄')) {
-        alert('Нет текста для копирования');
+        showNotification('Нет текста для копирования', 'warning');
         return;
     }
     try {
         await navigator.clipboard.writeText(text);
-        alert('✅ Текст скопирован в буфер обмена');
+        showNotification('Текст скопирован в буфер обмена', 'success');
     } catch {
-        alert('❌ Не удалось скопировать текст');
+        showNotification('Не удалось скопировать текст', 'error');
     }
 }
 
@@ -247,7 +223,7 @@ window.verifyCode = async function() {
 
     const result = await Auth.verifyCode(code);
     if (result.success) {
-        alert('✅ Регистрация успешно завершена!');
+        showNotification('Регистрация успешно завершена!', 'success');
         Auth.closeVerificationModal();
         Auth.closeAuthModal();
     } else {
@@ -263,11 +239,71 @@ window.closeVerificationModal = function() {
     Auth.closeVerificationModal();
 };
 
+// ========== УВЕДОМЛЕНИЯ ==========
+
+function showNotification(message, type = 'info', duration = 3000) {
+    const toast = document.getElementById('notificationToast');
+    const messageSpan = document.getElementById('notificationMessage');
+    const iconSpan = document.getElementById('notificationIcon');
+
+    if (!toast || !messageSpan) return;
+
+    // Отменяем предыдущий таймер закрытия
+    if (window.notificationTimeout) clearTimeout(window.notificationTimeout);
+    if (window.notificationHideTimeout) clearTimeout(window.notificationHideTimeout);
+
+    // Убираем предыдущие классы
+    toast.classList.remove('show', 'hide', 'success', 'error', 'warning', 'info');
+
+    // Устанавливаем иконку и класс
+    let icon = '';
+    switch (type) {
+        case 'success':
+            icon = '<i class="fas fa-check-circle"></i>';
+            toast.classList.add('success');
+            break;
+        case 'error':
+            icon = '<i class="fas fa-exclamation-circle"></i>';
+            toast.classList.add('error');
+            break;
+        case 'warning':
+            icon = '<i class="fas fa-exclamation-triangle"></i>';
+            toast.classList.add('warning');
+            break;
+        default:
+            icon = '<i class="fas fa-info-circle"></i>';
+            toast.classList.add('info');
+    }
+
+    iconSpan.innerHTML = icon;
+    messageSpan.textContent = message;
+
+    // Показываем уведомление
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    // Убираем через duration
+    window.notificationTimeout = setTimeout(() => {
+        closeNotification();
+    }, duration);
+}
+
+function closeNotification() {
+    const toast = document.getElementById('notificationToast');
+    if (toast) {
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        window.notificationHideTimeout = setTimeout(() => {
+            toast.classList.remove('hide');
+        }, 300);
+    }
+}
+
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 
 document.addEventListener('DOMContentLoaded', () => {
     initSidebarToggle();
-    // Принудительно обновляем UI после загрузки
     setTimeout(() => {
         if (typeof updateUI === 'function') {
             updateUI();
@@ -287,3 +323,5 @@ window.handleLogout = handleLogout;
 window.updateUI = updateUI;
 window.copyText = copyText;
 window.updateUserMenu = updateUserMenu;
+window.showNotification = showNotification;
+window.closeNotification = closeNotification;

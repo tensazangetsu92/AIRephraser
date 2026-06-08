@@ -19,7 +19,7 @@ def get_current_datetime():
 SUBSCRIPTION_PLANS = {
     "free": {
         "total_requests": 5,
-        "max_words": 300,
+        "max_words": 1000,
         "price_monthly": 0
     },
     "premium": {

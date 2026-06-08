@@ -111,12 +111,18 @@
     list-style: none;
     padding: 0;
     margin-bottom: 1.5rem;
+    margin-left: 10px;
 }
 
 .tariff-features li {
-    padding: 0.5rem 0;
+    padding: 3px 0;
     color: #c0c0c0;
     font-size: 0.875rem;
+}
+
+.tariff-features li i {
+    font-size: 1.2rem;
+    margin-right: 5px;
 }
 
 .tariff-btn {

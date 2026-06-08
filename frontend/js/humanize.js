@@ -31,6 +31,8 @@ function loadTextFromLocalStorage() {
     }
 }
 
+let copyInputTimer = null;
+
 async function copyInputText() {
     const elements = window.elements || {};
     const inputTextarea = elements.input;
@@ -40,7 +42,7 @@ async function copyInputText() {
     const text = inputTextarea.value;
 
     if (!text || !text.trim()) {
-        alert('Нет текста для копирования');
+        showNotification('Нет текста для копирования', 'warning');
         return;
     }
 
@@ -49,25 +51,35 @@ async function copyInputText() {
 
         const copyBtn = document.getElementById('copyInputBtn');
         if (copyBtn) {
-            console.log('Changing icon to check');
-            // Сохраняем исходное содержимое
-            const originalHtml = copyBtn.innerHTML;
+            // Отменяем предыдущий таймер
+            if (copyInputTimer) clearTimeout(copyInputTimer);
+
+            // Сохраняем исходное содержимое (только если иконка не галочка)
+            if (!copyBtn.hasAttribute('data-original-html')) {
+                copyBtn.setAttribute('data-original-html', copyBtn.innerHTML);
+            }
+            const originalHtml = copyBtn.getAttribute('data-original-html');
+
             // Меняем на галочку
             copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+
             // Возвращаем через 1.5 секунды
-            setTimeout(() => {
+            copyInputTimer = setTimeout(() => {
                 copyBtn.innerHTML = originalHtml;
+                copyInputTimer = null;
             }, 1500);
         }
 
-        alert('✅ Текст из поля ввода скопирован');
+        showNotification('Текст из поля ввода скопирован', 'success');
     } catch (err) {
         console.error('Copy failed:', err);
-        alert('❌ Не удалось скопировать текст');
+        showNotification('Не удалось скопировать текст', 'error');
     }
 }
 
 // Копирование текста из поля результата
+let copyResultTimer = null;
+
 async function copyResultText() {
     const elements = window.elements || {};
     const resultTextarea = elements.result;
@@ -77,7 +89,7 @@ async function copyResultText() {
     const text = resultTextarea.value;
 
     if (!text || text === 'Результат появится здесь...' || text.includes('⚠️') || text.includes('❌') || text.includes('🔄')) {
-        alert('Нет текста для копирования');
+        showNotification('Нет текста для копирования', 'warning');
         return;
     }
 
@@ -86,17 +98,29 @@ async function copyResultText() {
 
         const copyBtn = document.getElementById('copyResultBtn');
         if (copyBtn) {
-            const originalHtml = copyBtn.innerHTML;
+            // Отменяем предыдущий таймер
+            if (copyResultTimer) clearTimeout(copyResultTimer);
+
+            // Сохраняем исходное содержимое (только если иконка не галочка)
+            if (!copyBtn.hasAttribute('data-original-html')) {
+                copyBtn.setAttribute('data-original-html', copyBtn.innerHTML);
+            }
+            const originalHtml = copyBtn.getAttribute('data-original-html');
+
+            // Меняем на галочку
             copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-            setTimeout(() => {
+
+            // Возвращаем через 1.5 секунды
+            copyResultTimer = setTimeout(() => {
                 copyBtn.innerHTML = originalHtml;
+                copyResultTimer = null;
             }, 1500);
         }
 
-        alert('✅ Текст из поля результата скопирован');
+        showNotification('Текст из поля результата скопирован', 'success');
     } catch (err) {
         console.error('Copy failed:', err);
-        alert('❌ Не удалось скопировать текст');
+        showNotification('Не удалось скопировать текст', 'error');
     }
 }
 
