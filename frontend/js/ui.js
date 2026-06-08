@@ -240,6 +240,8 @@ window.closeVerificationModal = function() {
 };
 
 // ========== УВЕДОМЛЕНИЯ ==========
+let notificationTimeout = null;
+let notificationHideTimeout = null;
 
 function showNotification(message, type = 'info', duration = 3000) {
     const toast = document.getElementById('notificationToast');
@@ -248,58 +250,53 @@ function showNotification(message, type = 'info', duration = 3000) {
 
     if (!toast || !messageSpan) return;
 
-    // Отменяем предыдущий таймер закрытия
-    if (window.notificationTimeout) clearTimeout(window.notificationTimeout);
-    if (window.notificationHideTimeout) clearTimeout(window.notificationHideTimeout);
+    // Отменяем все таймеры
+    if (notificationTimeout) clearTimeout(notificationTimeout);
+    if (notificationHideTimeout) clearTimeout(notificationHideTimeout);
 
-    // Убираем предыдущие классы
-    toast.classList.remove('show', 'hide', 'success', 'error', 'warning', 'info');
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+    };
 
-    // Устанавливаем иконку и класс
-    let icon = '';
-    switch (type) {
-        case 'success':
-            icon = '<i class="fas fa-check-circle"></i>';
-            toast.classList.add('success');
-            break;
-        case 'error':
-            icon = '<i class="fas fa-exclamation-circle"></i>';
-            toast.classList.add('error');
-            break;
-        case 'warning':
-            icon = '<i class="fas fa-exclamation-triangle"></i>';
-            toast.classList.add('warning');
-            break;
-        default:
-            icon = '<i class="fas fa-info-circle"></i>';
-            toast.classList.add('info');
-    }
-
-    iconSpan.innerHTML = icon;
-    messageSpan.textContent = message;
-
-    // Показываем уведомление
-    setTimeout(() => {
+    const show = () => {
+        toast.classList.remove('success', 'error', 'warning', 'info');
+        iconSpan.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i>`;
+        messageSpan.textContent = message;
+        toast.classList.add(type);
         toast.classList.add('show');
-    }, 10);
 
-    // Убираем через duration
-    window.notificationTimeout = setTimeout(() => {
-        closeNotification();
-    }, duration);
+        notificationTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, duration);
+    };
+
+    // Если уже показано — скрываем и ждём окончания transition (300ms)
+    if (toast.classList.contains('show')) {
+        toast.classList.remove('show');
+        notificationHideTimeout = setTimeout(show, 300);
+    } else {
+        show();
+    }
 }
 
 function closeNotification() {
     const toast = document.getElementById('notificationToast');
-    if (toast) {
-        toast.classList.remove('show');
-        toast.classList.add('hide');
-        window.notificationHideTimeout = setTimeout(() => {
-            toast.classList.remove('hide');
-        }, 300);
-    }
+    if (toast) toast.classList.remove('show');
+    if (notificationTimeout) clearTimeout(notificationTimeout);
+    if (notificationHideTimeout) clearTimeout(notificationHideTimeout);
 }
 
+window.showNotification = showNotification;
+window.closeNotification = closeNotification;
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -325,3 +322,4 @@ window.copyText = copyText;
 window.updateUserMenu = updateUserMenu;
 window.showNotification = showNotification;
 window.closeNotification = closeNotification;
+

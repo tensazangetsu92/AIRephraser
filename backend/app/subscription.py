@@ -56,7 +56,7 @@ def get_user_subscription(db: Session, user_id: int) -> Subscription:
 
 
 def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: str = None):
-    """Обновить подписку пользователя"""
+    """Обновить подписку пользователя и сбросить статистику"""
     if plan_type not in SUBSCRIPTION_PLANS:
         raise HTTPException(status_code=400, detail="Invalid plan type")
 
@@ -71,6 +71,9 @@ def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: 
     subscription.payment_id = payment_id
     subscription.total_requests = plan["total_requests"]
     subscription.max_words = plan["max_words"]
+
+    # 👇 СБРАСЫВАЕМ СТАТИСТИКУ ИСПОЛЬЗОВАННЫХ ЗАПРОСОВ
+    reset_usage_stats(db, user_id)
 
     db.commit()
     db.refresh(subscription)
@@ -201,3 +204,25 @@ def get_usage_stats(db: Session, user_id: int) -> dict:
         "max_words": subscription.max_words,
         "end_date": subscription.end_date.isoformat() if subscription.end_date else None
     }
+
+
+# app/subscription.py
+
+def reset_usage_stats(db: Session, user_id: int):
+    """Сбрасывает статистику использования при смене подписки"""
+    today = date.today()
+
+    # Удаляем все записи статистики для этого пользователя
+    db.query(UsageStats).filter(UsageStats.user_id == user_id).delete()
+
+    # Создаём чистую запись на сегодня
+    new_stats = UsageStats(
+        user_id=user_id,
+        request_date=today,
+        requests_count=0,
+        total_chars_processed=0
+    )
+    db.add(new_stats)
+    db.commit()
+
+    print(f"🔄 Reset usage stats for user {user_id}")

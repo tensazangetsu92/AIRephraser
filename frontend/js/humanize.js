@@ -125,6 +125,8 @@ async function copyResultText() {
 }
 
 // Обработка текста (основная логика)
+// frontend/js/humanize.js - обнови функцию processText
+
 async function processText(text) {
     const elements = window.elements || {};
 
@@ -160,6 +162,15 @@ async function processText(text) {
             if (elements.result) elements.result.value = data.result;
             localStorage.setItem('saved_result_text', data.result);
             clearWarning();
+
+            // 👇 ОБНОВЛЯЕМ БАЛАНС ПОСЛЕ УСПЕШНОГО ЗАПРОСА
+            if (typeof updateBalanceDisplay === 'function') {
+                updateBalanceDisplay();
+            }
+            if (typeof loadCurrentSubscription === 'function') {
+                loadCurrentSubscription();
+            }
+
         } else if (response.status === 401) {
             if (elements.result) elements.result.value = '❌ Сессия истекла. Пожалуйста, войдите заново.';
             Auth.logout();
@@ -167,6 +178,10 @@ async function processText(text) {
             setTimeout(() => Auth.showAuthModal(), 1500);
         } else if (response.status === 429) {
             if (elements.result) elements.result.value = '❌ ' + (data.detail || 'Лимит запросов исчерпан');
+            // Обновляем баланс даже при лимите, чтобы показать 0
+            if (typeof updateBalanceDisplay === 'function') {
+                updateBalanceDisplay();
+            }
         } else {
             if (elements.result) elements.result.value = '❌ Ошибка: ' + (data.detail || 'Неизвестная ошибка');
         }

@@ -12,7 +12,6 @@ async function updateSubscriptionUI(activePlan = null) {
                 activePlan = data.subscription.plan_type;
                 window.currentSubscription = data.subscription;
 
-                // 👇 Обновляем лимит слов
                 if (typeof window.updateMaxWordsFromSubscription === 'function') {
                     window.updateMaxWordsFromSubscription(data.subscription);
                 }
@@ -62,7 +61,7 @@ async function updateSubscriptionUI(activePlan = null) {
 // Обновление подписки Premium
 async function upgradeToPremium() {
     if (!Auth.isAuthenticated()) {
-        alert('Пожалуйста, войдите в аккаунт, чтобы оформить подписку');
+        showNotification('Пожалуйста, войдите в аккаунт, чтобы оформить подписку', 'warning');
         Auth.showAuthModal();
         return;
     }
@@ -80,28 +79,41 @@ async function upgradeToPremium() {
         const data = await response.json();
 
         if (response.ok) {
-            alert('✅ Подписка Premium активирована!');
+            showNotification('✅ Подписка Premium активирована!', 'success');
+
+            // Обновляем данные подписки на сервере
+            await loadCurrentSubscription();
+
+            // Обновляем баланс
+            if (typeof updateBalanceDisplay === 'function') {
+                await updateBalanceDisplay();
+            }
+
+            // Обновляем UI
+            if (typeof window.updateUI === 'function') {
+                window.updateUI();
+            }
 
             // Обновляем лимит слов
             if (data.subscription && typeof window.updateMaxWordsFromSubscription === 'function') {
                 window.updateMaxWordsFromSubscription(data.subscription);
             }
 
-            await updateSubscriptionUI('premium');
-            if (typeof window.updateUI === 'function') window.updateUI();
+            // Перезагружаем страницу, чтобы всё сбросилось (опционально)
+            // setTimeout(() => window.location.reload(), 1500);
         } else {
-            alert('❌ Ошибка: ' + (data.detail || 'Не удалось активировать подписку'));
+            showNotification('❌ Ошибка: ' + (data.detail || 'Не удалось активировать подписку'), 'error');
         }
     } catch (err) {
         console.error('Upgrade error:', err);
-        alert('❌ Ошибка соединения с сервером');
+        showNotification('❌ Ошибка соединения с сервером', 'error');
     }
 }
 
 // Обновление подписки Pro
 async function upgradeToPro() {
     if (!Auth.isAuthenticated()) {
-        alert('Пожалуйста, войдите в аккаунт, чтобы оформить подписку');
+        showNotification('Пожалуйста, войдите в аккаунт, чтобы оформить подписку', 'warning');
         Auth.showAuthModal();
         return;
     }
@@ -119,21 +131,34 @@ async function upgradeToPro() {
         const data = await response.json();
 
         if (response.ok) {
-            alert('✅ Подписка Pro активирована!');
+            showNotification('✅ Подписка Pro активирована!', 'success');
 
-            // 👇 Обновляем лимит слов
+            // Обновляем данные подписки на сервере
+            await loadCurrentSubscription();
+
+            // Обновляем баланс
+            if (typeof updateBalanceDisplay === 'function') {
+                await updateBalanceDisplay();
+            }
+
+            // Обновляем UI
+            if (typeof window.updateUI === 'function') {
+                window.updateUI();
+            }
+
+            // Обновляем лимит слов
             if (data.subscription && typeof window.updateMaxWordsFromSubscription === 'function') {
                 window.updateMaxWordsFromSubscription(data.subscription);
             }
 
-            await updateSubscriptionUI('pro');
-            if (typeof window.updateUI === 'function') window.updateUI();
+            // Перезагружаем страницу, чтобы всё сбросилось (опционально)
+            // setTimeout(() => window.location.reload(), 1500);
         } else {
-            alert('❌ Ошибка: ' + (data.detail || 'Не удалось активировать подписку'));
+            showNotification('❌ Ошибка: ' + (data.detail || 'Не удалось активировать подписку'), 'error');
         }
     } catch (err) {
         console.error('Upgrade error:', err);
-        alert('❌ Ошибка соединения с сервером');
+        showNotification('❌ Ошибка соединения с сервером', 'error');
     }
 }
 
@@ -147,6 +172,9 @@ async function loadCurrentSubscription() {
         const data = await response.json();
 
         if (data.success) {
+            // Сохраняем данные подписки глобально
+            window.currentSubscription = data.subscription;
+
             // Обновляем лимит слов
             if (typeof window.updateMaxWordsFromSubscription === 'function') {
                 window.updateMaxWordsFromSubscription(data.subscription);
@@ -158,7 +186,7 @@ async function loadCurrentSubscription() {
                 window.updateLimitsDisplay(data.subscription, data.usage);
             }
 
-            // 👇 ОБНОВЛЯЕМ ТЕКСТ ТИПА ПОДПИСКИ В UI
+            // Обновляем текст типа подписки в UI
             const subscribeTypeText = document.getElementById('subscribeTypeText');
             if (subscribeTypeText) {
                 const planType = data.subscription.plan_type;
@@ -172,9 +200,17 @@ async function loadCurrentSubscription() {
                 subscribeTypeText.textContent = planText;
             }
 
-            // 👇 ОБНОВЛЯЕМ БАЛАНС
+            // Обновляем баланс
             if (typeof updateBalanceDisplay === 'function') {
-                updateBalanceDisplay();
+                await updateBalanceDisplay();
+            }
+
+            // Обновляем статистику использованных запросов
+            if (data.usage) {
+                const used = data.usage.total_requests_used;
+                const limit = data.usage.total_requests_limit;
+                const remaining = data.usage.remaining_requests;
+                console.log(`Использовано: ${used}, Лимит: ${limit}, Осталось: ${remaining}`);
             }
         }
     } catch (err) {
@@ -182,9 +218,6 @@ async function loadCurrentSubscription() {
     }
 }
 
-// frontend/js/subscription.js - добавь в конец файла
-
-// Обновление блока баланса в сайдбаре
 async function updateBalanceDisplay() {
     if (!Auth.isAuthenticated()) return;
 
@@ -202,17 +235,14 @@ async function updateBalanceDisplay() {
             if (!balanceBlock || !balanceBarFill || !balanceText) return;
 
             const used = data.usage.total_requests_used;
-            const limit = data.usage.total_requests_limit;
-            const remaining = data.usage.remaining_requests;
+            const limit = data.subscription.total_requests;
+            const remaining = limit - used;
 
-            // Показываем блок
             balanceBlock.style.display = 'block';
 
-            // Вычисляем процент ОСТАВШИХСЯ запросов (не использованных)
             const percentRemaining = (remaining / limit) * 100;
             balanceBarFill.style.width = `${percentRemaining}%`;
 
-            // Меняем цвет при малом остатке
             if (percentRemaining <= 10) {
                 balanceBarFill.style.background = 'linear-gradient(90deg, #ef4444, #f59e0b)';
             } else if (percentRemaining <= 30) {
@@ -221,20 +251,22 @@ async function updateBalanceDisplay() {
                 balanceBarFill.style.background = 'linear-gradient(90deg, #5787d9, #7c3aed)';
             }
 
-            // Текст баланса
-            balanceText.innerHTML = `${remaining} / ${limit} токенов осталось`;
+            balanceText.innerHTML = `${remaining} / ${limit} запросов осталось`;
         }
     } catch (err) {
         console.error('Failed to update balance:', err);
     }
 }
 
-// Также вызываем при загрузке страницы
+// Инициализация
 document.addEventListener('DOMContentLoaded', () => {
     if (Auth.isAuthenticated()) {
+        loadCurrentSubscription();
         updateBalanceDisplay();
     }
 });
 
-// Делаем функцию глобальной
+// Экспортируем функции
+window.forceUpdateBalance = updateBalanceDisplay;
 window.updateBalanceDisplay = updateBalanceDisplay;
+window.loadCurrentSubscription = loadCurrentSubscription;
