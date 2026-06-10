@@ -26,7 +26,7 @@ from app.subscription import (
     get_usage_stats,
     check_usage_limit,
     increment_usage,
-    SUBSCRIPTION_PLANS, check_subscription_expired
+    SUBSCRIPTION_PLANS, check_subscription_expired, get_plan_limits
 )
 from app.email_utils import verify_code
 from auth import create_pending_user, verify_and_create_user
@@ -157,10 +157,12 @@ async def get_me(current_user: User = Depends(get_current_user), db: Session = D
 
 @router.get("/subscription")
 async def get_subscription(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Получить информацию о подписке пользователя"""
+    from app.subscription import check_subscription_expired
     check_subscription_expired(db, current_user.id)
+
     subscription = get_user_subscription(db, current_user.id)
     usage_stats = get_usage_stats(db, current_user.id)
+    limits = get_plan_limits(subscription.plan_type)
 
     return {
         "success": True,
@@ -170,12 +172,13 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: S
             "is_active": subscription.is_active,
             "start_date": subscription.start_date,
             "end_date": subscription.end_date,
-            "total_requests": subscription.total_requests,
-            "max_words": subscription.max_words
+            "total_requests": limits["total_requests"],
+            "max_words": limits["max_words"]
         },
         "usage": usage_stats,
         "available_plans": SUBSCRIPTION_PLANS
     }
+
 
 
 @router.post("/subscription/upgrade")
@@ -190,6 +193,7 @@ async def upgrade_subscription_endpoint(
         plan_data.plan_type,
         payment_id=f"test_payment_{datetime.now().timestamp()}"
     )
+    limits = get_plan_limits(subscription.plan_type)
 
     return {
         "success": True,
@@ -197,8 +201,8 @@ async def upgrade_subscription_endpoint(
         "subscription": {
             "plan_type": subscription.plan_type,
             "end_date": subscription.end_date,
-            "total_requests": subscription.total_requests,
-            "max_words": subscription.max_words
+            "total_requests": limits["total_requests"],
+            "max_words": limits["max_words"]
         }
     }
 

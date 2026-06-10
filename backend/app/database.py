@@ -45,9 +45,6 @@ class Subscription(Base):
     end_date = Column(DateTime(timezone=True), nullable=True)
     payment_id = Column(String(255), nullable=True)
 
-    total_requests = Column(Integer, default=5)
-    max_words = Column(Integer, default=300)
-
     last_reset_date = Column(DateTime(timezone=True), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
