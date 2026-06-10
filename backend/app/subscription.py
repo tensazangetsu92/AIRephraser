@@ -55,7 +55,7 @@ def get_user_subscription(db: Session, user_id: int) -> Subscription:
     return subscription
 
 
-def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: str = None):
+def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: str = None, duration_days: int = 30):
     """Обновить подписку пользователя и сбросить статистику"""
     if plan_type not in SUBSCRIPTION_PLANS:
         raise HTTPException(status_code=400, detail="Invalid plan type")
@@ -63,7 +63,8 @@ def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: 
     subscription = get_user_subscription(db, user_id)
     plan = SUBSCRIPTION_PLANS[plan_type]
 
-    end_date = get_current_datetime() + timedelta(days=30)
+    now = get_current_datetime()
+    end_date = now + timedelta(days=duration_days)
 
     subscription.plan_type = plan_type
     subscription.is_active = True
@@ -71,8 +72,8 @@ def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: 
     subscription.payment_id = payment_id
     subscription.total_requests = plan["total_requests"]
     subscription.max_words = plan["max_words"]
+    subscription.last_reset_date = now  # ← запоминаем точку отсчёта
 
-    # 👇 СБРАСЫВАЕМ СТАТИСТИКУ ИСПОЛЬЗОВАННЫХ ЗАПРОСОВ
     reset_usage_stats(db, user_id)
 
     db.commit()
@@ -96,13 +97,24 @@ def downgrade_to_free(db: Session, user_id: int):
 
 
 def check_subscription_expired(db: Session, user_id: int):
-    """Проверить, не истекла ли подписка"""
+    """Проверить срок подписки и ежемесячный сброс статистики"""
     subscription = get_user_subscription(db, user_id)
+    now = get_current_datetime()
 
     if subscription.plan_type != "free" and subscription.end_date:
-        if get_current_datetime() > subscription.end_date:
+        # Подписка полностью истекла
+        if now > subscription.end_date:
             downgrade_to_free(db, user_id)
             return True
+
+        # Проверяем, прошёл ли месяц с последнего сброса (для долгих подписок)
+        if subscription.last_reset_date:
+            next_reset = subscription.last_reset_date + timedelta(days=30)
+            if now >= next_reset:
+                reset_usage_stats(db, user_id)
+                subscription.last_reset_date = next_reset
+                db.commit()
+
     return False
 
 
@@ -170,13 +182,11 @@ def increment_usage(db: Session, user_id: int, word_count: int):
         stats = UsageStats(
             user_id=user_id,
             request_date=today,
-            requests_count=0,
-            total_chars_processed=0
+            requests_count=0
         )
         db.add(stats)
 
     stats.requests_count += 1
-    stats.total_chars_processed += word_count
     db.commit()
 
 
@@ -212,15 +222,12 @@ def reset_usage_stats(db: Session, user_id: int):
     """Сбрасывает статистику использования при смене подписки"""
     today = date.today()
 
-    # Удаляем все записи статистики для этого пользователя
     db.query(UsageStats).filter(UsageStats.user_id == user_id).delete()
 
-    # Создаём чистую запись на сегодня
     new_stats = UsageStats(
         user_id=user_id,
         request_date=today,
-        requests_count=0,
-        total_chars_processed=0
+        requests_count=0
     )
     db.add(new_stats)
     db.commit()

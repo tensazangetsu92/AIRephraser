@@ -103,14 +103,14 @@ const Auth = {
                         updateUserMenu();
                     }
 
-                    alert('✅ Вход через Google выполнен успешно!');
+                    showNotification('✅ Вход через Google выполнен успешно!');
                 } else {
                     console.error('No user data in response:', data);
-                    alert('❌ Не удалось получить данные пользователя');
+                    showNotification('❌ Не удалось получить данные пользователя');
                 }
             } catch (err) {
                 console.error('Google auth error:', err);
-                alert('❌ Ошибка при входе через Google');
+                showNotification('❌ Ошибка при входе через Google');
             }
 
             return true;
@@ -342,9 +342,9 @@ const Auth = {
         }
         const result = await API.sendVerification(this.pendingEmail, this.pendingPassword);
         if (result.ok) {
-            alert('✅ Код отправлен повторно!');
+            showNotification('✅ Код отправлен повторно!');
         } else {
-            alert('❌ Ошибка: ' + (result.error || 'Не удалось отправить код'));
+            showNotification('❌ Ошибка: ' + (result.error || 'Не удалось отправить код'));
         }
     },
 };
@@ -377,7 +377,7 @@ window.closeAuthModal = () => Auth.closeAuthModal();
                 Auth.setUser(data.user);
                 if (typeof updateUI === 'function') updateUI();
                 if (typeof updateUserMenu === 'function') updateUserMenu();
-                alert('✅ Вход через Google выполнен успешно!');
+                showNotification('✅ Вход через Google выполнен успешно!');
             }
         })
         .catch(err => console.error('Token validation error:', err));

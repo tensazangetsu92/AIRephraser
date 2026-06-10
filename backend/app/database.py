@@ -48,6 +48,8 @@ class Subscription(Base):
     total_requests = Column(Integer, default=5)
     max_words = Column(Integer, default=300)
 
+    last_reset_date = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -61,7 +63,6 @@ class UsageStats(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     request_date = Column(Date, server_default=func.current_date())
     requests_count = Column(Integer, default=0)
-    total_chars_processed = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

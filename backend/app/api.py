@@ -26,7 +26,7 @@ from app.subscription import (
     get_usage_stats,
     check_usage_limit,
     increment_usage,
-    SUBSCRIPTION_PLANS
+    SUBSCRIPTION_PLANS, check_subscription_expired
 )
 from app.email_utils import verify_code
 from auth import create_pending_user, verify_and_create_user
@@ -142,8 +142,10 @@ async def humanize(
 
 
 @router.get("/me")
-async def get_me(current_user: User = Depends(get_current_user)):
+async def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Получение информации о текущем пользователе"""
+
+    check_subscription_expired(db, current_user.id)
     return {
         "success": True,
         "user": {
@@ -156,6 +158,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
 @router.get("/subscription")
 async def get_subscription(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Получить информацию о подписке пользователя"""
+    check_subscription_expired(db, current_user.id)
     subscription = get_user_subscription(db, current_user.id)
     usage_stats = get_usage_stats(db, current_user.id)
 

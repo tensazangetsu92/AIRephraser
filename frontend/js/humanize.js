@@ -299,11 +299,11 @@ async function pasteFromClipboard() {
             localStorage.setItem('saved_input_text', text);
             if (pasteBtn) pasteBtn.style.display = 'none';
         } else {
-            alert('Буфер обмена пуст');
+            showNotification('Буфер обмена пуст');
         }
     } catch (err) {
         console.error('Failed to read clipboard:', err);
-        alert('Не удалось получить доступ к буферу обмена. Разрешите доступ в настройках браузера.');
+        showNotification('Не удалось получить доступ к буферу обмена. Разрешите доступ в настройках браузера.');
     }
 }
 
