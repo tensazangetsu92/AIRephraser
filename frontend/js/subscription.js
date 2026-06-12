@@ -1,30 +1,54 @@
 // frontend/js/subscription.js
 
-// Обновление UI карточек подписки
-async function updateSubscriptionUI(activePlan = null) {
-    if (!activePlan && Auth.isAuthenticated()) {
-        try {
-            const response = await fetch('/subscription', {
-                headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
-            });
-            const data = await response.json();
-            if (data.success) {
-                activePlan = data.subscription.plan_type;
-                window.currentSubscription = data.subscription;
+// Кэш данных
+let cachedSubscriptionData = null;
+let isFetching = false;
 
-                if (typeof window.updateMaxWordsFromSubscription === 'function') {
-                    window.updateMaxWordsFromSubscription(data.subscription);
-                }
+async function fetchSubscriptionData(force = false) {
+    if (!Auth.isAuthenticated()) return null;
 
-                if (typeof window.updateLimitsDisplay === 'function') {
-                    window.updateLimitsDisplay(data.subscription, data.usage);
-                }
-            }
-        } catch (err) {
-            console.error('Failed to get subscription:', err);
-            return;
+    // Если уже идёт запрос, ждём его
+    if (isFetching) {
+        // Ждём завершения текущего запроса
+        let attempts = 0;
+        while (isFetching && attempts < 50) {
+            await new Promise(r => setTimeout(r, 50));
+            attempts++;
         }
+        return cachedSubscriptionData;
     }
+
+    // Если есть кэш и не форсируем, возвращаем его
+    if (!force && cachedSubscriptionData) {
+        return cachedSubscriptionData;
+    }
+
+    isFetching = true;
+
+    try {
+        const response = await fetch('/subscription', {
+            headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            cachedSubscriptionData = data;
+            window.currentSubscription = data.subscription;
+            return data;
+        }
+    } catch (err) {
+        console.error('Failed to fetch subscription:', err);
+    } finally {
+        isFetching = false;
+    }
+
+    return null;
+}
+
+// Обновление UI карточек подписки (без запроса, использует переданные данные)
+function updateSubscriptionUIFromData(data, activePlan = null) {
+    activePlan = activePlan || data?.subscription?.plan_type;
+    if (!activePlan) return;
 
     const planLevel = { 'free': 0, 'premium': 1, 'pro': 2 };
     const currentLevel = planLevel[activePlan] || 0;
@@ -58,6 +82,69 @@ async function updateSubscriptionUI(activePlan = null) {
     });
 }
 
+// Обновление баланса из данных (без запроса)
+function updateBalanceDisplayFromData(data) {
+    if (!data?.success) return;
+
+    const balanceBlock = document.getElementById('balanceBlock');
+    const balanceBarFill = document.getElementById('balanceBarFill');
+    const balanceText = document.getElementById('balanceText');
+
+    if (!balanceBlock || !balanceBarFill || !balanceText) return;
+
+    const used = data.usage.total_requests_used;
+    const limit = data.subscription.total_requests;
+    const remaining = limit - used;
+
+    balanceBlock.style.display = 'block';
+
+    const percentRemaining = (remaining / limit) * 100;
+    balanceBarFill.style.width = `${percentRemaining}%`;
+
+    if (percentRemaining <= 10) {
+        balanceBarFill.style.background = 'linear-gradient(90deg, #ef4444, #f59e0b)';
+    } else if (percentRemaining <= 30) {
+        balanceBarFill.style.background = 'linear-gradient(90deg, #f59e0b, #eab308)';
+    } else {
+        balanceBarFill.style.background = 'linear-gradient(90deg, #5787d9, #7c3aed)';
+    }
+
+    balanceText.innerHTML = `${remaining} / ${limit} запросов осталось`;
+}
+
+// ОСНОВНАЯ ФУНКЦИЯ - один запрос, обновляет всё
+async function refreshAllSubscriptionData() {
+    const data = await fetchSubscriptionData(true);
+    if (data) {
+        // Обновляем всё из одного запроса
+        updateBalanceDisplayFromData(data);
+        updateSubscriptionUIFromData(data);
+        updateSubscriptionText(data);
+        updateMaxWordsLimit(data);
+    }
+}
+
+function updateSubscriptionText(data) {
+    const subscribeTypeText = document.getElementById('subscribeTypeText');
+    if (subscribeTypeText && data?.subscription) {
+        const planType = data.subscription.plan_type;
+        let planText = '';
+        switch (planType) {
+            case 'free': planText = 'Базовая подписка'; break;
+            case 'premium': planText = 'Premium подписка'; break;
+            case 'pro': planText = 'Pro подписка'; break;
+            default: planText = 'Подписка';
+        }
+        subscribeTypeText.textContent = planText;
+    }
+}
+
+function updateMaxWordsLimit(data) {
+    if (typeof window.updateMaxWordsFromSubscription === 'function' && data?.subscription) {
+        window.updateMaxWordsFromSubscription(data.subscription);
+    }
+}
+
 // Обновление подписки Premium
 async function upgradeToPremium() {
     if (!Auth.isAuthenticated()) {
@@ -79,28 +166,11 @@ async function upgradeToPremium() {
         const data = await response.json();
 
         if (response.ok) {
-            showNotification(' Подписка Premium активирована!', 'success');
-
-            // Обновляем данные подписки на сервере
-            await loadCurrentSubscription();
-
-            // Обновляем баланс
-            if (typeof updateBalanceDisplay === 'function') {
-                await updateBalanceDisplay();
-            }
-
-            // Обновляем UI
-            if (typeof window.updateUI === 'function') {
-                window.updateUI();
-            }
-
-            // Обновляем лимит слов
-            if (data.subscription && typeof window.updateMaxWordsFromSubscription === 'function') {
-                window.updateMaxWordsFromSubscription(data.subscription);
-            }
-
-            // Перезагружаем страницу, чтобы всё сбросилось (опционально)
-            // setTimeout(() => window.location.reload(), 1500);
+            showNotification('✅ Подписка Premium активирована!', 'success');
+            // Сбрасываем кэш и обновляем всё
+            cachedSubscriptionData = null;
+            await refreshAllSubscriptionData();
+            if (typeof window.updateUI === 'function') window.updateUI();
         } else {
             showNotification('❌ Ошибка: ' + (data.detail || 'Не удалось активировать подписку'), 'error');
         }
@@ -131,28 +201,11 @@ async function upgradeToPro() {
         const data = await response.json();
 
         if (response.ok) {
-            showNotification(' Подписка Pro активирована!', 'success');
-
-            // Обновляем данные подписки на сервере
-            await loadCurrentSubscription();
-
-            // Обновляем баланс
-            if (typeof updateBalanceDisplay === 'function') {
-                await updateBalanceDisplay();
-            }
-
-            // Обновляем UI
-            if (typeof window.updateUI === 'function') {
-                window.updateUI();
-            }
-
-            // Обновляем лимит слов
-            if (data.subscription && typeof window.updateMaxWordsFromSubscription === 'function') {
-                window.updateMaxWordsFromSubscription(data.subscription);
-            }
-
-            // Перезагружаем страницу, чтобы всё сбросилось (опционально)
-            // setTimeout(() => window.location.reload(), 1500);
+            showNotification('✅ Подписка Pro активирована!', 'success');
+            // Сбрасываем кэш и обновляем всё
+            cachedSubscriptionData = null;
+            await refreshAllSubscriptionData();
+            if (typeof window.updateUI === 'function') window.updateUI();
         } else {
             showNotification('❌ Ошибка: ' + (data.detail || 'Не удалось активировать подписку'), 'error');
         }
@@ -162,111 +215,29 @@ async function upgradeToPro() {
     }
 }
 
+// Основной метод для внешних вызовов
 async function loadCurrentSubscription() {
-    if (!Auth.isAuthenticated()) return;
-
-    try {
-        const response = await fetch('/subscription', {
-            headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
-        });
-        const data = await response.json();
-
-        if (data.success) {
-            // Сохраняем данные подписки глобально
-            window.currentSubscription = data.subscription;
-
-            // Обновляем лимит слов
-            if (typeof window.updateMaxWordsFromSubscription === 'function') {
-                window.updateMaxWordsFromSubscription(data.subscription);
-            }
-
-            await updateSubscriptionUI(data.subscription.plan_type);
-
-            if (typeof window.updateLimitsDisplay === 'function') {
-                window.updateLimitsDisplay(data.subscription, data.usage);
-            }
-
-            // Обновляем текст типа подписки в UI
-            const subscribeTypeText = document.getElementById('subscribeTypeText');
-            if (subscribeTypeText) {
-                const planType = data.subscription.plan_type;
-                let planText = '';
-                switch (planType) {
-                    case 'free': planText = 'Базовая подписка'; break;
-                    case 'premium': planText = 'Premium подписка'; break;
-                    case 'pro': planText = 'Pro подписка'; break;
-                    default: planText = 'Подписка';
-                }
-                subscribeTypeText.textContent = planText;
-            }
-
-            // Обновляем баланс
-            if (typeof updateBalanceDisplay === 'function') {
-                await updateBalanceDisplay();
-            }
-
-            // Обновляем статистику использованных запросов
-            if (data.usage) {
-                const used = data.usage.total_requests_used;
-                const limit = data.usage.total_requests_limit;
-                const remaining = data.usage.remaining_requests;
-                console.log(`Использовано: ${used}, Лимит: ${limit}, Осталось: ${remaining}`);
-            }
-        }
-    } catch (err) {
-        console.error('Failed to load subscription:', err);
-    }
+    await refreshAllSubscriptionData();
 }
 
 async function updateBalanceDisplay() {
-    if (!Auth.isAuthenticated()) return;
-
-    try {
-        const response = await fetch('/subscription', {
-            headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
-        });
-        const data = await response.json();
-
-        if (data.success) {
-            const balanceBlock = document.getElementById('balanceBlock');
-            const balanceBarFill = document.getElementById('balanceBarFill');
-            const balanceText = document.getElementById('balanceText');
-
-            if (!balanceBlock || !balanceBarFill || !balanceText) return;
-
-            const used = data.usage.total_requests_used;
-            const limit = data.subscription.total_requests;
-            const remaining = limit - used;
-
-            balanceBlock.style.display = 'block';
-
-            const percentRemaining = (remaining / limit) * 100;
-            balanceBarFill.style.width = `${percentRemaining}%`;
-
-            if (percentRemaining <= 10) {
-                balanceBarFill.style.background = 'linear-gradient(90deg, #ef4444, #f59e0b)';
-            } else if (percentRemaining <= 30) {
-                balanceBarFill.style.background = 'linear-gradient(90deg, #f59e0b, #eab308)';
-            } else {
-                balanceBarFill.style.background = 'linear-gradient(90deg, #5787d9, #7c3aed)';
-            }
-
-            balanceText.innerHTML = `${remaining} / ${limit} запросов осталось`;
-        }
-    } catch (err) {
-        console.error('Failed to update balance:', err);
+    // Просто обновляем из кэша, без запроса
+    if (cachedSubscriptionData) {
+        updateBalanceDisplayFromData(cachedSubscriptionData);
+    } else {
+        await refreshAllSubscriptionData();
     }
 }
 
-// Инициализация
+// Инициализация - один запрос
 document.addEventListener('DOMContentLoaded', () => {
     if (Auth.isAuthenticated()) {
-        loadCurrentSubscription();
-        updateBalanceDisplay();
+        refreshAllSubscriptionData();
     }
 });
 
 // Экспортируем функции
-window.forceUpdateBalance = updateBalanceDisplay;
+window.forceUpdateBalance = refreshAllSubscriptionData;
 window.updateBalanceDisplay = updateBalanceDisplay;
 window.loadCurrentSubscription = loadCurrentSubscription;
+window.refreshAllSubscriptionData = refreshAllSubscriptionData;

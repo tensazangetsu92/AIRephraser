@@ -10,30 +10,31 @@ async function loadProfile() {
     document.getElementById('profileEmail').textContent = user.email;
     document.getElementById('profileAvatar').src = getAvatarUrl(user.email);
 
-    const response = await fetch('/subscription', {
-        headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
-    });
-    const data = await response.json();
+    // Используем кэшированные данные, если есть
+    let data = window.cachedSubscriptionData;
 
-    if (data.success) {
+    if (!data) {
+        // Если нет кэша, делаем запрос
+        const response = await fetch('/subscription', {
+            headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+        });
+        data = await response.json();
+    }
+
+    if (data?.success) {
         const sub = data.subscription;
         const usage = data.usage;
 
         document.getElementById('maxWords').textContent = sub.max_words;
 
-        const planClass = getPlanClass(sub.plan_type);
-
         const profilePlanEl = document.getElementById('profilePlan');
         profilePlanEl.textContent =
             sub.plan_type === 'free' ? 'Бесплатный тариф' :
             sub.plan_type === 'premium' ? 'Premium тариф' : 'Pro тариф';
-        profilePlanEl.className = `profile-plan ${planClass}`;
 
         const subscriptionPlanEl = document.getElementById('subscriptionPlan');
         subscriptionPlanEl.textContent = sub.plan_type.toUpperCase();
-        subscriptionPlanEl.className = `balance-card-plan ${planClass}`;
 
-        // Текст основного баланса
         const used = usage.total_requests_used;
         const limit = usage.total_requests_limit;
         const remaining = usage.remaining_requests;
@@ -41,7 +42,6 @@ async function loadProfile() {
         document.getElementById('balanceMainText').textContent =
             `${remaining} / ${limit} запросов осталось`;
 
-        // Заполнение и цвет полосы — по остатку (как в сайдбаре)
         const fill = document.getElementById('requestsProgress');
         const percentRemaining = limit > 0 ? (remaining / limit) * 100 : 0;
         fill.style.width = `${percentRemaining}%`;
