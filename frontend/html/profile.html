@@ -16,32 +16,34 @@
     </div>
 
 
-    <div class="profile-section">
-        <h3><i class="fas fa-crown"></i> Подписка <span class="balance-card-plan" id="subscriptionPlan">Free</span></h3>
-        <div class="balance-card-large">
-            <div class="balance-card-header">
-                <span class="balance-card-title">Баланс запросов</span>
-
-            </div>
-
-            <div class="balance-bar-container-large">
-                <div class="balance-bar-fill-large" id="requestsProgress"></div>
-            </div>
-
-            <div class="balance-card-text" id="balanceMainText"></div>
-
-            <div class="balance-card-details">
-                <div class="balance-detail-item">
-                    <i class="fas fa-file-word"></i>
-                    <span>Лимит слов за раз: <strong id="maxWords">300</strong></span>
+    <div class="profile-row">
+        <div class="profile-section">
+            <h3><i class="fas fa-coins"></i> Баланс</h3>
+            <div class="balance-card-large">
+                <div class="balance-bar-container-large">
+                    <div class="balance-bar-fill-large" id="requestsProgress"></div>
                 </div>
-                <div class="balance-detail-item" id="expiryRow" style="display: none;">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Действует до: <strong id="subscriptionExpiry"></strong></span>
-                </div>
+                <div class="balance-card-text" id="balanceMainText"></div>
             </div>
+            <a href="/pricing" class="upgrade-btn" id="addTokensBtn">Добавить токены</a>
         </div>
-        <a href="/pricing" class="upgrade-btn">Изменить тариф</a>
+
+        <div class="profile-section">
+            <h3><i class="fas fa-crown"></i> Подписка <span class="balance-card-plan" id="subscriptionPlan">Free</span></h3>
+            <div class="balance-card-large">
+                <div class="balance-card-details">
+                    <div class="balance-detail-item">
+                        <i class="fas fa-file-word"></i>
+                        <span>Лимит слов за раз: <strong id="maxWords">300</strong></span>
+                    </div>
+                    <div class="balance-detail-item" id="expiryRow" style="display: none;">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Действует до: <strong id="subscriptionExpiry"></strong></span>
+                    </div>
+                </div>
+            </div>
+            <a href="/pricing" class="upgrade-btn" id="upgradeBtn">Изменить тариф</a>
+        </div>
     </div>
 
     <div class="profile-section">

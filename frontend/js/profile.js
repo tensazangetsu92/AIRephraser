@@ -40,7 +40,7 @@ async function loadProfile() {
         const remaining = usage.remaining_requests;
 
         document.getElementById('balanceMainText').textContent =
-            `${remaining} / ${limit} запросов осталось`;
+            `${remaining} / ${limit} токенов осталось`;
 
         const fill = document.getElementById('requestsProgress');
         const percentRemaining = limit > 0 ? (remaining / limit) * 100 : 0;
@@ -58,6 +58,13 @@ async function loadProfile() {
             const expiryDate = new Date(sub.end_date);
             document.getElementById('subscriptionExpiry').textContent = expiryDate.toLocaleDateString('ru-RU');
             document.getElementById('expiryRow').style.display = 'flex';
+        }
+
+        const upgradeBtn = document.getElementById('upgradeBtn');
+        if (sub.plan_type === 'pro') {
+            upgradeBtn.textContent = 'Посмотреть тарифы';
+        } else {
+            upgradeBtn.textContent = 'Улучшить подписку';
         }
 
         await loadHistory();

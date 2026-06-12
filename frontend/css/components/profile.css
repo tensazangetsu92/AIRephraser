@@ -95,6 +95,8 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    color: var(--text-color);
+    font-weight: 700;
 }
 
 .danger-btn.red {
@@ -110,9 +112,13 @@
 .balance-card-large {
     padding: 18px 20px;
     margin-bottom: 1rem;
+    height: 90px;
     background: rgba(18, 18, 18, 0.3);
     border-radius: 16px;
     border: 1px solid var(--sidebar-border-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .balance-card-header {
@@ -160,15 +166,13 @@
     font-size: 16px;
     color: var(--text-color);
     opacity: 0.9;
-    margin-bottom: 14px;
+
 }
 
 .balance-card-details {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding-top: 10px;
-    border-top: 1px solid var(--sidebar-border-color);
 }
 
 .balance-detail-item {
@@ -203,4 +207,15 @@
 .plan-pro {
     background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
     color: #fff !important;
+}
+
+.profile-row {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.profile-row .profile-section {
+    flex: 1;
+    margin-bottom: 0;
 }

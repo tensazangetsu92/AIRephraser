@@ -177,7 +177,7 @@ async function processText(text) {
             if (typeof window.updateUI === 'function') window.updateUI();
             setTimeout(() => Auth.showAuthModal(), 1500);
         } else if (response.status === 429) {
-            if (elements.result) elements.result.value = '❌ ' + (data.detail || 'Лимит запросов исчерпан');
+            if (elements.result) elements.result.value = '❌ ' + (data.detail || 'Лимит токенов исчерпан');
             // Обновляем баланс даже при лимите, чтобы показать 0
             if (typeof updateBalanceDisplay === 'function') {
                 updateBalanceDisplay();

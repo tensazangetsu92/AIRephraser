@@ -109,7 +109,7 @@ function updateBalanceDisplayFromData(data) {
         balanceBarFill.style.background = 'linear-gradient(90deg, #5787d9, #7c3aed)';
     }
 
-    balanceText.innerHTML = `${remaining} / ${limit} запросов осталось`;
+    balanceText.innerHTML = `${remaining} / ${limit} токенов осталось`;
 }
 
 // ОСНОВНАЯ ФУНКЦИЯ - один запрос, обновляет всё
