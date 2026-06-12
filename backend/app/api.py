@@ -11,7 +11,7 @@ from starlette.responses import RedirectResponse
 
 from app.models import UserLogin, UserRegister, Token, HumanizeRequest, SubscriptionCreate
 from app.config import FRONTEND_PATH, FRONTEND_DIR
-from app.database import get_db, create_tables, User
+from app.database import get_db, create_tables, User, UserHistory
 from auth import (
     authenticate_user,
     create_access_token,
@@ -58,9 +58,92 @@ async def profile_page(request: Request):
 
 
 @router.get("/user/history")
-async def get_user_history(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # TODO: добавить таблицу истории запросов
-    return {"success": True, "history": []}
+async def get_user_history(
+        request: Request,
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+        page: int = 1,
+        limit: int = 20,
+        type: str = "all",
+        date: str = "all"
+):
+    query = db.query(UserHistory).filter(UserHistory.user_id == current_user.id)
+
+    # Фильтр по типу
+    if type != "all" and type != "humanizer":
+        query = query.filter(UserHistory.tool_type == type)
+
+    # Фильтр по дате
+    if date == "today":
+        query = query.filter(func.date(UserHistory.created_at) == func.current_date())
+    elif date == "week":
+        query = query.filter(UserHistory.created_at >= func.now() - timedelta(days=7))
+    elif date == "month":
+        query = query.filter(UserHistory.created_at >= func.now() - timedelta(days=30))
+
+    total = query.count()
+    total_pages = (total + limit - 1) // limit
+    offset = (page - 1) * limit
+
+    history = query.order_by(UserHistory.created_at.desc()).offset(offset).limit(limit).all()
+
+    return {
+        "success": True,
+        "history": [
+            {
+                "id": h.id,
+                "tool_type": h.tool_type,
+                "original_text": h.original_text,
+                "result_text": h.result_text,
+                "created_at": h.created_at.isoformat()
+            } for h in history
+        ],
+        "total": total,
+        "page": page,
+        "total_pages": total_pages
+    }
+
+
+@router.post("/user/history/save")
+async def save_to_history(
+        data: dict,
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    """Сохраняет результат обработки в историю пользователя"""
+    from app.database import UserHistory
+
+    try:
+        history = UserHistory(
+            user_id=current_user.id,
+            tool_type=data.get("tool_type", "humanizer"),
+            original_text=data.get("original_text", ""),
+            result_text=data.get("result_text", "")
+        )
+        db.add(history)
+        db.commit()
+        return {"success": True, "message": "Сохранено в историю"}
+    except Exception as e:
+        print(f"Error saving to history: {e}")
+        raise HTTPException(status_code=500, detail="Ошибка сохранения в историю")
+
+
+@router.delete("/user/history/clear")
+async def clear_user_history(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    db.query(UserHistory).filter(UserHistory.user_id == current_user.id).delete()
+    db.commit()
+    return {"success": True, "message": "История очищена"}
+
+
+@router.get("/history", response_class=HTMLResponse)
+async def history_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="history.html"
+    )
 
 
 @router.post("/user/change-password")

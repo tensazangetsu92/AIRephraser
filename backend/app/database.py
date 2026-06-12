@@ -29,10 +29,21 @@ class User(Base):
     # Связь с подпиской
     subscription = relationship("Subscription", back_populates="user", uselist=False)
 
+class UserHistory(Base):
+    __tablename__ = "user_history"
 
-# app/database.py - обновлённая модель Subscription
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    tool_type = Column(String(50), default="humanizer")  # 👈 ОСТАВИТЬ
+    original_text = Column(Text, nullable=False)
+    result_text = Column(Text, nullable=False)
+    intensity = Column(String(20))
+    tone = Column(String(20))
+    style = Column(String(20))
+    length = Column(String(20))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-# app/database.py - обновлённая модель Subscription (убрал daily_limit)
+    user = relationship("User")
 
 class Subscription(Base):
     __tablename__ = "subscriptions"

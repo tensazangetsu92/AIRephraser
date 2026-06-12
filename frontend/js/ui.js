@@ -69,6 +69,7 @@ function initUserMenu() {
     const logoutBtn = document.getElementById('logoutBtn');
     const langToggle = document.getElementById('langToggle');
     const profileBtn = document.getElementById('profileBtn');
+    const historyPopupBtn = document.getElementById('historyPopupBtn');
 
     if (!userMenu || !userPopup) return;
 
@@ -86,6 +87,7 @@ function initUserMenu() {
     const finalLogoutBtn = document.getElementById('logoutBtn');
     const finalLangToggle = document.getElementById('langToggle');
     const finalProfileBtn = document.getElementById('profileBtn');
+    const finalHistoryPopupBtn = document.getElementById('historyPopupBtn');
 
     finalUserMenu.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -115,6 +117,14 @@ function initUserMenu() {
         finalProfileBtn.addEventListener('click', () => {
             finalUserPopup.classList.remove('open');
             window.location.href = '/profile';
+        });
+    }
+
+    // 👇 ИСПРАВЛЕНО: используем finalHistoryPopupBtn
+    if (finalHistoryPopupBtn) {
+        finalHistoryPopupBtn.addEventListener('click', () => {
+            finalUserPopup.classList.remove('open');
+            window.location.href = '/history';
         });
     }
 }

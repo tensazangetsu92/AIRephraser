@@ -127,6 +127,8 @@ async function copyResultText() {
 // Обработка текста (основная логика)
 // frontend/js/humanize.js - обнови функцию processText
 
+// frontend/js/humanize.js - обнови функцию processText
+
 async function processText(text) {
     const elements = window.elements || {};
 
@@ -163,7 +165,10 @@ async function processText(text) {
             localStorage.setItem('saved_result_text', data.result);
             clearWarning();
 
-            // 👇 ОБНОВЛЯЕМ БАЛАНС ПОСЛЕ УСПЕШНОГО ЗАПРОСА
+            // 👇 СОХРАНЯЕМ В ИСТОРИЮ
+            await saveToHistory(text, data.result, 'humanizer');
+
+            // Обновляем баланс
             if (typeof updateBalanceDisplay === 'function') {
                 updateBalanceDisplay();
             }
@@ -178,7 +183,6 @@ async function processText(text) {
             setTimeout(() => Auth.showAuthModal(), 1500);
         } else if (response.status === 429) {
             if (elements.result) elements.result.value = '❌ ' + (data.detail || 'Лимит токенов исчерпан');
-            // Обновляем баланс даже при лимите, чтобы показать 0
             if (typeof updateBalanceDisplay === 'function') {
                 updateBalanceDisplay();
             }
@@ -193,6 +197,32 @@ async function processText(text) {
     if (elements.humanizeBtn) {
         elements.humanizeBtn.disabled = false;
         elements.humanizeBtn.innerHTML = 'Очеловечить текст';
+    }
+}
+
+async function saveToHistory(originalText, resultText, toolType = 'humanizer') {
+    const token = Auth.getToken();
+    if (!token) return;
+
+    try {
+        const response = await fetch('/user/history/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                tool_type: toolType,
+                original_text: originalText,
+                result_text: resultText
+            })
+        });
+
+        if (!response.ok) {
+            console.error('Failed to save to history:', await response.text());
+        }
+    } catch (err) {
+        console.error('Error saving to history:', err);
     }
 }
 
