@@ -26,7 +26,7 @@ async def google_login(request: Request):
         "client_id": GOOGLE_CLIENT_ID,
         "redirect_uri": GOOGLE_REDIRECT_URI,
         "response_type": "code",
-        "scope": "openid email profile",
+        "scope": "openid email profile.html",
         "access_type": "offline",
         "prompt": "select_account"
     }

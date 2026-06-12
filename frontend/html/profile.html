@@ -1,0 +1,81 @@
+{% extends "template.html" %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <img id="profileAvatar" src="" alt="Avatar">
+
+        </div>
+        <div class="profile-info">
+            <h1 id="profileEmail"></h1>
+            <span class="profile-plan" id="profilePlan"></span>
+        </div>
+    </div>
+
+
+    <div class="profile-section">
+        <h3><i class="fas fa-crown"></i> Подписка <span class="balance-card-plan" id="subscriptionPlan">Free</span></h3>
+        <div class="balance-card-large">
+            <div class="balance-card-header">
+                <span class="balance-card-title">Баланс запросов</span>
+
+            </div>
+
+            <div class="balance-bar-container-large">
+                <div class="balance-bar-fill-large" id="requestsProgress"></div>
+            </div>
+
+            <div class="balance-card-text" id="balanceMainText"></div>
+
+            <div class="balance-card-details">
+                <div class="balance-detail-item">
+                    <i class="fas fa-file-word"></i>
+                    <span>Лимит слов за раз: <strong id="maxWords">300</strong></span>
+                </div>
+                <div class="balance-detail-item" id="expiryRow" style="display: none;">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Действует до: <strong id="subscriptionExpiry"></strong></span>
+                </div>
+            </div>
+        </div>
+        <a href="/pricing" class="upgrade-btn">Изменить тариф</a>
+    </div>
+
+    <div class="profile-section">
+        <h3><i class="fas fa-history"></i> История запросов</h3>
+        <div class="history-list" id="historyList">
+            <div class="history-empty">История пуста</div>
+        </div>
+    </div>
+
+    <div class="profile-section">
+        <h3><i class="fas fa-shield-alt"></i> Безопасность</h3>
+        <button class="danger-btn" id="changePasswordBtn">
+            <i class="fas fa-key"></i> Сменить пароль
+        </button>
+        <button class="danger-btn red" id="deleteAccountBtn">
+            <i class="fas fa-trash"></i> Удалить аккаунт
+        </button>
+    </div>
+</div>
+
+<!-- Модалка смены пароля -->
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closePasswordModal()">&times;</span>
+        <h2>Смена пароля</h2>
+        <div id="passwordError" class="error-message" style="display: none;"></div>
+        <input type="password" id="oldPassword" placeholder="Старый пароль">
+        <input type="password" id="newPassword" placeholder="Новый пароль (мин. 4 символа)">
+        <input type="password" id="confirmPassword" placeholder="Подтвердите пароль">
+        <button onclick="changePassword()">Сменить пароль</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/js/profile.js" defer></script>
+{% endblock %}

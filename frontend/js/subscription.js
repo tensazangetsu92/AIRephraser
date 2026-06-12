@@ -79,7 +79,7 @@ async function upgradeToPremium() {
         const data = await response.json();
 
         if (response.ok) {
-            showNotification('✅ Подписка Premium активирована!', 'success');
+            showNotification(' Подписка Premium активирована!', 'success');
 
             // Обновляем данные подписки на сервере
             await loadCurrentSubscription();
@@ -131,7 +131,7 @@ async function upgradeToPro() {
         const data = await response.json();
 
         if (response.ok) {
-            showNotification('✅ Подписка Pro активирована!', 'success');
+            showNotification(' Подписка Pro активирована!', 'success');
 
             // Обновляем данные подписки на сервере
             await loadCurrentSubscription();

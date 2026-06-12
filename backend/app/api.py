@@ -46,6 +46,44 @@ async def root(request: Request):
         name="humanizer.html"
     )
 
+
+# app/api.py
+
+@router.get("/profile", response_class=HTMLResponse)
+async def profile_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="profile.html"
+    )
+
+
+@router.get("/user/history")
+async def get_user_history(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # TODO: добавить таблицу истории запросов
+    return {"success": True, "history": []}
+
+
+@router.post("/user/change-password")
+async def change_password(
+        data: dict,
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    from auth import verify_password, get_hash_password
+
+    old_password = data.get("old_password")
+    new_password = data.get("new_password")
+
+    if not verify_password(old_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Неверный старый пароль")
+
+    current_user.password_hash = get_hash_password(new_password)
+    db.commit()
+
+    return {"success": True, "message": "Пароль изменён"}
+
+
+
 @router.get("/humanizer")
 async def humanizer_page(request: Request):
     return templates.TemplateResponse(
