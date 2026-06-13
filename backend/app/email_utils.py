@@ -1,5 +1,6 @@
 # app/email_utils.py
 import smtplib
+from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.config import (

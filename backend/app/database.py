@@ -39,10 +39,6 @@ class UserHistory(Base):
     tool_type = Column(String(50), default="humanizer")  # 👈 ОСТАВИТЬ
     original_text = Column(Text, nullable=False)
     result_text = Column(Text, nullable=False)
-    intensity = Column(String(20))
-    tone = Column(String(20))
-    style = Column(String(20))
-    length = Column(String(20))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User")
