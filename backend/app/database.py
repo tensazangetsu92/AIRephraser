@@ -1,4 +1,6 @@
 # app/database.py
+from datetime import datetime, timedelta
+
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
@@ -77,6 +79,16 @@ class UsageStats(Base):
     # Связь с пользователем
     user = relationship("User")
 
+def delete_old_history(db: Session, days: int = 90):
+    """Удаляет записи истории старше N дней"""
+    cutoff_date = datetime.now() - timedelta(days=days)
+    deleted = db.query(UserHistory).filter(
+        UserHistory.created_at < cutoff_date
+    ).delete()
+    db.commit()
+    if deleted:
+        print(f"🗑️ Удалено {deleted} старых записей из истории (старше {days} дней)")
+    return deleted
 
 # Зависимости для FastAPI
 def get_db():

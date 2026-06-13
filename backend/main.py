@@ -9,6 +9,36 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.api import router
 from app.config import CORS_ORIGINS, CORS_CREDENTIALS, CORS_METHODS, CORS_HEADERS, SECRET_KEY
 from app.oauth import router as google_router
+from contextlib import asynccontextmanager
+from apscheduler.schedulers.background import BackgroundScheduler
+from app.database import delete_old_history, SessionLocal
+
+scheduler = BackgroundScheduler()
+
+def cleanup_job():
+    print("🧹 Запуск очистки старых записей истории...")
+    db = SessionLocal()
+    try:
+        deleted = delete_old_history(db, days=90)
+        print(f"🧹 Очистка завершена. Удалено записей: {deleted}")
+    except Exception as e:
+        print(f"❌ Ошибка при очистке: {e}")
+    finally:
+        db.close()
+
+scheduler.add_job(cleanup_job, 'interval', days=1, id='history_cleanup')
+scheduler.start()
+
+cleanup_job()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Запуск приложения
+    print("🚀 Запуск приложения...")
+    yield
+    # Остановка приложения
+    print("🛑 Остановка приложения...")
+    scheduler.shutdown()
 
 # Создаем приложение
 app = FastAPI(

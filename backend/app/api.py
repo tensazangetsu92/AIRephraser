@@ -146,6 +146,23 @@ async def history_page(request: Request):
     )
 
 
+@router.delete("/user/history/cleanup-old")
+async def cleanup_old_history(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+        days: int = 90
+):
+    """Удаляет историю пользователя старше N дней (доступно только админу)"""
+    from app.database import delete_old_history
+
+    # Проверка: только админ может чистить всю базу
+    if current_user.email != "admin@humary.com":
+        raise HTTPException(status_code=403, detail="Доступ только для администратора")
+
+    deleted = delete_old_history(db, days)
+    return {"success": True, "deleted": deleted, "days": days}
+
+
 @router.post("/user/change-password")
 async def change_password(
         data: dict,
