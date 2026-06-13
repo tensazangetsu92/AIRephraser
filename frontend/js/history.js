@@ -21,14 +21,14 @@ async function loadHistory() {
             historyList.innerHTML = data.history.map(item => `
                 <div class="history-item" data-id="${item.id}">
                     <div class="history-item-header">
-                        <span class="history-item-type">${getTypeName(item.type)}</span>
+                        <span class="history-item-type">${getTypeName(item.tool_type)}</span>
                         <span class="history-item-date">${new Date(item.created_at).toLocaleString()}</span>
                     </div>
                     <div class="history-item-original">
-                        <strong>Было:</strong> ${escapeHtml(item.original_text.substring(0, 200))}${item.original_text.length > 200 ? '...' : ''}
+                        ${escapeHtml(item.original_text.substring(0, 250))}${item.original_text.length > 200 ? '...' : ''}
                     </div>
                     <div class="history-item-result">
-                        <strong>Стало:</strong> ${escapeHtml(item.result_text.substring(0, 200))}${item.result_text.length > 200 ? '...' : ''}
+                        ${escapeHtml(item.result_text.substring(0, 250))}${item.result_text.length > 200 ? '...' : ''}
                     </div>
                 </div>
             `).join('');

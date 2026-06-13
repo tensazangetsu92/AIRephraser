@@ -1,4 +1,6 @@
 # backend/app/oauth.py (исправленная версия - без username)
+from urllib.parse import urlencode
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -21,18 +23,17 @@ GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
 @router.get("/login")
 async def google_login(request: Request):
-    """Простой редирект без state (упрощенный метод)"""
+    """Простой редирект без state"""
     params = {
         "client_id": GOOGLE_CLIENT_ID,
         "redirect_uri": GOOGLE_REDIRECT_URI,
         "response_type": "code",
-        "scope": "openid email profile.html",
+        "scope": "openid email profile",
         "access_type": "offline",
         "prompt": "select_account"
     }
 
-    query_string = "&".join([f"{k}={v}" for k, v in params.items()])
-    redirect_url = f"{GOOGLE_AUTH_URL}?{query_string}"
+    redirect_url = f"{GOOGLE_AUTH_URL}?{urlencode(params)}"
 
     return RedirectResponse(url=redirect_url)
 
