@@ -79,28 +79,6 @@ function updatePagination() {
     if (pageInfo) pageInfo.textContent = `Страница ${currentPage} из ${totalPages}`;
 }
 
-async function clearHistory() {
-    if (!confirm('Вы уверены? Вся история будет удалена безвозвратно.')) return;
-
-    try {
-        const response = await fetch('/user/history/clear', {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
-        });
-        const data = await response.json();
-
-        if (response.ok) {
-            showNotification('История очищена', 'success');
-            currentPage = 1;
-            loadHistory();
-        } else {
-            showNotification(data.detail || 'Ошибка очистки', 'error');
-        }
-    } catch (err) {
-        showNotification('Ошибка соединения', 'error');
-    }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     loadHistory();
 
@@ -118,10 +96,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('historyFilterType')?.addEventListener('change', (e) => {
-        currentFilter = e.target.value;
-        currentPage = 1;
-        loadHistory();
+    document.querySelectorAll('.history-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.history-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            currentFilter = tab.dataset.type;
+            currentPage = 1;
+            loadHistory();
+        });
     });
 
     document.getElementById('historyFilterDate')?.addEventListener('change', (e) => {

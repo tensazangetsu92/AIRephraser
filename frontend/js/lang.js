@@ -416,42 +416,63 @@ function updateSelectOptions() {
         'longer': t('length_longer')
     };
 
-    // Обновляем intensity select
-    const intensitySelect = document.getElementById('intensity');
-    if (intensitySelect) {
-        Array.from(intensitySelect.options).forEach(option => {
-            if (intensityMap[option.value]) {
-                option.textContent = intensityMap[option.value];
+    // Обновляем intensity custom-select
+    const intensitySelect = document.querySelector('#intensity')?.previousElementSibling;
+    if (intensitySelect && intensitySelect.classList.contains('custom-select')) {
+        intensitySelect.querySelectorAll('.custom-select-option').forEach(option => {
+            const value = option.dataset.value;
+            if (intensityMap[value]) {
+                option.textContent = intensityMap[value];
+                // Обновляем label, если эта опция выбрана
+                if (option.classList.contains('selected')) {
+                    const label = intensitySelect.querySelector('.custom-select-label');
+                    if (label) label.textContent = intensityMap[value];
+                }
             }
         });
     }
 
-    // Обновляем tone select
-    const toneSelect = document.getElementById('tone');
-    if (toneSelect) {
-        Array.from(toneSelect.options).forEach(option => {
-            if (toneMap[option.value]) {
-                option.textContent = toneMap[option.value];
+    // Обновляем tone custom-select
+    const toneSelect = document.querySelector('#tone')?.previousElementSibling;
+    if (toneSelect && toneSelect.classList.contains('custom-select')) {
+        toneSelect.querySelectorAll('.custom-select-option').forEach(option => {
+            const value = option.dataset.value;
+            if (toneMap[value]) {
+                option.textContent = toneMap[value];
+                if (option.classList.contains('selected')) {
+                    const label = toneSelect.querySelector('.custom-select-label');
+                    if (label) label.textContent = toneMap[value];
+                }
             }
         });
     }
 
-    // Обновляем style select
-    const styleSelect = document.getElementById('style');
-    if (styleSelect) {
-        Array.from(styleSelect.options).forEach(option => {
-            if (styleMap[option.value]) {
-                option.textContent = styleMap[option.value];
+    // Обновляем style custom-select
+    const styleSelect = document.querySelector('#style')?.previousElementSibling;
+    if (styleSelect && styleSelect.classList.contains('custom-select')) {
+        styleSelect.querySelectorAll('.custom-select-option').forEach(option => {
+            const value = option.dataset.value;
+            if (styleMap[value]) {
+                option.textContent = styleMap[value];
+                if (option.classList.contains('selected')) {
+                    const label = styleSelect.querySelector('.custom-select-label');
+                    if (label) label.textContent = styleMap[value];
+                }
             }
         });
     }
 
-    // Обновляем length select
-    const lengthSelect = document.getElementById('length');
-    if (lengthSelect) {
-        Array.from(lengthSelect.options).forEach(option => {
-            if (lengthMap[option.value]) {
-                option.textContent = lengthMap[option.value];
+    // Обновляем length custom-select
+    const lengthSelect = document.querySelector('#length')?.previousElementSibling;
+    if (lengthSelect && lengthSelect.classList.contains('custom-select')) {
+        lengthSelect.querySelectorAll('.custom-select-option').forEach(option => {
+            const value = option.dataset.value;
+            if (lengthMap[value]) {
+                option.textContent = lengthMap[value];
+                if (option.classList.contains('selected')) {
+                    const label = lengthSelect.querySelector('.custom-select-label');
+                    if (label) label.textContent = lengthMap[value];
+                }
             }
         });
     }

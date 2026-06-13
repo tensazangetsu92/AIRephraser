@@ -39,46 +39,77 @@
             <i class="fa-solid fa-wand-magic-sparkles"></i>
             <label>Сила изменения</label>
         </div>
-        <select id="intensity">
-            <option value="low">Слабая</option>
-            <option value="medium" selected>Нормальная</option>
-            <option value="high">Сильная</option>
-        </select>
+        <div class="custom-select" data-value="medium">
+            <button type="button" class="custom-select-trigger">
+                <span class="custom-select-label">Нормальная</span>
+                <i class="fas fa-chevron-down custom-select-arrow"></i>
+            </button>
+            <div class="custom-select-options">
+                <div class="custom-select-option" data-value="low">Слабая</div>
+                <div class="custom-select-option selected" data-value="medium">Нормальная</div>
+                <div class="custom-select-option" data-value="high">Сильная</div>
+            </div>
+        </div>
+        <input type="hidden" id="intensity" value="medium">
     </div>
+
     <div class="control-group">
         <div class="label-wrapper">
             <i class="fa-solid fa-face-smile"></i>
             <label>Тон</label>
         </div>
-        <select id="tone">
-            <option value="neutral">Нейтральный</option>
-            <option value="formal">Формальный</option>
-            <option value="casual">Повседневный</option>
-            <option value="friendly">Дружелюбный</option>
-            <option value="academic">Академический</option>
-        </select>
+        <div class="custom-select" data-value="neutral">
+            <button type="button" class="custom-select-trigger">
+                <span class="custom-select-label">Нейтральный</span>
+                <i class="fas fa-chevron-down custom-select-arrow"></i>
+            </button>
+            <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="neutral">Нейтральный</div>
+                <div class="custom-select-option" data-value="formal">Формальный</div>
+                <div class="custom-select-option" data-value="casual">Повседневный</div>
+                <div class="custom-select-option" data-value="friendly">Дружелюбный</div>
+                <div class="custom-select-option" data-value="academic">Академический</div>
+            </div>
+        </div>
+        <input type="hidden" id="tone" value="neutral">
     </div>
+
     <div class="control-group">
         <div class="label-wrapper">
             <i class="fa-solid fa-pen-fancy"></i>
             <label>Стиль</label>
         </div>
-        <select id="style">
-            <option value="simple">Простой</option>
-            <option value="creative">Креативный</option>
-            <option value="professional">Профессиональный</option>
-        </select>
+        <div class="custom-select" data-value="simple">
+            <button type="button" class="custom-select-trigger">
+                <span class="custom-select-label">Простой</span>
+                <i class="fas fa-chevron-down custom-select-arrow"></i>
+            </button>
+            <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="simple">Простой</div>
+                <div class="custom-select-option" data-value="creative">Креативный</div>
+                <div class="custom-select-option" data-value="professional">Профессиональный</div>
+            </div>
+        </div>
+        <input type="hidden" id="style" value="simple">
     </div>
+
     <div class="control-group">
         <div class="label-wrapper">
             <i class="fa-solid fa-ruler"></i>
             <label>Длина</label>
         </div>
-        <select id="length">
-            <option value="same">Оставить</option>
-            <option value="shorter">Короче</option>
-            <option value="longer">Длиннее</option>
-        </select>
+        <div class="custom-select" data-value="same">
+            <button type="button" class="custom-select-trigger">
+                <span class="custom-select-label">Оставить</span>
+                <i class="fas fa-chevron-down custom-select-arrow"></i>
+            </button>
+            <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="same">Оставить</div>
+                <div class="custom-select-option" data-value="shorter">Короче</div>
+                <div class="custom-select-option" data-value="longer">Длиннее</div>
+            </div>
+        </div>
+        <input type="hidden" id="length" value="same">
     </div>
     <div class="control-group">
         <button class="main-btn" id="humanizeBtn">Очеловечить</button>
@@ -90,3 +121,5 @@
 <script src="/js/humanize.js" defer></script>
 <script src="/js/main.js" defer></script>
 {% endblock %}
+
+

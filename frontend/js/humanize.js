@@ -144,7 +144,10 @@ async function processText(text) {
         elements.humanizeBtn.disabled = true;
         elements.humanizeBtn.innerHTML = '<span class="loading"></span> Обработка...';
     }
-    if (elements.result) elements.result.value = '🔄 Обработка текста...';
+    if (elements.result) {
+        elements.result.value = 'Обработка текста...';
+        showNotification('Обработка текста');
+    }
 
     const token = Auth.getToken();
 

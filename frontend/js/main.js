@@ -77,6 +77,7 @@ function initEventListeners() {
 function init() {
     initElements();
     initEventListeners();
+    initCustomSelects();
     if (typeof initUserMenu === 'function') {
         initUserMenu();
     }
@@ -113,9 +114,51 @@ function init() {
     }
 }
 
-// Запуск
-init();
+
 
 if (typeof initLanguage === 'function') {
     initLanguage();
 }
+
+function initCustomSelects() {
+    console.log('initCustomSelects called, found:', document.querySelectorAll('.custom-select').length);
+    document.querySelectorAll('.custom-select').forEach(select => {
+        const trigger = select.querySelector('.custom-select-trigger');
+        const label = select.querySelector('.custom-select-label');
+        const options = select.querySelectorAll('.custom-select-option');
+        const hiddenInput = select.nextElementSibling; // input[type=hidden]
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Закрываем остальные открытые селекты
+            document.querySelectorAll('.custom-select.open').forEach(s => {
+                if (s !== select) s.classList.remove('open');
+            });
+            select.classList.toggle('open');
+        });
+
+        options.forEach(option => {
+            option.addEventListener('click', () => {
+                const value = option.dataset.value;
+                const text = option.textContent;
+
+                label.textContent = text;
+                hiddenInput.value = value;
+                select.dataset.value = value;
+
+                options.forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+
+                select.classList.remove('open');
+            });
+        });
+    });
+
+    // Закрытие при клике вне
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.custom-select.open').forEach(s => s.classList.remove('open'));
+    });
+}
+
+// Запуск
+init();

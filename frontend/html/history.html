@@ -6,24 +6,16 @@
 <div class="history-container">
     <div class="history-header">
         <h1><i class="fas fa-history"></i> История запросов</h1>
-        <button class="clear-history-btn" id="clearHistoryBtn">
-            <i class="fas fa-trash-alt"></i> Очистить историю
-        </button>
     </div>
 
     <div class="history-filters">
-        <select id="historyFilterType">
-            <option value="all">Все типы</option>
-            <option value="humanizer">Гуманайзер</option>
-            <option value="detector">Детектор</option>
-            <option value="paraphraser">Перефразер</option>
-        </select>
-        <select id="historyFilterDate">
-            <option value="all">За всё время</option>
-            <option value="today">Сегодня</option>
-            <option value="week">За неделю</option>
-            <option value="month">За месяц</option>
-        </select>
+        <div class="history-tabs" id="historyTabs">
+            <button class="history-tab active" data-type="all">Все</button>
+            <button class="history-tab" data-type="humanizer">Гуманайзер</button>
+            <button class="history-tab" data-type="detector">Детектор</button>
+            <button class="history-tab" data-type="paraphraser">Перефразер</button>
+            <button class="history-tab" data-type="grammar">Грамматика</button>
+        </div>
     </div>
 
     <div class="history-list" id="historyList">
