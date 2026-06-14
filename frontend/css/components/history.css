@@ -73,6 +73,7 @@
     border-radius: 12px;
     padding: 1rem;
     transition: all 0.2s;
+    cursor: pointer;
 }
 
 .history-item:hover {
