@@ -1,0 +1,45 @@
+{% extends "template.html" %}
+
+{% block title %}Грамматика{% endblock %}
+
+{% block content %}
+
+<div class="editor">
+    <div class="col">
+        <div class="textarea-wrapper">
+            <div class="editor-name">Ваш текст</div>
+            <textarea id="input" placeholder="Вставьте текст для проверки грамматики..."></textarea>
+            <button class="paste-btn" id="pasteBtn">
+                <i class="fas fa-paste"></i>
+                Вставить текст
+            </button>
+        </div>
+        <div class="word-counter-wrapper">
+            <span class="word-count" id="wordCount"></span>
+            <span class="word-warning" id="wordWarning"></span>
+            <button class="copy-text-btn" id="copyInputBtn" title="Копировать результат">
+                <i class="fa-regular fa-clone"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col">
+        <div class="editor-name">Результат</div>
+        <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10" readonly></textarea>
+        <div class="word-counter-wrapper">
+            <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат">
+                <i class="fa-regular fa-clone"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="controls">
+    <div class="control-group">
+        <button class="main-btn" id="checkGrammarBtn">Исправить грамматику</button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
