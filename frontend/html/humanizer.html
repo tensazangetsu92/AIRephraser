@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<div class="editor">
+<div class="editor" id="editorContainer">
     <div class="col">
         <div class="textarea-wrapper">
             <div class="editor-name">Ваш текст</div>
@@ -22,9 +22,9 @@
             </button>
         </div>
     </div>
-    <div class="col">
+    <div class="col result-col" id="resultCol" style="display: none;">
         <div class="editor-name">Результат</div>
-        <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10"></textarea>
+        <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10" readonly></textarea>
         <div class="word-counter-wrapper">
             <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат">
                 <i class="fa-regular fa-clone"></i>

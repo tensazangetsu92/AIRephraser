@@ -13,21 +13,31 @@ function saveTextToLocalStorage() {
     }
 }
 
-// Загрузка сохранённого текста из localStorage
 function loadTextFromLocalStorage() {
     const elements = window.elements || {};
     const savedInput = localStorage.getItem('saved_input_text');
     const savedResult = localStorage.getItem('saved_result_text');
 
-    if (elements.input && savedInput) {
-        elements.input.value = savedInput;
+    if (elements.input) {
+        elements.input.value = savedInput || '';
         if (typeof window.updateWordCounter === 'function') {
             window.updateWordCounter();
         }
     }
 
+    // Если поле ввода пустое — сбрасываем результат и скрываем колонку
+    if (!savedInput || !savedInput.trim()) {
+        localStorage.removeItem('saved_result_text');
+        if (elements.result) elements.result.value = '';
+        hideResultColumn();
+        return;
+    }
+
     if (elements.result && savedResult) {
         elements.result.value = savedResult;
+        showResultColumn();
+    } else {
+        hideResultColumn();
     }
 }
 
@@ -124,10 +134,19 @@ async function copyResultText() {
     }
 }
 
-// Обработка текста (основная логика)
-// frontend/js/humanize.js - обнови функцию processText
+function showResultColumn() {
+    const resultCol = document.getElementById('resultCol');
+    const editor = document.getElementById('editorContainer');
+    if (resultCol) resultCol.style.display = '';
+    if (editor) editor.classList.remove('single-col');
+}
 
-// frontend/js/humanize.js - обнови функцию processText
+function hideResultColumn() {
+    const resultCol = document.getElementById('resultCol');
+    const editor = document.getElementById('editorContainer');
+    if (resultCol) resultCol.style.display = 'none';
+    if (editor) editor.classList.add('single-col');
+}
 
 async function processText(text) {
     const elements = window.elements || {};
@@ -167,7 +186,7 @@ async function processText(text) {
             if (elements.result) elements.result.value = data.result;
             localStorage.setItem('saved_result_text', data.result);
             clearWarning();
-
+            showResultColumn();
             // 👇 СОХРАНЯЕМ В ИСТОРИЮ
             await saveToHistory(text, data.result, 'humanizer');
 
@@ -340,19 +359,12 @@ async function pasteFromClipboard() {
     }
 }
 
-// Сохраняем текст при вводе
 function initAutoSave() {
     const elements = window.elements || {};
 
     if (elements.input) {
         elements.input.addEventListener('input', () => {
             localStorage.setItem('saved_input_text', elements.input.value);
-        });
-    }
-
-    if (elements.result) {
-        elements.result.addEventListener('input', () => {
-            localStorage.setItem('saved_result_text', elements.result.value);
         });
     }
 }
