@@ -2,9 +2,10 @@
 
 from openai import AsyncOpenAI
 import asyncio
+import json
 
 from app.config import OPENROUTER_API_KEY, MODEL_NAME, TEMPERATURE
-from prompts import SYSTEM_PROMPT, format_humanize_prompt
+from prompts import SYSTEM_PROMPT, format_humanize_prompt, DETECTOR_SYSTEM_PROMPT, format_detector_prompt
 
 client = AsyncOpenAI(
     api_key=OPENROUTER_API_KEY,
@@ -49,8 +50,6 @@ async def ask_llm(text: str, intensity: str, tone: str, style: str, length: str,
         print(f"Error in ask_llm: {e}")
         return text  # Возвращаем исходный текст при ошибке
 
-
-# llm.py - добавьте эту функцию
 
 async def humanize_pipeline(text: str, intensity: str, tone: str, style: str, length: str, target_language: str = "ru"):
     """Основной пайплайн обработки текста с проверкой длины"""
@@ -114,6 +113,56 @@ async def humanize_pipeline(text: str, intensity: str, tone: str, style: str, le
     except Exception as e:
         print(f"Error: {e}")
         return text
+
+
+async def detect_ai_pipeline(text: str) -> dict:
+    """Анализирует текст и возвращает вероятность того, что он написан ИИ"""
+
+    prompt = format_detector_prompt(text)
+
+    try:
+        response = await client.chat.completions.create(
+            model=OPENROUTER_CONFIG["model"],
+            temperature=0.3,
+            messages=[
+                {"role": "system", "content": DETECTOR_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        raw_result = response.choices[0].message.content.strip()
+
+        # Убираем возможные markdown-обёртки ```json ... ```
+        cleaned = raw_result.replace("```json", "").replace("```", "").strip()
+
+        parsed = json.loads(cleaned)
+
+        # Защитные проверки и нормализация
+        ai_probability = max(0, min(100, int(parsed.get("ai_probability", 50))))
+        human_probability = max(0, min(100, int(parsed.get("human_probability", 100 - ai_probability))))
+
+        return {
+            "ai_probability": ai_probability,
+            "human_probability": human_probability,
+            "verdict": parsed.get("verdict", "Не удалось определить точно"),
+            "explanation": parsed.get("explanation", "")
+        }
+
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error in detect_ai_pipeline: {e}, raw: {raw_result if 'raw_result' in locals() else 'N/A'}")
+        return {
+            "ai_probability": 50,
+            "human_probability": 50,
+            "verdict": "Не удалось точно определить происхождение текста",
+            "explanation": "Произошла ошибка при анализе текста. Попробуйте ещё раз."
+        }
+    except Exception as e:
+        print(f"Error in detect_ai_pipeline: {e}")
+        return {
+            "ai_probability": 50,
+            "human_probability": 50,
+            "verdict": "Ошибка анализа",
+            "explanation": "Не удалось проанализировать текст из-за технической ошибки."
+        }
 
 
 def get_available_models():

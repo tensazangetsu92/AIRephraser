@@ -68,3 +68,242 @@
     }
 
 }
+
+/* ========================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ — добавить в конец responsive.css
+   или подключить отдельным файлом после остальных стилей
+   ======================================== */
+
+/* --- Кнопка-гамбургер (только мобильные) --- */
+.mobile-menu-btn {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 300;
+    width: 40px;
+    height: 40px;
+    background: var(--sidebar-background-color, #1e1e1e);
+    border: 1px solid var(--sidebar-border-color, #313130);
+    border-radius: 10px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-color, #f0f0f0);
+    font-size: 1.1rem;
+    transition: background 0.2s;
+}
+
+.mobile-menu-btn:hover {
+    background: rgba(18, 18, 18, 0.6);
+}
+
+/* --- Тёмный оверлей за сайдбаром --- */
+.sidebar-overlay {
+    display: none;  /* скрыт по умолчанию */
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 99;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none; /* не ловит клики когда невидим */
+}
+
+.sidebar-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* ========================================
+   БРЕЙКПОИНТ: планшет и телефон (≤ 768px)
+   ======================================== */
+@media (max-width: 768px) {
+
+    /* Показываем гамбургер */
+    .mobile-menu-btn {
+        display: flex;
+    }
+
+    /* Показываем оверлей когда он нужен */
+    .sidebar-overlay {
+        display: block;
+    }
+
+    /* Сайдбар уезжает за левый край */
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease, width 0.3s ease;
+        width: 240px !important; /* всегда полный, collapsed игнорируем на мобиле */
+        z-index: 200;
+    }
+
+    /* Открытый сайдбар (класс добавляется JS) */
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    /* Сброс collapsed-стилей на мобиле — показываем текст */
+    .sidebar.collapsed .logo,
+    .sidebar.collapsed .logo-img,
+    .sidebar.collapsed .sidebar-item span,
+    .sidebar.collapsed .lang-text,
+    .sidebar.collapsed #userEmailText,
+    .sidebar.collapsed .subscribe-type {
+        display: revert;
+    }
+    .sidebar.collapsed .sidebar-menu-name {
+        visibility: visible;
+        opacity: 0.6;
+    }
+    .sidebar.collapsed .sidebar-item {
+        padding: 9px 0px 9px 20px;
+    }
+    .sidebar.collapsed .sidebar-logo {
+        justify-content: flex-start;
+        padding: 24px 15px;
+    }
+    .sidebar.collapsed .sidebar-toggle-btn {
+        margin-left: auto;
+    }
+    .sidebar.collapsed .sidebar-footer-btn {
+        justify-content: center;
+        padding: 10px;
+    }
+    .sidebar.collapsed .sidebar-footer-btn span {
+        display: inline;
+    }
+    .sidebar.collapsed .user-avatar {
+        justify-content: flex-start;
+        padding: 8px;
+    }
+    .sidebar.collapsed .user-avatar > div {
+        display: block;
+    }
+    .sidebar.collapsed .balance-block {
+        display: block;
+    }
+
+    /* Кнопку сворачивания прячем на мобиле */
+    .sidebar-toggle-btn {
+        display: none;
+    }
+
+    /* Контент занимает всю ширину */
+    .container {
+        margin-left: 0 !important;
+        padding: 4.5rem 1rem 1.5rem; /* отступ сверху под гамбургер */
+        min-width: 0;
+    }
+
+    /* Editor: колонки вертикально */
+    .editor {
+        flex-direction: column;
+        gap: 1rem;
+        margin: 0 0 1rem;
+    }
+
+    textarea, .output {
+        height: 240px;
+    }
+
+    /* Controls: вертикально, на всю ширину */
+    .controls {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.75rem;
+        margin: 0 0 1.5rem;
+        padding: 0;
+        align-items: stretch;
+    }
+
+    .control-group {
+        flex: none;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .control-group:last-child {
+        flex: none;
+    }
+
+    .main-btn {
+        margin-top: 0;
+        padding: 0.85rem 1.5rem;
+    }
+
+    /* Кастомные селекты открываются вниз (места снизу больше) */
+    .custom-select-options {
+        top: 100%;
+        bottom: auto;
+        border-radius: 0 0 12px 12px;
+        border-top: none;
+        border-bottom: var(--border-button-color);
+    }
+
+    .custom-select.open .custom-select-trigger {
+        border-radius: 12px 12px 0 0;
+    }
+
+    /* Модалка */
+    .modal-content {
+        padding: 1.5rem;
+        margin: 1rem;
+        width: calc(100% - 2rem);
+    }
+}
+
+/* ========================================
+   БРЕЙКПОИНТ: совсем маленький экран (≤ 400px)
+   ======================================== */
+@media (max-width: 400px) {
+    .container {
+        padding: 4rem 0.75rem 1rem;
+    }
+
+    .col {
+        padding: 12px;
+    }
+
+    textarea, .output {
+        height: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        width: 100%;
+        align-items: end;
+    }
+
+    .control-group {
+        max-width: none;
+        min-width: 0;
+    }
+
+    /* Кнопка занимает всю нижнюю строку */
+    .control-group:last-child {
+        grid-column: 1 / -1;
+        flex: none;
+    }
+
+    .main-btn {
+        margin-top: 0;
+    }
+
+    /* Селекты открываются вниз на мобиле */
+    .custom-select-options {
+        top: 100%;
+        bottom: auto;
+        border-radius: 0 0 12px 12px;
+        border-top: none;
+        border-bottom: var(--border-button-color);
+    }
+
+    .custom-select.open .custom-select-trigger {
+        border-radius: 12px 12px 0 0;
+    }
+}

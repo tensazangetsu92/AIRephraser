@@ -6,11 +6,14 @@
     gap: 1rem;
     margin-bottom: 1.5rem;
     align-items: flex-end; /* Выравнивание по нижнему краю */
+    justify-content: flex-end;
+    margin: 0 auto;
 }
 
 .control-group {
-    flex: 1;              /* Равномерное распределение */
-    min-width: 140px;     /* Минимальная ширина */
+    flex: 1;
+    min-width: 140px;
+    max-width: 200px;
 }
 
 /* Убираем лишнее у кнопки */
@@ -167,4 +170,8 @@
 
 .main-btn:active {
     transform: scale(0.98);
+}
+
+.single-main-btn {
+    margin-top: 1px;
 }

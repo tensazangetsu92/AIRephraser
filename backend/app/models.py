@@ -74,6 +74,9 @@ class HumanizeRequest(BaseModel):
     length: Literal["same", "shorter", "longer"] = "same"
     target_language: Literal["ru", "en"] = "ru"
 
+class DetectRequest(BaseModel):
+    text: str
+
 
 class ApiResponse(BaseModel):
     """Стандартный ответ API"""

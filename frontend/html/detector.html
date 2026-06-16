@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<div class="editor">
+<div class="editor" id="editorContainer">
     <div class="col">
         <div class="textarea-wrapper">
             <div class="editor-name">Ваш текст</div>
@@ -17,7 +17,16 @@
         <div class="word-counter-wrapper">
             <span class="word-count" id="wordCount"></span>
             <span class="word-warning" id="wordWarning"></span>
-            <button class="copy-text-btn" id="copyInputBtn" title="Копировать результат">
+            <button class="copy-text-btn" id="copyInputBtn" title="Копировать текст">
+                <i class="fa-regular fa-clone"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col result-col" id="resultCol" style="display: none;">
+        <div class="editor-name">Результат</div>
+        <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10" readonly></textarea>
+        <div class="word-counter-wrapper">
+            <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат">
                 <i class="fa-regular fa-clone"></i>
             </button>
         </div>
@@ -25,12 +34,12 @@
 </div>
 
 <div class="controls">
-    <div class="control-group">
-        <button class="main-btn" id="detectBtn">Проверить текст</button>
-    </div>
+    <button class="main-btn single-main-btn" id="detectBtn">Проверить текст</button>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
+<script src="/js/detector.js" defer></script>
+<script src="/js/main.js" defer></script>
 {% endblock %}
