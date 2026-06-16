@@ -206,10 +206,15 @@ function initSidebarToggle() {
     if (!sidebar || !toggleBtn) return;
 
     const applyCollapsed = (collapsed) => {
-        sidebar.classList.toggle('collapsed', collapsed);
-        if (container) container.style.marginLeft = collapsed ? '60px' : '240px';
-    };
+        // Блокируем overflow на время анимации
+        sidebar.style.overflow = 'hidden';
+        setTimeout(() => {
+            sidebar.style.overflow = '';
+        }, 320); // чуть больше transition (0.3s)
 
+        sidebar.classList.toggle('collapsed', collapsed);
+        if (container) container.style.marginLeft = collapsed ? '70px' : '240px';
+    };
     applyCollapsed(localStorage.getItem('sidebarCollapsed') === 'true');
 
     toggleBtn.addEventListener('click', () => {

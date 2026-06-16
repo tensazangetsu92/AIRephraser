@@ -264,6 +264,10 @@
     background: rgba(18, 18, 18, 0.3);
     border-radius: 16px;
     border: 1px solid var(--sidebar-border-color);
+    max-height: 200px;
+    transition: max-width 0.3s ease, opacity 0.1s ease,
+                margin 0.3s ease, padding 0.3s ease;
+    overflow: hidden;
 }
 
 .balance-title {

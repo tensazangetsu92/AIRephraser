@@ -46,13 +46,24 @@
 .sidebar.collapsed .sidebar-item span,
 .sidebar.collapsed .lang-text,
 .sidebar.collapsed #userEmailText,
-.sidebar.collapsed .subscribe-type {
+.sidebar.collapsed .subscribe-type
+.sidebar.collapsed .balance-title,
+.sidebar.collapsed .balance-text {
     display: none;
 }
 .sidebar.collapsed .sidebar-menu-name {
     visibility: hidden;
     opacity: 0;
     /* padding и высота остаются прежними */
+}
+
+.balance-title,
+.balance-text,
+#userEmailText,
+.subscribe-type {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Выравниваем иконки по центру */
@@ -115,4 +126,42 @@
 /* Когда сайдбар свёрнут - контент смещается */
 .sidebar.collapsed + .container {
     margin-left: 70px;
+}
+
+/* Шкала токенов — плавно скрываем */
+.sidebar.collapsed .balance-block {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Аватарка не вылезает за пределы свёрнутого сайдбара */
+.sidebar.collapsed .user-menu {
+    padding: 10px 4px;
+}
+
+.sidebar.collapsed .user-avatar {
+    justify-content: center;
+    padding: 8px 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.sidebar.collapsed .user-avatar img {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+/* Footer не вылезает */
+.sidebar.collapsed .sidebar-footer {
+    width: 70px;
+    overflow: hidden;
+}
+
+.sidebar.collapsed .sidebar-footer-btn {
+    width: calc(100% - 12px);
+    padding: 10px 0;
+    margin: 8px 6px;
 }
