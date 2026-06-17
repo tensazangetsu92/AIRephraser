@@ -290,7 +290,7 @@ async function send() {
     }
 
     if (wordCount < minWords) {
-        const errorMessage = `❌ Минимальное количество слов: ${minWords}.`;
+        const errorMessage = `Минимальное количество слов: ${minWords}`;
         showWarning(errorMessage, true);
         const wordCountSpan = document.getElementById('wordCount');
         if (wordCountSpan) {
@@ -301,7 +301,7 @@ async function send() {
     }
 
     if (!window.isWithinWordLimit(text)) {
-        const errorMessage = `❌ Максимальное количество слов: ${maxWords}.`;
+        const errorMessage = `Максимальное количество слов: ${maxWords}`;
         showWarning(errorMessage, true);
         return;
     }

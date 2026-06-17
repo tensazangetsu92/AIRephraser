@@ -7,13 +7,11 @@
     margin-bottom: 1.5rem;
     align-items: flex-end; /* Выравнивание по нижнему краю */
     justify-content: flex-end;
-    margin: 0 auto;
+    margin: 0 2rem;
 }
 
 .control-group {
     flex: 1;
-    min-width: 140px;
-    max-width: 200px;
 }
 
 /* Убираем лишнее у кнопки */
@@ -173,5 +171,7 @@
 }
 
 .single-main-btn {
-    margin-top: 1px;
+    width: 200px;
+    margin: 1rem 2rem 0 2rem;
+    align-self: flex-end;
 }

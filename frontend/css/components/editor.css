@@ -4,18 +4,16 @@
 .container {
     margin-left: 260px;
     flex: 1;
-    padding: 2rem;
+    padding: 0 2rem;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
 }
-
 
 .editor {
     display: flex;
     gap: 2rem;
-    margin: 0 2rem 1.5rem 2rem;
+    margin: 1rem 2rem 1.5rem 2rem;
 }
 
 .col {
@@ -96,17 +94,19 @@ textarea::-webkit-scrollbar-track {
     justify-content: space-between;
     align-items: center;
     margin-top: 0.5rem;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
 }
 
 .word-count {
     color: #c4c4c4;
     transition: color 0.2s;
+    font-weight: 600;
 }
 
 .word-warning {
-    font-size: 0.75rem;
     transition: color 0.2s;
+    margin-left: 10px;
+    font-weight: 600;
 }
 
 /* Обёртка для textarea и кнопки */
@@ -202,6 +202,6 @@ textarea::-webkit-scrollbar-track {
 
 .editor.single-col .col:first-child {
     max-width: 1000px;
-    margin: 20px auto;
+    margin: 0 auto;
     width: 100%;
 }
