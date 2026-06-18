@@ -5,7 +5,7 @@
 {% block content %}
 
 <div class="editor" id="editorContainer">
-    <div class="col">
+    <div class="col" id="inputCol">
         <div class="textarea-wrapper">
             <div class="editor-name">Ваш текст</div>
             <textarea id="input" placeholder="Вставьте текст для проверки на ИИ..."></textarea>
@@ -22,19 +22,53 @@
             </button>
         </div>
     </div>
+
     <div class="col result-col" id="resultCol" style="display: none;">
         <div class="editor-name">Результат</div>
-        <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10" readonly></textarea>
-        <div class="word-counter-wrapper">
-            <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат">
-                <i class="fa-regular fa-clone"></i>
-            </button>
+        <div id="result" class="output detector-output" placeholder="Результат появится здесь..."></div>
+    </div>
+
+    <div class="col detector-report-col" id="detectorReportCol" style="display: none;">
+        <div class="editor-name">Вероятный анализ</div>
+        <div class="detector-report-body">
+            <div class="detector-chart-wrapper">
+                <svg viewBox="0 0 120 120" class="detector-chart" id="detectorChart">
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="#313130" stroke-width="14"></circle>
+                    <circle id="chartHuman" cx="60" cy="60" r="50" fill="none" stroke="#22c55e" stroke-width="14" stroke-dasharray="0 314" transform="rotate(-90 60 60)"></circle>
+                    <circle id="chartMixed" cx="60" cy="60" r="50" fill="none" stroke="#f59e0b" stroke-width="14" stroke-dasharray="0 314" transform="rotate(-90 60 60)"></circle>
+                    <circle id="chartAi" cx="60" cy="60" r="50" fill="none" stroke="#ef4444" stroke-width="14" stroke-dasharray="0 314" transform="rotate(-90 60 60)"></circle>
+                </svg>
+                <div class="detector-chart-center" id="detectorChartCenter">0%</div>
+            </div>
+            <div class="detector-legend">
+                <div class="detector-legend-item">
+                    <span class="detector-dot detector-dot-human"></span>
+                    <span class="detector-legend-label">Человек</span>
+                    <span class="detector-legend-value" id="legendHuman">0%</span>
+                </div>
+                <div class="detector-legend-item">
+                    <span class="detector-dot detector-dot-mixed"></span>
+                    <span class="detector-legend-label">Смешанный</span>
+                    <span class="detector-legend-value" id="legendMixed">0%</span>
+                </div>
+                <div class="detector-legend-item">
+                    <span class="detector-dot detector-dot-ai"></span>
+                    <span class="detector-legend-label">ИИ</span>
+                    <span class="detector-legend-value" id="legendAi">0%</span>
+                </div>
+            </div>
+            <div class="detector-verdict" id="detectorVerdict"></div>
         </div>
+        <button class="detector-new-check-btn" id="newCheckBtn">
+            <i class="fas fa-redo"></i> Новая проверка
+        </button>
     </div>
 </div>
 
 <div class="controls">
-    <button class="main-btn single-main-btn" id="detectBtn">Проверить текст</button>
+    <div class="control-group">
+        <button class="main-btn" id="detectBtn">Проверить текст</button>
+    </div>
 </div>
 
 {% endblock %}
