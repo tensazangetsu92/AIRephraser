@@ -1,30 +1,25 @@
-// frontend/js/detector.js
-
 let pendingDetectText = null;
-const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 50; // r=50 в SVG
+const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 50;
 
-function loadDetectorTextFromLocalStorage() {
+function loadTextFromLocalStorage() {
     const elements = window.elements || {};
     const savedInput = localStorage.getItem('detector_input_text');
 
     if (elements.input) {
         elements.input.value = savedInput || '';
-        if (typeof window.updateWordCounter === 'function') {
-            window.updateWordCounter();
-        }
+        updateWordCounter();
     }
 
-    const savedResult = localStorage.getItem('detector_result_data');
     if (!savedInput || !savedInput.trim()) {
         localStorage.removeItem('detector_result_data');
         hideResultColumns();
         return;
     }
 
+    const savedResult = localStorage.getItem('detector_result_data');
     if (savedResult) {
         try {
-            const data = JSON.parse(savedResult);
-            renderDetectorResult(data);
+            renderDetectorResult(JSON.parse(savedResult));
             showResultColumns();
         } catch {
             hideResultColumns();
@@ -35,47 +30,32 @@ function loadDetectorTextFromLocalStorage() {
 }
 
 function showResultColumns() {
-    const inputCol = document.getElementById('inputCol');
+    document.getElementById('inputCol')?.style.setProperty('display', 'none');
     const resultCol = document.getElementById('resultCol');
-    const reportCol = document.getElementById('detectorReportCol');
-    const editor = document.getElementById('editorContainer');
-    const controls = document.querySelector('.controls');
-
-    if (inputCol) inputCol.style.display = 'none';
     if (resultCol) resultCol.style.display = '';
+    const reportCol = document.getElementById('detectorReportCol');
     if (reportCol) reportCol.style.display = 'flex';
-    if (editor) editor.classList.remove('single-col');
+    document.getElementById('editorContainer')?.classList.remove('single-col');
+    const controls = document.querySelector('.controls');
     if (controls) controls.style.display = 'none';
 }
 
 function hideResultColumns() {
     const inputCol = document.getElementById('inputCol');
-    const resultCol = document.getElementById('resultCol');
-    const reportCol = document.getElementById('detectorReportCol');
-    const editor = document.getElementById('editorContainer');
-    const controls = document.querySelector('.controls');
-
     if (inputCol) inputCol.style.display = '';
-    if (resultCol) resultCol.style.display = 'none';
-    if (reportCol) reportCol.style.display = 'none';
-    if (editor) editor.classList.add('single-col');
+    document.getElementById('resultCol')?.style.setProperty('display', 'none');
+    document.getElementById('detectorReportCol')?.style.setProperty('display', 'none');
+    document.getElementById('editorContainer')?.classList.add('single-col');
+    const controls = document.querySelector('.controls');
     if (controls) controls.style.display = '';
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 function renderDetectorResult(data) {
     const resultDiv = document.getElementById('result');
-
     if (resultDiv && Array.isArray(data.sentences)) {
-        resultDiv.innerHTML = data.sentences.map(s => {
-            const cls = `detector-sentence sentence-${s.label}`;
-            return `<span class="${cls}">${escapeHtml(s.text)}</span>`;
-        }).join(' ');
+        resultDiv.innerHTML = data.sentences.map(s =>
+            `<span class="detector-sentence sentence-${s.label}">${escapeHtml(s.text)}</span>`
+        ).join(' ');
     }
 
     renderDonutChart(data.human_probability, data.mixed_probability, data.ai_probability);
@@ -100,7 +80,6 @@ function renderDonutChart(humanPct, mixedPct, aiPct) {
     const chartHuman = document.getElementById('chartHuman');
     const chartMixed = document.getElementById('chartMixed');
     const chartAi = document.getElementById('chartAi');
-
     if (!chartHuman || !chartMixed || !chartAi) return;
 
     const humanLen = (humanPct / 100) * CIRCLE_CIRCUMFERENCE;
@@ -109,10 +88,8 @@ function renderDonutChart(humanPct, mixedPct, aiPct) {
 
     chartHuman.setAttribute('stroke-dasharray', `${humanLen} ${CIRCLE_CIRCUMFERENCE}`);
     chartHuman.setAttribute('stroke-dashoffset', '0');
-
     chartMixed.setAttribute('stroke-dasharray', `${mixedLen} ${CIRCLE_CIRCUMFERENCE}`);
     chartMixed.setAttribute('stroke-dashoffset', `${-humanLen}`);
-
     chartAi.setAttribute('stroke-dasharray', `${aiLen} ${CIRCLE_CIRCUMFERENCE}`);
     chartAi.setAttribute('stroke-dashoffset', `${-(humanLen + mixedLen)}`);
 }
@@ -125,47 +102,31 @@ async function processDetectText(text) {
         detectBtn.disabled = true;
         detectBtn.innerHTML = '<span class="loading"></span> Анализ...';
     }
-    if (resultDiv) {
-        resultDiv.textContent = 'Анализ текста...';
-    }
+    if (resultDiv) resultDiv.textContent = 'Анализ текста...';
     showResultColumns();
     showNotification('Анализ текста');
 
-    const token = Auth.getToken();
-
     try {
-        const response = await fetch('/detect', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ text })
-        });
+        const { ok, status, data } = await API.detect(text);
 
-        const data = await response.json();
-
-        if (response.ok) {
+        if (ok) {
             renderDetectorResult(data.result);
             localStorage.setItem('detector_result_data', JSON.stringify(data.result));
             clearWarning();
-
             if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
             if (typeof loadCurrentSubscription === 'function') loadCurrentSubscription();
-
-        } else if (response.status === 401) {
+        } else if (status === 401) {
             if (resultDiv) resultDiv.textContent = '❌ Сессия истекла. Пожалуйста, войдите заново.';
             Auth.logout();
             if (typeof window.updateUI === 'function') window.updateUI();
             setTimeout(() => Auth.showAuthModal(), 1500);
-        } else if (response.status === 429) {
+        } else if (status === 429) {
             if (resultDiv) resultDiv.textContent = '❌ ' + (data.detail || 'Лимит токенов исчерпан');
             if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
         } else {
             if (resultDiv) resultDiv.textContent = '❌ Ошибка: ' + (data.detail || 'Неизвестная ошибка');
         }
-    } catch (err) {
-        console.error('Detect error:', err);
+    } catch {
         if (resultDiv) resultDiv.textContent = '❌ Ошибка соединения с сервером';
     }
 
@@ -175,49 +136,33 @@ async function processDetectText(text) {
     }
 }
 
-function showWarning(message, isError = false) {
-    const warningSpan = document.getElementById('wordWarning');
-    if (warningSpan) {
-        warningSpan.textContent = message;
-        warningSpan.style.color = isError ? '#ef4444' : '#f59e0b';
-    }
-}
-
-function clearWarning() {
-    const warningSpan = document.getElementById('wordWarning');
-    if (warningSpan) warningSpan.textContent = '';
-}
-
-async function sendDetect() {
+async function send() {
     const elements = window.elements || {};
-
     if (!elements.input) return;
 
     const text = elements.input.value;
-    const wordCount = window.countWords ? window.countWords(text) : 0;
-    const maxWords = window.currentMaxWords || 1000;
-    const minWords = window.currentMinWords || 50;
+    const wordCount = countWords(text);
 
     clearWarning();
 
     if (!text.trim()) {
-        showWarning('⚠️ Пожалуйста, введите текст для анализа', false);
+        showWarning('⚠️ Пожалуйста, введите текст для анализа');
         return;
     }
 
-    if (wordCount < minWords) {
-        showWarning(`❌ Минимальное количество слов: ${minWords}.`, true);
+    if (wordCount < currentMinWords) {
+        showWarning(`❌ Минимальное количество слов: ${currentMinWords}`, true);
         return;
     }
 
-    if (window.isWithinWordLimit && !window.isWithinWordLimit(text)) {
-        showWarning(`❌ Максимальное количество слов: ${maxWords}.`, true);
+    if (!isWithinWordLimit(text)) {
+        showWarning(`❌ Максимальное количество слов: ${currentMaxWords}`, true);
         return;
     }
 
     if (!Auth.isAuthenticated()) {
         pendingDetectText = text;
-        showWarning('🔐 Для использования сервиса необходимо войти в аккаунт', false);
+        showWarning('🔐 Для использования сервиса необходимо войти в аккаунт');
         Auth.showAuthModal();
         return;
     }
@@ -225,27 +170,25 @@ async function sendDetect() {
     await processDetectText(text);
 }
 
-async function pasteFromClipboardDetect() {
+async function pasteFromClipboard() {
     const textarea = document.getElementById('input');
     const pasteBtn = document.getElementById('pasteBtn');
-
     try {
         const text = await navigator.clipboard.readText();
         if (text) {
             textarea.value = text;
             textarea.dispatchEvent(new Event('input', { bubbles: true }));
-            localStorage.setItem('detector_input_text', text);
+            localStorage.setItem('detector_input_text', textarea.value);
             if (pasteBtn) pasteBtn.style.display = 'none';
         } else {
-            showNotification('Буфер обмена пуст');
+            showNotification('Буфер обмена пуст', 'warning');
         }
-    } catch (err) {
-        console.error('Failed to read clipboard:', err);
-        showNotification('Не удалось получить доступ к буферу обмена.');
+    } catch {
+        showNotification('Не удалось получить доступ к буферу обмена', 'error');
     }
 }
 
-function initDetectorAutoSave() {
+function initAutoSave() {
     const elements = window.elements || {};
     if (elements.input) {
         elements.input.addEventListener('input', () => {
@@ -254,74 +197,36 @@ function initDetectorAutoSave() {
     }
 }
 
-async function copyDetectResultText() {
-    const resultDiv = document.getElementById('result');
-    if (!resultDiv) return;
+window.send = send;
+window.pasteFromClipboard = pasteFromClipboard;
+window.loadTextFromLocalStorage = loadTextFromLocalStorage;
+window.initAutoSave = initAutoSave;
 
-    const text = resultDiv.innerText;
-    if (!text || !text.trim()) {
-        showNotification('Нет текста для копирования', 'warning');
-        return;
-    }
+window.copyInputText = () => {
+    const btn = document.getElementById('copyInputBtn');
+    copyButtonText(btn, () => window.elements?.input?.value);
+};
 
-    try {
-        await navigator.clipboard.writeText(text);
-        showNotification('Результат скопирован', 'success');
-    } catch (err) {
-        console.error('Copy failed:', err);
-        showNotification('Не удалось скопировать текст', 'error');
-    }
-}
-
-window.send = sendDetect;
-window.showWarning = showWarning;
-window.clearWarning = clearWarning;
-window.pasteFromClipboard = pasteFromClipboardDetect;
-window.loadTextFromLocalStorage = loadDetectorTextFromLocalStorage;
-window.initAutoSave = initDetectorAutoSave;
-window.copyResultText = copyDetectResultText;
-window.copyInputText = async function() {
-    const elements = window.elements || {};
-    const text = elements.input?.value;
-    if (!text || !text.trim()) {
-        showNotification('Нет текста для копирования', 'warning');
-        return;
-    }
-    try {
-        await navigator.clipboard.writeText(text);
-        showNotification('Текст скопирован', 'success');
-    } catch {
-        showNotification('Не удалось скопировать текст', 'error');
-    }
+window.copyResultText = () => {
+    const btn = document.getElementById('copyResultBtn');
+    copyButtonText(btn, () => document.getElementById('result')?.innerText);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    const pasteBtn = document.getElementById('pasteBtn');
-    if (pasteBtn) pasteBtn.addEventListener('click', pasteFromClipboardDetect);
+    document.getElementById('pasteBtn')?.addEventListener('click', pasteFromClipboard);
+    document.getElementById('copyInputBtn')?.addEventListener('click', window.copyInputText);
+    document.getElementById('copyResultBtn')?.addEventListener('click', window.copyResultText);
+    document.getElementById('detectBtn')?.addEventListener('click', send);
 
-    const copyInputBtn = document.getElementById('copyInputBtn');
-    if (copyInputBtn) copyInputBtn.addEventListener('click', window.copyInputText);
+    document.getElementById('newCheckBtn')?.addEventListener('click', () => {
+        localStorage.removeItem('detector_input_text');
+        localStorage.removeItem('detector_result_data');
+        const elements = window.elements || {};
+        if (elements.input) elements.input.value = '';
+        hideResultColumns();
+        updateWordCounter();
+    });
 
-    const copyResultBtn = document.getElementById('copyResultBtn');
-    if (copyResultBtn) copyResultBtn.addEventListener('click', copyDetectResultText);
-
-    const detectBtn = document.getElementById('detectBtn');
-    if (detectBtn) {
-        detectBtn.addEventListener('click', () => sendDetect());
-    }
-
-    const newCheckBtn = document.getElementById('newCheckBtn');
-    if (newCheckBtn) {
-        newCheckBtn.addEventListener('click', () => {
-            localStorage.removeItem('detector_input_text');
-            localStorage.removeItem('detector_result_data');
-            const elements = window.elements || {};
-            if (elements.input) elements.input.value = '';
-            hideResultColumns();
-            if (typeof window.updateWordCounter === 'function') window.updateWordCounter();
-        });
-    }
-
-    loadDetectorTextFromLocalStorage();
-    initDetectorAutoSave();
+    loadTextFromLocalStorage();
+    initAutoSave();
 });

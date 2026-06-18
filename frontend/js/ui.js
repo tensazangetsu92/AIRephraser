@@ -1,22 +1,10 @@
-// frontend/js/ui.js
-
-// ========== МОДАЛЬНЫЕ ОКНА ==========
-
-function showLogin() {
-    Auth.showAuthModal();
-}
-
+function showLogin() { Auth.showAuthModal(); }
 function showRegister() {
     Auth.isRegisterMode = true;
     Auth.updateUIMode();
     Auth.showAuthModal();
 }
-
-function closeModals() {
-    Auth.closeAuthModal();
-}
-
-// ========== ОБЁРТКИ АВТОРИЗАЦИИ ==========
+function closeModals() { Auth.closeAuthModal(); }
 
 async function handleLogin() {
     const email = document.getElementById('authEmail')?.value;
@@ -41,15 +29,8 @@ async function handleRegister() {
     }
 }
 
-function handleGoogleLogin() {
-    Auth.loginWithGoogle();
-}
-
-function handleLogout() {
-    Auth.logout();
-}
-
-// ========== АВАТАРКА ==========
+function handleGoogleLogin() { Auth.loginWithGoogle(); }
+function handleLogout() { Auth.logout(); }
 
 function getAvatarUrl(email) {
     if (!email) return '';
@@ -57,105 +38,69 @@ function getAvatarUrl(email) {
     return `https://www.gravatar.com/avatar/${md5}?s=96&d=identicon`;
 }
 
-// ========== USER MENU + ПОПАП ==========
-
 let userMenuInited = false;
 
 function initUserMenu() {
     if (userMenuInited) return;
-
     const userMenu = document.getElementById('userMenu');
     const userPopup = document.getElementById('userPopup');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const langToggle = document.getElementById('langToggle');
-    const profileBtn = document.getElementById('profileBtn');
-    const historyPopupBtn = document.getElementById('historyPopupBtn');
-
     if (!userMenu || !userPopup) return;
-
     userMenuInited = true;
 
-    // Убираем старые обработчики, чтобы не дублировать
     const newUserMenu = userMenu.cloneNode(true);
     userMenu.parentNode.replaceChild(newUserMenu, userMenu);
-
     const newUserPopup = userPopup.cloneNode(true);
     userPopup.parentNode.replaceChild(newUserPopup, userPopup);
 
-    const finalUserMenu = document.getElementById('userMenu');
-    const finalUserPopup = document.getElementById('userPopup');
-    const finalLogoutBtn = document.getElementById('logoutBtn');
-    const finalLangToggle = document.getElementById('langToggle');
-    const finalProfileBtn = document.getElementById('profileBtn');
-    const finalHistoryPopupBtn = document.getElementById('historyPopupBtn');
+    const finalMenu = document.getElementById('userMenu');
+    const finalPopup = document.getElementById('userPopup');
 
-    finalUserMenu.addEventListener('click', (e) => {
+    finalMenu.addEventListener('click', (e) => {
         e.stopPropagation();
-        finalUserPopup.classList.toggle('open');
+        finalPopup.classList.toggle('open');
     });
 
-    document.addEventListener('click', () => {
-        finalUserPopup.classList.remove('open');
+    document.addEventListener('click', () => finalPopup.classList.remove('open'));
+    finalPopup.addEventListener('click', (e) => e.stopPropagation());
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        finalPopup.classList.remove('open');
+        Auth.logout();
     });
 
-    finalUserPopup.addEventListener('click', (e) => e.stopPropagation());
+    document.getElementById('langToggle')?.addEventListener('click', () => {
+        if (typeof toggleLang === 'function') toggleLang();
+    });
 
-    if (finalLogoutBtn) {
-        finalLogoutBtn.addEventListener('click', () => {
-            finalUserPopup.classList.remove('open');
-            Auth.logout();
-        });
-    }
+    document.getElementById('profileBtn')?.addEventListener('click', () => {
+        finalPopup.classList.remove('open');
+        window.location.href = '/profile';
+    });
 
-    if (finalLangToggle) {
-        finalLangToggle.addEventListener('click', () => {
-            if (typeof toggleLang === 'function') toggleLang();
-        });
-    }
-
-    if (finalProfileBtn) {
-        finalProfileBtn.addEventListener('click', () => {
-            finalUserPopup.classList.remove('open');
-            window.location.href = '/profile';
-        });
-    }
-
-    // 👇 ИСПРАВЛЕНО: используем finalHistoryPopupBtn
-    if (finalHistoryPopupBtn) {
-        finalHistoryPopupBtn.addEventListener('click', () => {
-            finalUserPopup.classList.remove('open');
-            window.location.href = '/history';
-        });
-    }
+    document.getElementById('historyPopupBtn')?.addEventListener('click', () => {
+        finalPopup.classList.remove('open');
+        window.location.href = '/history';
+    });
 }
 
 function updateUserMenu() {
     const user = Auth.getUser();
     const userMenu = document.getElementById('userMenu');
     const authBtn = document.getElementById('authBtn');
-    const avatarImg = document.getElementById('avatarImg');
-    const userEmailText = document.getElementById('userEmailText');
 
     if (user && Auth.isAuthenticated()) {
-        if (userMenu) {
-            userMenu.style.display = 'block';
-        }
+        if (userMenu) userMenu.style.display = 'block';
         if (authBtn) authBtn.style.display = 'none';
+        const userEmailText = document.getElementById('userEmailText');
+        const avatarImg = document.getElementById('avatarImg');
         if (userEmailText) userEmailText.textContent = user.email;
-        if (avatarImg) {
-            avatarImg.src = getAvatarUrl(user.email);
-            avatarImg.alt = user.email;
-        }
+        if (avatarImg) { avatarImg.src = getAvatarUrl(user.email); avatarImg.alt = user.email; }
         initUserMenu();
     } else {
-        if (userMenu) {
-            userMenu.style.display = 'none';
-        }
+        if (userMenu) userMenu.style.display = 'none';
         if (authBtn) authBtn.style.display = 'block';
     }
 }
-
-// ========== ОБНОВЛЕНИЕ UI ==========
 
 function updateUI() {
     const user = Auth.getUser();
@@ -179,42 +124,19 @@ function updateUI() {
     }
 }
 
-// ========== КОПИРОВАНИЕ ==========
-
-async function copyText() {
-    const elements = window.elements || {};
-    const text = elements.result?.innerText;
-    if (!text || text === 'Результат появится здесь...' || text.includes('⚠️') || text.includes('❌') || text.includes('🔄')) {
-        showNotification('Нет текста для копирования', 'warning');
-        return;
-    }
-    try {
-        await navigator.clipboard.writeText(text);
-        showNotification('Текст скопирован в буфер обмена', 'success');
-    } catch {
-        showNotification('Не удалось скопировать текст', 'error');
-    }
-}
-
-// ========== СВОРАЧИВАНИЕ САЙДБАРА ==========
-
 function initSidebarToggle() {
     const sidebar = document.querySelector('.sidebar');
     const toggleBtn = document.getElementById('sidebarToggle');
     const container = document.querySelector('.container');
-
     if (!sidebar || !toggleBtn) return;
 
     const applyCollapsed = (collapsed) => {
-        // Блокируем overflow на время анимации
         sidebar.style.overflow = 'hidden';
-        setTimeout(() => {
-            sidebar.style.overflow = '';
-        }, 320); // чуть больше transition (0.3s)
-
+        setTimeout(() => { sidebar.style.overflow = ''; }, 320);
         sidebar.classList.toggle('collapsed', collapsed);
         if (container) container.style.marginLeft = collapsed ? '70px' : '240px';
     };
+
     applyCollapsed(localStorage.getItem('sidebarCollapsed') === 'true');
 
     toggleBtn.addEventListener('click', () => {
@@ -224,37 +146,6 @@ function initSidebarToggle() {
     });
 }
 
-// ========== ВЕРИФИКАЦИЯ ==========
-
-window.verifyCode = async function() {
-    const codeInput = document.getElementById('verificationCode');
-    const code = codeInput?.value.trim();
-    const errorDiv = document.getElementById('verificationError');
-
-    if (!code || code.length !== 6) {
-        if (errorDiv) { errorDiv.textContent = 'Введите 6-значный код'; errorDiv.style.display = 'block'; }
-        return;
-    }
-
-    const result = await Auth.verifyCode(code);
-    if (result.success) {
-        showNotification('Регистрация успешно завершена!', 'success');
-        Auth.closeVerificationModal();
-        Auth.closeAuthModal();
-    } else {
-        if (errorDiv) { errorDiv.textContent = result.error; errorDiv.style.display = 'block'; }
-    }
-};
-
-window.resendCode = async function() {
-    await Auth.resendVerificationCode();
-};
-
-window.closeVerificationModal = function() {
-    Auth.closeVerificationModal();
-};
-
-// ========== УВЕДОМЛЕНИЯ ==========
 let notificationTimeout = null;
 let notificationHideTimeout = null;
 
@@ -262,10 +153,8 @@ function showNotification(message, type = 'info', duration = 3000) {
     const toast = document.getElementById('notificationToast');
     const messageSpan = document.getElementById('notificationMessage');
     const iconSpan = document.getElementById('notificationIcon');
-
     if (!toast || !messageSpan) return;
 
-    // Отменяем все таймеры
     if (notificationTimeout) clearTimeout(notificationTimeout);
     if (notificationHideTimeout) clearTimeout(notificationHideTimeout);
 
@@ -280,15 +169,10 @@ function showNotification(message, type = 'info', duration = 3000) {
         toast.classList.remove('success', 'error', 'warning', 'info');
         iconSpan.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i>`;
         messageSpan.textContent = message;
-        toast.classList.add(type);
-        toast.classList.add('show');
-
-        notificationTimeout = setTimeout(() => {
-            toast.classList.remove('show');
-        }, duration);
+        toast.classList.add(type, 'show');
+        notificationTimeout = setTimeout(() => toast.classList.remove('show'), duration);
     };
 
-    // Если уже показано — скрываем и ждём окончания transition (300ms)
     if (toast.classList.contains('show')) {
         toast.classList.remove('show');
         notificationHideTimeout = setTimeout(show, 300);
@@ -304,26 +188,30 @@ function closeNotification() {
     if (notificationHideTimeout) clearTimeout(notificationHideTimeout);
 }
 
-window.showNotification = showNotification;
-window.closeNotification = closeNotification;
+window.verifyCode = async function () {
+    const code = document.getElementById('verificationCode')?.value.trim();
+    const errorDiv = document.getElementById('verificationError');
+    if (!code || code.length !== 6) {
+        if (errorDiv) { errorDiv.textContent = 'Введите 6-значный код'; errorDiv.style.display = 'block'; }
+        return;
+    }
+    const result = await Auth.verifyCode(code);
+    if (result.success) {
+        showNotification('Регистрация успешно завершена!', 'success');
+        Auth.closeVerificationModal();
+        Auth.closeAuthModal();
+    } else {
+        if (errorDiv) { errorDiv.textContent = result.error; errorDiv.style.display = 'block'; }
+    }
+};
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-// ========== ИНИЦИАЛИЗАЦИЯ ==========
+window.resendCode = async function () { await Auth.resendVerificationCode(); };
+window.closeVerificationModal = function () { Auth.closeVerificationModal(); };
 
 document.addEventListener('DOMContentLoaded', () => {
     initSidebarToggle();
-    setTimeout(() => {
-        if (typeof updateUI === 'function') {
-            updateUI();
-        }
-    }, 100);
+    setTimeout(() => { if (typeof updateUI === 'function') updateUI(); }, 100);
 });
-
-// ========== ГЛОБАЛЬНЫЕ ФУНКЦИИ ==========
 
 window.showLogin = showLogin;
 window.showRegister = showRegister;
@@ -333,8 +221,6 @@ window.handleRegister = handleRegister;
 window.handleGoogleLogin = handleGoogleLogin;
 window.handleLogout = handleLogout;
 window.updateUI = updateUI;
-window.copyText = copyText;
 window.updateUserMenu = updateUserMenu;
 window.showNotification = showNotification;
 window.closeNotification = closeNotification;
-

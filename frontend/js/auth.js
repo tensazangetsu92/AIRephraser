@@ -1,19 +1,15 @@
-// frontend/js/auth.js
-
 const Auth = {
-
     token: localStorage.getItem('token'),
-    isRegisterMode: false, // false = вход, true = регистрация
+    isRegisterMode: false,
+    pendingEmail: null,
+    pendingPassword: null,
 
-    getToken() {
-        return this.token;
-    },
+    getToken() { return this.token; },
 
     setToken(token) {
         this.token = token;
         if (token) {
             localStorage.setItem('token', token);
-            console.log('Token saved:', token.substring(0, 20) + '...');
         } else {
             localStorage.removeItem('token');
         }
@@ -26,12 +22,13 @@ const Auth = {
 
     setUser(user) {
         if (user) {
-            console.log('Saving user to localStorage:', user);
             localStorage.setItem('user', JSON.stringify(user));
         } else {
             localStorage.removeItem('user');
         }
     },
+
+    isAuthenticated() { return !!this.token; },
 
     async login(email, password) {
         const result = await API.login(email, password);
@@ -39,83 +36,44 @@ const Auth = {
             this.setToken(result.data.access_token);
             this.setUser(result.data.user);
             this.closeAuthModal();
-
-            // 👇 ДОЛЖЕН БЫТЬ ВЫЗОВ
-            if (typeof updateUI === 'function') {
-                updateUI();
-            }
-            if (typeof updateUserMenu === 'function') {
-                updateUserMenu();
-            }
-
+            if (typeof updateUI === 'function') updateUI();
+            if (typeof updateUserMenu === 'function') updateUserMenu();
             return { success: true, user: result.data.user };
         }
         return { success: false, error: result.data.detail || 'Ошибка входа' };
-    },
-
-    async register(email, password) {
-        const result = await API.register(email, password);
-        if (result.ok) {
-            this.isRegisterMode = false;
-            this.updateUIMode();
-            return { success: true, message: result.data.message };
-        } else {
-            return { success: false, error: result.data.detail || 'Ошибка регистрации' };
-        }
     },
 
     loginWithGoogle() {
         window.location.href = '/auth/google/login';
     },
 
-    // Исправленный обработчик Google токена
     async handleGoogleCallback() {
         const urlParams = new URLSearchParams(window.location.search);
         const googleToken = urlParams.get('token');
+        if (!googleToken) return false;
 
-        console.log('Checking Google token in URL:', googleToken ? 'Found!' : 'Not found');
+        this.setToken(googleToken);
 
-        if (googleToken) {
-            this.setToken(googleToken);
+        try {
+            const response = await fetch('/me', {
+                headers: { 'Authorization': `Bearer ${googleToken}` }
+            });
+            const data = await response.json();
 
-            try {
-                console.log('Fetching user data from /me...');
-                const response = await fetch('/me', {
-                    headers: { 'Authorization': `Bearer ${googleToken}` }
-                });
-
-                console.log('/me response status:', response.status);
-                const data = await response.json();
-                console.log('/me response data:', data);
-
-                if (data.success && data.user) {
-                    this.setUser(data.user);
-
-                    // Очищаем URL от токена БЕЗ перезагрузки
-                    const cleanUrl = window.location.origin + window.location.pathname;
-                    window.history.replaceState({}, document.title, cleanUrl);
-
-                    // Обновляем интерфейс
-                    if (typeof updateUI === 'function') {
-                        updateUI();
-                    }
-                    if (typeof updateUserMenu === 'function') {
-                        updateUserMenu();
-                    }
-
-                    showNotification('✅ Вход через Google выполнен успешно!');
-                } else {
-                    console.error('No user data in response:', data);
-                    showNotification('❌ Не удалось получить данные пользователя');
-                }
-            } catch (err) {
-                console.error('Google auth error:', err);
-                showNotification('❌ Ошибка при входе через Google');
+            if (data.success && data.user) {
+                this.setUser(data.user);
+                window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
+                if (typeof updateUI === 'function') updateUI();
+                if (typeof updateUserMenu === 'function') updateUserMenu();
+                showNotification('Вход через Google выполнен успешно!', 'success');
+            } else {
+                showNotification('Не удалось получить данные пользователя', 'error');
             }
-
-            return true;
+        } catch {
+            showNotification('Ошибка при входе через Google', 'error');
         }
-        return false;
+
+        return true;
     },
 
     logout() {
@@ -125,19 +83,12 @@ const Auth = {
         window.location.reload();
     },
 
-    isAuthenticated() {
-        return !!this.token;
-    },
-
     showAuthModal() {
         const modal = document.getElementById('authModal');
         if (modal) {
             modal.style.display = 'flex';
             this.resetForm();
-            setTimeout(() => {
-                const emailInput = document.getElementById('authEmail');
-                if (emailInput) emailInput.focus();
-            }, 100);
+            setTimeout(() => document.getElementById('authEmail')?.focus(), 100);
         }
     },
 
@@ -148,35 +99,34 @@ const Auth = {
     },
 
     resetForm() {
-        const fields = ['authEmail', 'authPassword', 'authConfirmPassword'];
-        fields.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (field) field.value = '';
+        ['authEmail', 'authPassword', 'authConfirmPassword'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
         });
         const errorDiv = document.getElementById('authError');
+        if (errorDiv) { errorDiv.style.display = 'none'; errorDiv.textContent = ''; }
+    },
+
+    showError(message) {
+        const errorDiv = document.getElementById('authError');
         if (errorDiv) {
-            errorDiv.style.display = 'none';
-            errorDiv.textContent = '';
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
         }
     },
 
     updateUIMode() {
+        const isReg = this.isRegisterMode;
         const title = document.getElementById('authTitle');
         const submitBtn = document.getElementById('authSubmitBtn');
         const confirmField = document.getElementById('authConfirmPassword');
         const toggleLink = document.getElementById('toggleAuthMode');
 
-        if (this.isRegisterMode) {
-            if (title) title.textContent = 'Регистрация';
-            if (submitBtn) submitBtn.textContent = 'Зарегистрироваться';
-            if (confirmField) confirmField.style.display = 'block';
-            if (toggleLink) toggleLink.innerHTML = 'Уже есть аккаунт? Войти';
-        } else {
-            if (title) title.textContent = 'Вход';
-            if (submitBtn) submitBtn.textContent = 'Войти';
-            if (confirmField) confirmField.style.display = 'none';
-            if (toggleLink) toggleLink.innerHTML = 'Нет аккаунта? Зарегистрироваться';
-        }
+        if (title) title.textContent = isReg ? 'Регистрация' : 'Вход';
+        if (submitBtn) submitBtn.textContent = isReg ? 'Зарегистрироваться' : 'Войти';
+        if (confirmField) confirmField.style.display = isReg ? 'block' : 'none';
+        if (toggleLink) toggleLink.innerHTML = isReg ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться';
     },
 
     toggleMode() {
@@ -198,55 +148,29 @@ const Auth = {
     async handleSubmit() {
         const email = document.getElementById('authEmail')?.value.trim();
         const password = document.getElementById('authPassword')?.value;
+
         const errorDiv = document.getElementById('authError');
+        if (errorDiv) { errorDiv.style.display = 'none'; errorDiv.textContent = ''; }
 
-        if (errorDiv) {
-            errorDiv.style.display = 'none';
-            errorDiv.textContent = '';
-        }
+        if (!email) { this.showError('Введите email'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { this.showError('Введите корректный email'); return; }
+        if (!password) { this.showError('Введите пароль'); return; }
 
-        if (!email) {
-            this.showError('Введите email');
-            return;
-        }
+        const submitBtn = document.getElementById('authSubmitBtn');
+        const originalText = submitBtn?.textContent;
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            this.showError('Введите корректный email');
-            return;
-        }
-
-        if (!password) {
-            this.showError('Введите пароль');
-            return;
-        }
+        const setLoading = (loading, text) => {
+            if (submitBtn) { submitBtn.textContent = loading ? text : originalText; submitBtn.disabled = loading; }
+        };
 
         if (this.isRegisterMode) {
             const confirmPassword = document.getElementById('authConfirmPassword')?.value;
+            if (password.length < 4) { this.showError('Пароль должен содержать минимум 4 символа'); return; }
+            if (password !== confirmPassword) { this.showError('Пароли не совпадают'); return; }
 
-            if (password.length < 4) {
-                this.showError('Пароль должен содержать минимум 4 символа');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                this.showError('Пароли не совпадают');
-                return;
-            }
-
-            const submitBtn = document.getElementById('authSubmitBtn');
-            const originalText = submitBtn?.textContent;
-            if (submitBtn) {
-                submitBtn.textContent = '⏳ Отправка кода...';
-                submitBtn.disabled = true;
-            }
-
+            setLoading(true, 'Отправка кода...');
             const result = await this.sendVerification(email, password);
-
-            if (submitBtn) {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
+            setLoading(false);
 
             if (result.success) {
                 this.showVerificationModal(result.email);
@@ -254,36 +178,10 @@ const Auth = {
                 this.showError(result.error);
             }
         } else {
-            const submitBtn = document.getElementById('authSubmitBtn');
-            const originalText = submitBtn?.textContent;
-            if (submitBtn) {
-                submitBtn.textContent = '⏳ Вход...';
-                submitBtn.disabled = true;
-            }
-
+            setLoading(true, 'Вход...');
             const result = await this.login(email, password);
-
-            if (submitBtn) {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
-
-            if (!result.success) {
-                this.showError(result.error);
-            }
-        }
-    },
-
-    showError(message) {
-        const errorDiv = document.getElementById('authError');
-        if (errorDiv) {
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => {
-                if (errorDiv.style.display === 'block') {
-                    errorDiv.style.display = 'none';
-                }
-            }, 5000);
+            setLoading(false);
+            if (!result.success) this.showError(result.error);
         }
     },
 
@@ -293,9 +191,8 @@ const Auth = {
             this.pendingEmail = email;
             this.pendingPassword = password;
             return { success: true, email: result.data.email };
-        } else {
-            return { success: false, error: result.data.detail || 'Ошибка отправки кода' };
         }
+        return { success: false, error: result.data.detail || 'Ошибка отправки кода' };
     },
 
     async verifyCode(code) {
@@ -304,28 +201,22 @@ const Auth = {
             this.setToken(result.data.access_token);
             this.setUser(result.data.user);
             this.closeVerificationModal();
-            if (typeof updateUI === 'function') {
-                updateUI();
-            }
-            if (typeof updateUserMenu === 'function') {
-                updateUserMenu();
-            }
+            if (typeof updateUI === 'function') updateUI();
+            if (typeof updateUserMenu === 'function') updateUserMenu();
             return { success: true };
-        } else {
-            return { success: false, error: result.data.detail || 'Неверный код' };
         }
+        return { success: false, error: result.data.detail || 'Неверный код' };
     },
 
     showVerificationModal(email) {
         const modal = document.getElementById('verificationModal');
         const emailSpan = document.getElementById('verificationEmail');
-        const codeInput = document.getElementById('verificationCode');
-        const errorDiv = document.getElementById('verificationError');
-
         if (modal && emailSpan) {
             emailSpan.textContent = `Код отправлен на ${email}`;
             modal.style.display = 'flex';
+            const codeInput = document.getElementById('verificationCode');
             if (codeInput) codeInput.value = '';
+            const errorDiv = document.getElementById('verificationError');
             if (errorDiv) errorDiv.style.display = 'none';
         }
     },
@@ -337,147 +228,88 @@ const Auth = {
 
     async resendVerificationCode() {
         if (!this.pendingEmail || !this.pendingPassword) {
-            this.showError('Ошибка: email не найден');
+            showNotification('Ошибка: email не найден', 'error');
             return;
         }
         const result = await API.sendVerification(this.pendingEmail, this.pendingPassword);
         if (result.ok) {
-            showNotification('✅ Код отправлен повторно!');
+            showNotification('Код отправлен повторно', 'success');
         } else {
-            showNotification('❌ Ошибка: ' + (result.error || 'Не удалось отправить код'));
+            showNotification('Не удалось отправить код', 'error');
         }
     },
 };
 
-// ========== ИНИЦИАЛИЗАЦИЯ ==========
+function initAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (!modal) return;
 
-window.showAuthModal = () => Auth.showAuthModal();
-window.closeAuthModal = () => Auth.closeAuthModal();
+    Auth.updateUIMode();
 
-// Обработка Google токена ПРИ ЗАГРУЗКЕ
+    document.getElementById('authSubmitBtn')?.addEventListener('click', () => Auth.handleSubmit());
+
+    ['authEmail', 'authPassword', 'authConfirmPassword'].forEach(id => {
+        document.getElementById(id)?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); Auth.handleSubmit(); }
+        });
+    });
+
+    document.getElementById('toggleAuthMode')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        Auth.toggleMode();
+    });
+
+    document.getElementById('googleLoginBtn')?.addEventListener('click', () => Auth.loginWithGoogle());
+
+    let mouseDownOnOverlay = false;
+    modal.addEventListener('mousedown', (e) => { mouseDownOnOverlay = e.target === modal; });
+    modal.addEventListener('mouseup', (e) => {
+        if (e.target === modal && mouseDownOnOverlay) Auth.closeAuthModal();
+        mouseDownOnOverlay = false;
+    });
+
+    modal.querySelector('.modal-close')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        Auth.closeAuthModal();
+    });
+
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.addEventListener('mousedown', (e) => { mouseDownOnOverlay = false; e.stopPropagation(); });
+        modalContent.addEventListener('mouseup', (e) => e.stopPropagation());
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.style.display === 'flex') Auth.closeAuthModal();
+    });
+}
+
 (function handleTokenOnLoad() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
+    const token = new URLSearchParams(window.location.search).get('token');
+    if (!token || Auth.getToken()) return;
 
-    if (token && !Auth.getToken()) {
-        console.log('Found token in URL on load, saving...');
-        Auth.setToken(token);
+    Auth.setToken(token);
+    window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
 
-        // Убираем токен из URL
-        const cleanUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
-
-        // Получаем данные пользователя
-        fetch('/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-        .then(res => res.json())
+    fetch('/me', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(r => r.json())
         .then(data => {
             if (data.success && data.user) {
                 Auth.setUser(data.user);
                 if (typeof updateUI === 'function') updateUI();
                 if (typeof updateUserMenu === 'function') updateUserMenu();
-                showNotification('✅ Вход через Google выполнен успешно!');
+                showNotification('Вход через Google выполнен успешно!', 'success');
             }
         })
-        .catch(err => console.error('Token validation error:', err));
-    }
+        .catch(() => {});
 })();
+
+window.showAuthModal = () => Auth.showAuthModal();
+window.closeAuthModal = () => Auth.closeAuthModal();
 
 document.addEventListener('DOMContentLoaded', () => {
     Auth.handleGoogleCallback();
     initAuthModal();
-
-    const authBtn = document.getElementById('authBtn');
-    if (authBtn) {
-        authBtn.addEventListener('click', () => Auth.showAuthModal());
-    }
-
-    // Даём время загрузиться ui.js
-    setTimeout(() => {
-        if (typeof updateUI === 'function') updateUI();
-    }, 0);
+    document.getElementById('authBtn')?.addEventListener('click', () => Auth.showAuthModal());
+    setTimeout(() => { if (typeof updateUI === 'function') updateUI(); }, 0);
 });
-
-function initAuthModal() {
-    const modal = document.getElementById('authModal');
-
-    if (!modal) return;
-
-    Auth.updateUIMode();
-
-    const submitBtn = document.getElementById('authSubmitBtn');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', () => Auth.handleSubmit());
-    }
-
-    const inputs = ['authEmail', 'authPassword', 'authConfirmPassword'];
-    inputs.forEach(inputId => {
-        const input = document.getElementById(inputId);
-        if (input) {
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    Auth.handleSubmit();
-                }
-            });
-        }
-    });
-
-    const toggleLink = document.getElementById('toggleAuthMode');
-    if (toggleLink) {
-        toggleLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            Auth.toggleMode();
-        });
-    }
-
-    const googleBtn = document.getElementById('googleLoginBtn');
-    if (googleBtn) {
-        googleBtn.addEventListener('click', () => Auth.loginWithGoogle());
-    }
-
-    let mouseDownOnOverlay = false;
-
-    modal.addEventListener('mousedown', (e) => {
-        if (e.target === modal) {
-            mouseDownOnOverlay = true;
-        } else {
-            mouseDownOnOverlay = false;
-        }
-    });
-
-    modal.addEventListener('mouseup', (e) => {
-        if (e.target === modal && mouseDownOnOverlay === true) {
-            Auth.closeAuthModal();
-        }
-        mouseDownOnOverlay = false;
-    });
-
-    const closeBtn = modal.querySelector('.modal-close');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            Auth.closeAuthModal();
-        });
-    }
-
-    const modalContent = modal.querySelector('.modal-content');
-    if (modalContent) {
-        modalContent.addEventListener('mousedown', (e) => {
-            mouseDownOnOverlay = false;
-            e.stopPropagation();
-        });
-        modalContent.addEventListener('mouseup', (e) => {
-            e.stopPropagation();
-        });
-    }
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.style.display === 'flex') {
-            Auth.closeAuthModal();
-        }
-    });
-
-    console.log('Auth modal initialized');
-}

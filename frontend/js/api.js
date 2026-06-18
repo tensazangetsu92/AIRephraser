@@ -1,11 +1,8 @@
-// frontend/js/api.js
 const API = {
     baseUrl: '',
 
     async request(endpoint, method, body, requiresAuth = false) {
-        const headers = {
-            'Content-Type': 'application/json',
-        };
+        const headers = { 'Content-Type': 'application/json' };
 
         if (requiresAuth) {
             const token = Auth.getToken();
@@ -23,11 +20,7 @@ const API = {
         });
 
         const data = await response.json();
-
-        // Логируем ответ для отладки (НО НЕ В ПРОДАКШЕНЕ!)
-        console.log(`API Response ${endpoint}:`, { ok: response.ok, data });
-
-        return { ok: response.ok, data };
+        return { ok: response.ok, status: response.status, data };
     },
 
     login(email, password) {
@@ -35,11 +28,10 @@ const API = {
     },
 
     register(email, password) {
-        const username = email.split('@')[0];
         return this.request('/register', 'POST', {
             email,
             password,
-            username
+            username: email.split('@')[0]
         });
     },
 
@@ -47,14 +39,27 @@ const API = {
         return this.request('/me', 'GET', null, true);
     },
 
-    humanize(text, intensity, tone, style, length, targetLanguage = 'ru') {
-        return this.request('/humanize', 'POST', {
-            text,
-            intensity,
-            tone,
-            style,
-            length,
-            target_language: targetLanguage
+    humanize(text, intensity, tone, style, length) {
+        return this.request('/humanize', 'POST', { text, intensity, tone, style, length }, true);
+    },
+
+    detect(text) {
+        return this.request('/detect', 'POST', { text }, true);
+    },
+
+    paraphrase(text, tone, style) {
+        return this.request('/paraphrase', 'POST', { text, tone, style }, true);
+    },
+
+    checkGrammar(text) {
+        return this.request('/grammar', 'POST', { text }, true);
+    },
+
+    saveHistory(toolType, originalText, resultText) {
+        return this.request('/user/history/save', 'POST', {
+            tool_type: toolType,
+            original_text: originalText,
+            result_text: resultText
         }, true);
     },
 

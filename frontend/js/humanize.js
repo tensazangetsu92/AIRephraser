@@ -1,17 +1,4 @@
-// frontend/js/humanize.js
-
 let pendingText = null;
-
-// Сохранение текста в localStorage
-function saveTextToLocalStorage() {
-    const elements = window.elements || {};
-    if (elements.input) {
-        localStorage.setItem('saved_input_text', elements.input.value);
-    }
-    if (elements.result) {
-        localStorage.setItem('saved_result_text', elements.result.value);
-    }
-}
 
 function loadTextFromLocalStorage() {
     const elements = window.elements || {};
@@ -20,12 +7,9 @@ function loadTextFromLocalStorage() {
 
     if (elements.input) {
         elements.input.value = savedInput || '';
-        if (typeof window.updateWordCounter === 'function') {
-            window.updateWordCounter();
-        }
+        updateWordCounter();
     }
 
-    // Если поле ввода пустое — сбрасываем результат и скрываем колонку
     if (!savedInput || !savedInput.trim()) {
         localStorage.removeItem('saved_result_text');
         if (elements.result) elements.result.value = '';
@@ -38,99 +22,6 @@ function loadTextFromLocalStorage() {
         showResultColumn();
     } else {
         hideResultColumn();
-    }
-}
-
-let copyInputTimer = null;
-
-async function copyInputText() {
-    const elements = window.elements || {};
-    const inputTextarea = elements.input;
-
-    if (!inputTextarea) return;
-
-    const text = inputTextarea.value;
-
-    if (!text || !text.trim()) {
-        showNotification('Нет текста для копирования', 'warning');
-        return;
-    }
-
-    try {
-        await navigator.clipboard.writeText(text);
-
-        const copyBtn = document.getElementById('copyInputBtn');
-        if (copyBtn) {
-            // Отменяем предыдущий таймер
-            if (copyInputTimer) clearTimeout(copyInputTimer);
-
-            // Сохраняем исходное содержимое (только если иконка не галочка)
-            if (!copyBtn.hasAttribute('data-original-html')) {
-                copyBtn.setAttribute('data-original-html', copyBtn.innerHTML);
-            }
-            const originalHtml = copyBtn.getAttribute('data-original-html');
-
-            // Меняем на галочку
-            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-
-            // Возвращаем через 1.5 секунды
-            copyInputTimer = setTimeout(() => {
-                copyBtn.innerHTML = originalHtml;
-                copyInputTimer = null;
-            }, 1500);
-        }
-
-        showNotification('Текст из поля ввода скопирован', 'success');
-    } catch (err) {
-        console.error('Copy failed:', err);
-        showNotification('Не удалось скопировать текст', 'error');
-    }
-}
-
-// Копирование текста из поля результата
-let copyResultTimer = null;
-
-async function copyResultText() {
-    const elements = window.elements || {};
-    const resultTextarea = elements.result;
-
-    if (!resultTextarea) return;
-
-    const text = resultTextarea.value;
-
-    if (!text || text === 'Результат появится здесь...' || text.includes('⚠️') || text.includes('❌') || text.includes('🔄')) {
-        showNotification('Нет текста для копирования', 'warning');
-        return;
-    }
-
-    try {
-        await navigator.clipboard.writeText(text);
-
-        const copyBtn = document.getElementById('copyResultBtn');
-        if (copyBtn) {
-            // Отменяем предыдущий таймер
-            if (copyResultTimer) clearTimeout(copyResultTimer);
-
-            // Сохраняем исходное содержимое (только если иконка не галочка)
-            if (!copyBtn.hasAttribute('data-original-html')) {
-                copyBtn.setAttribute('data-original-html', copyBtn.innerHTML);
-            }
-            const originalHtml = copyBtn.getAttribute('data-original-html');
-
-            // Меняем на галочку
-            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-
-            // Возвращаем через 1.5 секунды
-            copyResultTimer = setTimeout(() => {
-                copyBtn.innerHTML = originalHtml;
-                copyResultTimer = null;
-            }, 1500);
-        }
-
-        showNotification('Текст из поля результата скопирован', 'success');
-    } catch (err) {
-        console.error('Copy failed:', err);
-        showNotification('Не удалось скопировать текст', 'error');
     }
 }
 
@@ -148,16 +39,35 @@ function hideResultColumn() {
     if (editor) editor.classList.add('single-col');
 }
 
+function initAutoSave() {
+    const elements = window.elements || {};
+    if (elements.input) {
+        elements.input.addEventListener('input', () => {
+            localStorage.setItem('saved_input_text', elements.input.value);
+        });
+    }
+}
+
+async function pasteFromClipboard() {
+    const textarea = document.getElementById('input');
+    const pasteBtn = document.getElementById('pasteBtn');
+    try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+            textarea.value = text;
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            localStorage.setItem('saved_input_text', text);
+            if (pasteBtn) pasteBtn.style.display = 'none';
+        } else {
+            showNotification('Буфер обмена пуст', 'warning');
+        }
+    } catch {
+        showNotification('Не удалось получить доступ к буферу обмена', 'error');
+    }
+}
+
 async function processText(text) {
     const elements = window.elements || {};
-
-    const requestData = {
-        text: text,
-        intensity: elements.intensity?.value || 'medium',
-        tone: elements.tone?.value || 'neutral',
-        style: elements.style?.value || 'simple',
-        length: elements.length?.value || 'same'
-    };
 
     if (elements.humanizeBtn) {
         elements.humanizeBtn.disabled = true;
@@ -168,51 +78,35 @@ async function processText(text) {
         showNotification('Обработка текста');
     }
 
-    const token = Auth.getToken();
-
     try {
-        const response = await fetch('/humanize', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(requestData)
-        });
+        const { ok, status, data } = await API.humanize(
+            text,
+            elements.intensity?.value || 'medium',
+            elements.tone?.value || 'neutral',
+            elements.style?.value || 'simple',
+            elements.length?.value || 'same'
+        );
 
-        const data = await response.json();
-
-        if (response.ok) {
+        if (ok) {
             if (elements.result) elements.result.value = data.result;
             localStorage.setItem('saved_result_text', data.result);
             clearWarning();
             showResultColumn();
-            // 👇 СОХРАНЯЕМ В ИСТОРИЮ
-            await saveToHistory(text, data.result, 'humanizer');
-
-            // Обновляем баланс
-            if (typeof updateBalanceDisplay === 'function') {
-                updateBalanceDisplay();
-            }
-            if (typeof loadCurrentSubscription === 'function') {
-                loadCurrentSubscription();
-            }
-
-        } else if (response.status === 401) {
+            API.saveHistory('humanizer', text, data.result);
+            if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+            if (typeof loadCurrentSubscription === 'function') loadCurrentSubscription();
+        } else if (status === 401) {
             if (elements.result) elements.result.value = '❌ Сессия истекла. Пожалуйста, войдите заново.';
             Auth.logout();
             if (typeof window.updateUI === 'function') window.updateUI();
             setTimeout(() => Auth.showAuthModal(), 1500);
-        } else if (response.status === 429) {
+        } else if (status === 429) {
             if (elements.result) elements.result.value = '❌ ' + (data.detail || 'Лимит токенов исчерпан');
-            if (typeof updateBalanceDisplay === 'function') {
-                updateBalanceDisplay();
-            }
+            if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
         } else {
             if (elements.result) elements.result.value = '❌ Ошибка: ' + (data.detail || 'Неизвестная ошибка');
         }
-    } catch (err) {
-        console.error('Humanize error:', err);
+    } catch {
         if (elements.result) elements.result.value = '❌ Ошибка соединения с сервером';
     }
 
@@ -222,93 +116,34 @@ async function processText(text) {
     }
 }
 
-async function saveToHistory(originalText, resultText, toolType = 'humanizer') {
-    const token = Auth.getToken();
-    if (!token) return;
-
-    try {
-        const response = await fetch('/user/history/save', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                tool_type: toolType,
-                original_text: originalText,
-                result_text: resultText
-            })
-        });
-
-        if (!response.ok) {
-            console.error('Failed to save to history:', await response.text());
-        }
-    } catch (err) {
-        console.error('Error saving to history:', err);
-    }
-}
-
-// Функция для отображения предупреждения
-function showWarning(message, isError = false) {
-    const warningSpan = document.getElementById('wordWarning');
-    if (warningSpan) {
-        warningSpan.textContent = message;
-        warningSpan.style.color = isError ? '#ef4444' : '#f59e0b';
-    }
-}
-
-// Функция для очистки предупреждения
-function clearWarning() {
-    const warningSpan = document.getElementById('wordWarning');
-    if (warningSpan) {
-        warningSpan.textContent = '';
-    }
-}
-
-// Отправка текста на обработку
 async function send() {
-    console.log('=== SEND FUNCTION CALLED ===');
-
     const elements = window.elements || {};
-
-    if (!elements.input) {
-        console.error('Elements not initialized!');
-        return;
-    }
+    if (!elements.input) return;
 
     const text = elements.input.value;
-    const wordCount = window.countWords ? window.countWords(text) : 0;
-    const maxWords = window.currentMaxWords || 1000;
-    const minWords = window.currentMinWords || 50;
+    const wordCount = countWords(text);
 
     clearWarning();
 
     if (!text.trim()) {
-        showWarning('⚠️ Пожалуйста, введите текст для обработки', false);
+        showWarning('⚠️ Пожалуйста, введите текст для обработки');
         if (elements.result) elements.result.value = '⚠️ Пожалуйста, введите текст для обработки';
         return;
     }
 
-    if (wordCount < minWords) {
-        const errorMessage = `Минимальное количество слов: ${minWords}`;
-        showWarning(errorMessage, true);
-        const wordCountSpan = document.getElementById('wordCount');
-        if (wordCountSpan) {
-            wordCountSpan.style.color = '#ef4444';
-            wordCountSpan.style.fontWeight = 'bold';
-        }
+    if (wordCount < currentMinWords) {
+        showWarning(`Минимальное количество слов: ${currentMinWords}`, true);
         return;
     }
 
-    if (!window.isWithinWordLimit(text)) {
-        const errorMessage = `Максимальное количество слов: ${maxWords}`;
-        showWarning(errorMessage, true);
+    if (!isWithinWordLimit(text)) {
+        showWarning(`Максимальное количество слов: ${currentMaxWords}`, true);
         return;
     }
 
     if (!Auth.isAuthenticated()) {
         pendingText = text;
-        showWarning('🔐 Для использования сервиса необходимо войти в аккаунт', false);
+        showWarning('🔐 Для использования сервиса необходимо войти в аккаунт');
         if (elements.result) elements.result.value = '🔐 Для использования сервиса необходимо войти в аккаунт';
         Auth.showAuthModal();
         return;
@@ -317,164 +152,112 @@ async function send() {
     await processText(text);
 }
 
-// Обработка отложенного текста (после входа)
 async function processPendingText() {
-    console.log('processPendingText called, pendingText:', pendingText);
+    if (!pendingText || !Auth.isAuthenticated()) return;
 
-    if (pendingText && Auth.isAuthenticated()) {
-        if (window.isWithinWordLimit && window.isWithinWordLimit(pendingText)) {
-            const text = pendingText;
-            pendingText = null;
-            await processText(text);
-        } else {
-            const maxWords = window.currentMaxWords || 1000;
-            const wordCount = window.countWords ? window.countWords(pendingText) : 0;
-            const errorMessage = `❌ Максимальное количество слов: ${maxWords}. Сейчас ${wordCount} слов.`;
-            const elements = window.elements || {};
-            if (elements.result) elements.result.value = errorMessage;
-            showWarning(errorMessage, true);
-            pendingText = null;
+    if (isWithinWordLimit(pendingText)) {
+        const text = pendingText;
+        pendingText = null;
+        await processText(text);
+    } else {
+        showWarning(`❌ Максимальное количество слов: ${currentMaxWords}`, true);
+        pendingText = null;
+    }
+}
+
+function initPdfUpload() {
+    if (typeof pdfjsLib === 'undefined') return;
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const pdfBtn = document.getElementById('pdfBtn');
+    const pdfFileInput = document.getElementById('pdfFileInput');
+    if (!pdfBtn || !pdfFileInput) return;
+
+    const newPdfBtn = pdfBtn.cloneNode(true);
+    pdfBtn.parentNode.replaceChild(newPdfBtn, pdfBtn);
+
+    newPdfBtn.addEventListener('click', () => pdfFileInput.click());
+
+    pdfFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        newPdfBtn.disabled = true;
+        newPdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = '';
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                let lastY = null;
+                let pageText = '';
+
+                for (const item of textContent.items) {
+                    if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+                        pageText += '\n';
+                    }
+                    if (pageText && !pageText.endsWith('\n') && !pageText.endsWith(' ') && item.str && !item.str.startsWith(' ')) {
+                        pageText += ' ';
+                    }
+                    pageText += item.str;
+                    lastY = item.transform[5];
+                }
+                fullText += pageText + '\n\n';
+            }
+
+            const text = fullText.trim();
+            if (!text) {
+                showNotification('PDF не содержит текста — возможно это сканированный документ', 'warning');
+                return;
+            }
+
+            const input = document.getElementById('input');
+            input.value = text;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            showNotification('Текст из PDF успешно загружен', 'success');
+
+        } catch {
+            showNotification('Не удалось прочитать PDF файл', 'error');
+        } finally {
+            newPdfBtn.disabled = false;
+            newPdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Загрузить PDF';
+            pdfFileInput.value = '';
         }
-    }
+    });
 }
 
-// Вставка текста из буфера обмена
-async function pasteFromClipboard() {
-    const textarea = document.getElementById('input');
-    const pasteBtn = document.getElementById('pasteBtn');
-
-    try {
-        const text = await navigator.clipboard.readText();
-        if (text) {
-            textarea.value = text;
-            textarea.dispatchEvent(new Event('input', { bubbles: true }));
-            localStorage.setItem('saved_input_text', text);
-            if (pasteBtn) pasteBtn.style.display = 'none';
-        } else {
-            showNotification('Буфер обмена пуст');
-        }
-    } catch (err) {
-        console.error('Failed to read clipboard:', err);
-        showNotification('Не удалось получить доступ к буферу обмена. Разрешите доступ в настройках браузера.');
-    }
-}
-
-function initAutoSave() {
-    const elements = window.elements || {};
-
-    if (elements.input) {
-        elements.input.addEventListener('input', () => {
-            localStorage.setItem('saved_input_text', elements.input.value);
-        });
-    }
-}
-
-// Делаем функции глобальными
-window.processPendingText = processPendingText;
 window.send = send;
-window.showWarning = showWarning;
-window.clearWarning = clearWarning;
+window.processPendingText = processPendingText;
 window.pasteFromClipboard = pasteFromClipboard;
 window.loadTextFromLocalStorage = loadTextFromLocalStorage;
 window.initAutoSave = initAutoSave;
-window.copyInputText = copyInputText;
-window.copyResultText = copyResultText;
 
-// Инициализация кнопок и загрузка сохранённого текста
+window.copyInputText = () => {
+    const btn = document.getElementById('copyInputBtn');
+    copyButtonText(btn, () => window.elements?.input?.value);
+};
+
+window.copyResultText = () => {
+    const btn = document.getElementById('copyResultBtn');
+    copyButtonText(btn, () => {
+        const val = window.elements?.result?.value;
+        if (!val || val.startsWith('⚠️') || val.startsWith('❌') || val.startsWith('🔐') || val === 'Обработка текста...') return '';
+        return val;
+    });
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-    const pasteBtn = document.getElementById('pasteBtn');
-    if (pasteBtn) {
-        pasteBtn.addEventListener('click', pasteFromClipboard);
-    }
-
-    const copyInputBtn = document.getElementById('copyInputBtn');
-    if (copyInputBtn) {
-        copyInputBtn.addEventListener('click', copyInputText);
-    }
-
-    const copyResultBtn = document.getElementById('copyResultBtn');
-    if (copyResultBtn) {
-        copyResultBtn.addEventListener('click', copyResultText);
-    }
+    document.getElementById('pasteBtn')?.addEventListener('click', pasteFromClipboard);
+    document.getElementById('copyInputBtn')?.addEventListener('click', window.copyInputText);
+    document.getElementById('copyResultBtn')?.addEventListener('click', window.copyResultText);
 
     loadTextFromLocalStorage();
     initAutoSave();
-});
-
-// Инициализация PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-// Вместо прямого addEventListener на кнопку
-const pdfBtn = document.getElementById('pdfBtn');
-const pdfFileInput = document.getElementById('pdfFileInput');
-
-// Убираем старые обработчики через clone
-const newPdfBtn = pdfBtn.cloneNode(true);
-pdfBtn.parentNode.replaceChild(newPdfBtn, pdfBtn);
-
-newPdfBtn.addEventListener('click', () => {
-    pdfFileInput.click();
-});
-
-pdfFileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    newPdfBtn.disabled = true;
-    newPdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
-
-    try {
-        const arrayBuffer = await file.arrayBuffer();
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let fullText = '';
-
-        for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-
-            let lastY = null;
-            let pageText = '';
-
-            for (const item of textContent.items) {
-                // Новая строка если Y координата изменилась
-                if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
-                    pageText += '\n';
-                }
-                // Добавляем пробел между элементами если нужно
-                if (pageText && !pageText.endsWith('\n') && !pageText.endsWith(' ') && item.str && !item.str.startsWith(' ')) {
-                    pageText += ' ';
-                }
-                pageText += item.str;
-                lastY = item.transform[5];
-            }
-
-            fullText += pageText + '\n\n';
-        }
-
-        const text = fullText.trim();
-        console.log('Extracted text length:', text.length);
-        console.log('First 300 chars:', text.substring(0, 300));
-
-        if (!text) {
-            showNotification('PDF не содержит текста — возможно это сканированный документ', 'warning');
-            return;
-        }
-
-        const input = document.getElementById('input');
-        input.value = text;
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        showNotification('Текст из PDF успешно загружен', 'success');
-
-    } catch (err) {
-        console.error('PDF error:', err);
-        showNotification('Не удалось прочитать PDF файл', 'error');
-    } finally {
-        newPdfBtn.disabled = false;
-        newPdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Загрузить PDF';
-        pdfFileInput.value = '';
-    }
+    initPdfUpload();
 });

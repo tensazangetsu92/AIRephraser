@@ -1,86 +1,91 @@
-// frontend/js/utils.js
-
-// Константы для лимитов слов
 const DEFAULT_MAX_WORDS = 1000;
 const DEFAULT_MIN_WORDS = 50;
 
-// Глобальная переменная для текущего лимита слов
 let currentMaxWords = DEFAULT_MAX_WORDS;
 let currentMinWords = DEFAULT_MIN_WORDS;
 
-// Функция подсчёта слов в тексте
 function countWords(text) {
     if (!text || !text.trim()) return 0;
     return text.trim().split(/\s+/).length;
 }
 
-// Проверка лимита слов (максимум)
 function isWithinWordLimit(text) {
-    const wordCount = countWords(text);
-    return wordCount <= currentMaxWords;
+    return countWords(text) <= currentMaxWords;
 }
 
-// Проверка минимального количества слов
 function isAboveMinWords(text) {
-    const wordCount = countWords(text);
-    return wordCount >= currentMinWords;
+    return countWords(text) >= currentMinWords;
 }
 
-// Обновление лимита слов из подписки
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showWarning(message, isError = false) {
+    const el = document.getElementById('wordWarning');
+    if (el) {
+        el.textContent = message;
+        el.style.color = isError ? '#ef4444' : '#f59e0b';
+    }
+}
+
+function clearWarning() {
+    const el = document.getElementById('wordWarning');
+    if (el) el.textContent = '';
+}
+
 function updateMaxWordsFromSubscription(subscription) {
-    if (subscription && subscription.max_words) {
-        currentMaxWords = subscription.max_words;
-    } else {
-        currentMaxWords = DEFAULT_MAX_WORDS;
-    }
-    if (typeof updateWordCounter === 'function') {
-        updateWordCounter();
-    }
+    currentMaxWords = subscription?.max_words || DEFAULT_MAX_WORDS;
+    window.currentMaxWords = currentMaxWords;
+    updateWordCounter();
 }
 
-// Обновление счетчика слов
 function updateWordCounter() {
-    const elements = window.elements || {};
-    if (!elements.input) return;
+    const input = window.elements?.input;
+    if (!input) return;
 
-    const text = elements.input.value;
-    const currentWords = countWords(text);
-    const maxWords = currentMaxWords;
-    const minWords = currentMinWords;
+    const current = countWords(input.value);
+    const span = document.getElementById('wordCount');
+    if (!span) return;
 
-    // Обновляем только счетчик слов (слева)
-    const wordCountSpan = document.getElementById('wordCount');
-    if (wordCountSpan) {
-        wordCountSpan.textContent = `${currentWords}/${maxWords}`;
+    span.textContent = `${current}/${currentMaxWords}`;
 
-        // Меняем цвет счетчика
-        if (currentWords > maxWords) {
-            wordCountSpan.style.color = '#ef4444';
-            wordCountSpan.style.fontWeight = 'bold';
-        } else if (currentWords < minWords) {
-            wordCountSpan.style.fontWeight = 'bold';
-        } else if (currentWords > maxWords * 0.9) {
-            wordCountSpan.style.color = '#f59e0b';
-            wordCountSpan.style.fontWeight = 'normal';
-        } else {
-            wordCountSpan.style.color = '#c4c4c4';
-            wordCountSpan.style.fontWeight = 'normal';
-        }
+    if (current > currentMaxWords) {
+        span.style.color = '#ef4444';
+        span.style.fontWeight = 'bold';
+    } else if (current > currentMaxWords * 0.9) {
+        span.style.color = '#f59e0b';
+        span.style.fontWeight = 'normal';
+    } else {
+        span.style.color = '#c4c4c4';
+        span.style.fontWeight = current < currentMinWords ? 'bold' : 'normal';
     }
-
-
 }
 
-// Получить текущие лимиты
-function getCurrentMaxWords() {
-    return currentMaxWords;
+async function copyButtonText(btn, getText) {
+    const text = getText();
+    if (!text || !text.trim()) {
+        showNotification('Нет текста для копирования', 'warning');
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(text);
+        if (btn) {
+            if (!btn.hasAttribute('data-original-html')) {
+                btn.setAttribute('data-original-html', btn.innerHTML);
+            }
+            const original = btn.getAttribute('data-original-html');
+            btn.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => { btn.innerHTML = original; }, 1500);
+        }
+        showNotification('Скопировано', 'success');
+    } catch {
+        showNotification('Не удалось скопировать текст', 'error');
+    }
 }
 
-function getCurrentMinWords() {
-    return currentMinWords;
-}
-
-// Делаем функции и переменные глобальными
 window.DEFAULT_MAX_WORDS = DEFAULT_MAX_WORDS;
 window.DEFAULT_MIN_WORDS = DEFAULT_MIN_WORDS;
 window.currentMaxWords = currentMaxWords;
@@ -88,7 +93,9 @@ window.currentMinWords = currentMinWords;
 window.countWords = countWords;
 window.isWithinWordLimit = isWithinWordLimit;
 window.isAboveMinWords = isAboveMinWords;
+window.escapeHtml = escapeHtml;
+window.showWarning = showWarning;
+window.clearWarning = clearWarning;
 window.updateMaxWordsFromSubscription = updateMaxWordsFromSubscription;
 window.updateWordCounter = updateWordCounter;
-window.getCurrentMaxWords = getCurrentMaxWords;
-window.getCurrentMinWords = getCurrentMinWords;
+window.copyButtonText = copyButtonText;
