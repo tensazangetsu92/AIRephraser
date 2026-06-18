@@ -54,7 +54,6 @@ function initEventListeners() {
     if (window.elements.input) {
         // 👇 ИСПРАВЛЕНО: updateCharCounter → updateWordCounter
         window.elements.input.addEventListener('input', () => {
-            console.log('input event fired');  // Отладка
             if (typeof window.updateWordCounter === 'function') {
                 window.updateWordCounter();
             } else {

@@ -400,3 +400,81 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTextFromLocalStorage();
     initAutoSave();
 });
+
+// Инициализация PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// Вместо прямого addEventListener на кнопку
+const pdfBtn = document.getElementById('pdfBtn');
+const pdfFileInput = document.getElementById('pdfFileInput');
+
+// Убираем старые обработчики через clone
+const newPdfBtn = pdfBtn.cloneNode(true);
+pdfBtn.parentNode.replaceChild(newPdfBtn, pdfBtn);
+
+newPdfBtn.addEventListener('click', () => {
+    pdfFileInput.click();
+});
+
+pdfFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    newPdfBtn.disabled = true;
+    newPdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
+
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+
+            let lastY = null;
+            let pageText = '';
+
+            for (const item of textContent.items) {
+                // Новая строка если Y координата изменилась
+                if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+                    pageText += '\n';
+                }
+                // Добавляем пробел между элементами если нужно
+                if (pageText && !pageText.endsWith('\n') && !pageText.endsWith(' ') && item.str && !item.str.startsWith(' ')) {
+                    pageText += ' ';
+                }
+                pageText += item.str;
+                lastY = item.transform[5];
+            }
+
+            fullText += pageText + '\n\n';
+        }
+
+        const text = fullText.trim();
+        console.log('Extracted text length:', text.length);
+        console.log('First 300 chars:', text.substring(0, 300));
+
+        if (!text) {
+            showNotification('PDF не содержит текста — возможно это сканированный документ', 'warning');
+            return;
+        }
+
+        const input = document.getElementById('input');
+        input.value = text;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        showNotification('Текст из PDF успешно загружен', 'success');
+
+    } catch (err) {
+        console.error('PDF error:', err);
+        showNotification('Не удалось прочитать PDF файл', 'error');
+    } finally {
+        newPdfBtn.disabled = false;
+        newPdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Загрузить PDF';
+        pdfFileInput.value = '';
+    }
+});

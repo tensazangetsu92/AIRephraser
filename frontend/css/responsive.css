@@ -262,11 +262,12 @@
     }
 
     .col {
-        padding: 12px;
+        min-height: 250px;
     }
 
     textarea, .output {
         height: 200px;
+        min-height: 200px;
     }
 }
 
@@ -305,5 +306,25 @@
 
     .custom-select.open .custom-select-trigger {
         border-radius: 12px 12px 0 0;
+    }
+
+    .col {
+        height: auto;        /* убираем фиксированную высоту */
+        min-height: 300px;   /* минимум чтобы не схлопывалось */
+    }
+
+    textarea, .output {
+        height: 260px;       /* фиксированная высота textarea вместо flex: 1 */
+        min-height: 260px;
+    }
+
+    .detector-report-col {
+        flex: none;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .detector-report-body {
+        padding: 1rem 0 0 0;
     }
 }
