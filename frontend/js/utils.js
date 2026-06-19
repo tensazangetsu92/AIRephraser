@@ -86,6 +86,88 @@ async function copyButtonText(btn, getText) {
     }
 }
 
+async function pasteFromClipboard() {
+    const textarea = document.getElementById('input');
+    const pasteBtn = document.getElementById('pasteBtn');
+    try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+            textarea.value = text;
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            if (pasteBtn) pasteBtn.style.display = 'none';
+        } else {
+            showNotification('Буфер обмена пуст', 'warning');
+        }
+    } catch {
+        showNotification('Не удалось получить доступ к буферу обмена', 'error');
+    }
+}
+
+function initPdfUpload() {
+    if (typeof pdfjsLib === 'undefined') return;
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const pdfBtn = document.getElementById('pdfBtn');
+    const pdfFileInput = document.getElementById('pdfFileInput');
+    if (!pdfBtn || !pdfFileInput) return;
+
+    const newPdfBtn = pdfBtn.cloneNode(true);
+    pdfBtn.parentNode.replaceChild(newPdfBtn, pdfBtn);
+
+    newPdfBtn.addEventListener('click', () => pdfFileInput.click());
+
+    pdfFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        newPdfBtn.disabled = true;
+        newPdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = '';
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                let lastY = null;
+                let pageText = '';
+
+                for (const item of textContent.items) {
+                    if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) pageText += '\n';
+                    if (pageText && !pageText.endsWith('\n') && !pageText.endsWith(' ') && item.str && !item.str.startsWith(' ')) pageText += ' ';
+                    pageText += item.str;
+                    lastY = item.transform[5];
+                }
+                fullText += pageText + '\n\n';
+            }
+
+            const text = fullText.trim();
+            if (!text) {
+                showNotification('PDF не содержит текста — возможно это сканированный документ', 'warning');
+                return;
+            }
+
+            const input = document.getElementById('input');
+            input.value = text;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            showNotification('Текст из PDF успешно загружен', 'success');
+
+        } catch {
+            showNotification('Не удалось прочитать PDF файл', 'error');
+        } finally {
+            newPdfBtn.disabled = false;
+            newPdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Загрузить PDF';
+            pdfFileInput.value = '';
+        }
+    });
+}
+
+window.pasteFromClipboard = pasteFromClipboard;
+window.initPdfUpload = initPdfUpload;
 window.DEFAULT_MAX_WORDS = DEFAULT_MAX_WORDS;
 window.DEFAULT_MIN_WORDS = DEFAULT_MIN_WORDS;
 window.currentMaxWords = currentMaxWords;

@@ -125,6 +125,7 @@ async def detect_ai_pipeline(text: str) -> dict:
         response = await client.chat.completions.create(
             model=OPENROUTER_CONFIG["model"],
             temperature=0.3,
+            max_tokens=8000,
             messages=[
                 {"role": "system", "content": DETECTOR_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt}
@@ -132,25 +133,18 @@ async def detect_ai_pipeline(text: str) -> dict:
         )
         raw_result = response.choices[0].message.content.strip()
 
-        # Убираем возможные markdown-обёртки ```json ... ```
+        # Убираем markdown-обёртки
         cleaned = raw_result.replace("```json", "").replace("```", "").strip()
+
+        # Удаляем строки-заглушки "..." которые ломают JSON
+        import re
+        cleaned = re.sub(r',?\s*\n\s*\.\.\.\s*\n', '\n', cleaned)
+        cleaned = re.sub(r',\s*\.\.\.\s*]', ']', cleaned)
 
         parsed = json.loads(cleaned)
 
-        # Защитные проверки и нормализация трёх категорий
-        ai_probability = max(0, min(100, int(parsed.get("ai_probability", 33))))
-        human_probability = max(0, min(100, int(parsed.get("human_probability", 33))))
-        mixed_probability = max(0, min(100, int(parsed.get("mixed_probability", 100 - ai_probability - human_probability))))
-
-        # Нормализуем сумму к 100, если LLM ошиблась в арифметике
-        total = ai_probability + human_probability + mixed_probability
-        if total != 100 and total > 0:
-            ai_probability = round(ai_probability * 100 / total)
-            human_probability = round(human_probability * 100 / total)
-            mixed_probability = 100 - ai_probability - human_probability
-
-        sentences = parsed.get("sentences", [])
         # Валидация меток предложений
+        sentences = parsed.get("sentences", [])
         valid_labels = {"human", "mixed", "ai"}
         clean_sentences = []
         for s in sentences:
@@ -162,6 +156,21 @@ async def detect_ai_pipeline(text: str) -> dict:
                 "label": label
             })
 
+        # Пересчёт процентов из реальных меток
+        if clean_sentences:
+            total = len(clean_sentences)
+            ai_count = sum(1 for s in clean_sentences if s["label"] == "ai")
+            human_count = sum(1 for s in clean_sentences if s["label"] == "human")
+            mixed_count = sum(1 for s in clean_sentences if s["label"] == "mixed")
+
+            ai_probability = round(ai_count / total * 100)
+            human_probability = round(human_count / total * 100)
+            mixed_probability = 100 - ai_probability - human_probability
+        else:
+            ai_probability = 33
+            human_probability = 34
+            mixed_probability = 33
+
         return {
             "ai_probability": ai_probability,
             "human_probability": human_probability,
@@ -172,7 +181,8 @@ async def detect_ai_pipeline(text: str) -> dict:
         }
 
     except json.JSONDecodeError as e:
-        print(f"JSON decode error in detect_ai_pipeline: {e}, raw: {raw_result}")
+        print(f"JSON decode error in detect_ai_pipeline: {e}")
+        print(f"Raw result: {repr(raw_result)}")
         return {
             "ai_probability": 33,
             "human_probability": 34,

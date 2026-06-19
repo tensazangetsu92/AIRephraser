@@ -6,18 +6,20 @@
     gap: 1rem;
     margin-bottom: 1.5rem;
     align-items: flex-end; /* Выравнивание по нижнему краю */
-    justify-content: flex-end;
+    justify-content: center;
     margin: 0 2rem;
 }
 
 .control-group {
     flex: 1;
+    justify-content: center;
 }
 
 /* Убираем лишнее у кнопки */
 .control-group:last-child {
     flex: 0.5;            /* Кнопка может быть немного уже */
     min-width: auto;
+
 }
 
 /* Обёртка для иконки и label */
@@ -145,21 +147,7 @@
     padding: 10px;
 }
 
-/* Кнопка - в ряд с остальными */
-.main-btn {
-    width: 100%;
-    padding: 1rem 2rem;
-    background: #272727;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 23px; /* Чтобы выровнять с селектами по высоте */
-    white-space: nowrap;
-}
+
 
 .main-btn:hover {
     opacity: 0.9;
@@ -170,8 +158,51 @@
     transform: scale(0.98);
 }
 
+.controls-single {
+    justify-content: center;
+}
+
+.controls-single .control-group {
+    flex: none;
+}
+
+/* Кнопка - в ряд с остальными */
+.main-btn {
+    width: 100%;
+    padding: 7px 14px;
+    background-color: #1a1a1a;
+    color: white;
+    border: 2px solid #4374c7;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 23px; /* Чтобы выровнять с селектами по высоте */
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+
+.detector-btn-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    max-width: calc(1000px + 4rem); /* 1000px + margin по бокам от .editor */
+    margin: 0 auto 1rem;
+    padding: 0 2rem;
+    box-sizing: border-box;
+}
+
 .single-main-btn {
-    width: 200px;
-    margin-top: 1rem;
-    align-self: flex-end;
+    width: auto;
+    margin-top: 0;
+}
+
+.main-btn img {
+    position: relative;
+    top: -2px; /* положительное — вниз, отрицательное — вверх */
+    right: 5px;
 }

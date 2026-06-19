@@ -13,6 +13,11 @@
                 <i class="fas fa-paste"></i>
                 Вставить текст
             </button>
+            <button class="pdf-btn" id="pdfBtn">
+                <i class="fas fa-file-pdf"></i>
+                Загрузить PDF
+            </button>
+            <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;">
         </div>
         <div class="word-counter-wrapper">
             <span class="word-count" id="wordCount"></span>
@@ -33,10 +38,10 @@
         <div class="detector-report-body">
             <div class="detector-chart-wrapper">
                 <svg viewBox="0 0 120 120" class="detector-chart" id="detectorChart">
-                    <circle cx="60" cy="60" r="50" fill="none" stroke="#313130" stroke-width="14"></circle>
-                    <circle id="chartHuman" cx="60" cy="60" r="50" fill="none" stroke="#22c55e" stroke-width="14" stroke-dasharray="0 314" transform="rotate(-90 60 60)"></circle>
-                    <circle id="chartMixed" cx="60" cy="60" r="50" fill="none" stroke="#f59e0b" stroke-width="14" stroke-dasharray="0 314" transform="rotate(-90 60 60)"></circle>
-                    <circle id="chartAi" cx="60" cy="60" r="50" fill="none" stroke="#ef4444" stroke-width="14" stroke-dasharray="0 314" transform="rotate(-90 60 60)"></circle>
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="#313130" stroke-width="16"></circle>
+                    <circle id="chartHuman" cx="60" cy="60" r="50" fill="none" stroke="#22c55e" stroke-width="16" stroke-dasharray="0 314" transform="rotate(-90 60 60)"></circle>
+                    <circle id="chartMixed" cx="60" cy="60" r="50" fill="none" stroke="#f59e0b" stroke-width="16" stroke-dasharray="0 314" transform="rotate(-90 60 60)"></circle>
+                    <circle id="chartAi" cx="60" cy="60" r="50" fill="none" stroke="#ef4444" stroke-width="16" stroke-dasharray="0 314" transform="rotate(-90 60 60)"></circle>
                 </svg>
                 <div class="detector-chart-center" id="detectorChartCenter">0%</div>
             </div>
@@ -63,17 +68,19 @@
             <i class="fas fa-redo"></i> Новая проверка
         </button>
     </div>
+
+
 </div>
 
-<div class="controls">
-    <div class="control-group">
-        <button class="main-btn" id="detectBtn">Проверить текст</button>
-    </div>
+<div class="detector-btn-wrapper">
+    <button class="single-main-btn main-btn" id="detectBtn">
+        <img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">
+        Проверить текст
+    </button>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
-<script src="/js/detector.js" defer></script>
-<script src="/js/main.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 {% endblock %}

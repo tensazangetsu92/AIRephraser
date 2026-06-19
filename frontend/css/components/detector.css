@@ -38,7 +38,7 @@
 
 .detector-report-col {
     flex: 0.8;
-    max-width: 360px;
+    max-width: 380px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -76,9 +76,10 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text-color);
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    transition: color 0.4s ease;
 }
 
 .detector-legend {
@@ -146,13 +147,14 @@
     justify-content: center;
     gap: 8px;
     width: 100%;
-    padding: 10px;
+    padding: 14px;
     background: rgba(18, 18, 18, 0.3);
     border: var(--border-button-color);
     border-radius: 12px;
     cursor: pointer;
     color: var(--text-color);
-    font-size: 0.85rem;
+    font-size: 1rem;
+    font-weight: 600;
     font-family: inherit;
     transition: all 0.2s;
 }
@@ -199,4 +201,10 @@
 
 .detector-report-body::-webkit-scrollbar-track {
     border-radius: 10px;
+}
+
+.detector-new-check-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
 }

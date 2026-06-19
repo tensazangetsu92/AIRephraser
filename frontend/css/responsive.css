@@ -36,6 +36,35 @@
 }
 
 @media (max-width: 768px) {
+    .col {
+        height: 360px;       /* фиксированная высота вместо auto */
+        min-height: unset;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    textarea, .output {
+        flex: 1;
+        min-height: 0;
+        height: auto;        /* убираем фиксированную высоту — пусть flex растягивает */
+    }
+
+    .editor-name {
+        flex-shrink: 0;
+    }
+
+    .word-counter-wrapper {
+        flex-shrink: 0;
+    }
+
+    .textarea-wrapper {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
     .container {
         padding: 5rem 1rem 1rem;
     }

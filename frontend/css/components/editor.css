@@ -122,15 +122,6 @@ textarea::-webkit-scrollbar-track {
     flex-direction: column;
 }
 
-.paste-btn:hover {
-    transform: translateY(-1px);
-    opacity: 0.9;
-}
-
-.paste-btn:active {
-    transform: translate(-50%, -50%) scale(0.95);
-}
-
 /* Когда textarea не пустой - скрываем кнопку */
 .textarea-wrapper textarea:not(:placeholder-shown) ~ .paste-btn {
     display: none;
@@ -169,7 +160,7 @@ textarea::-webkit-scrollbar-track {
     font-size: 24px;
 }
 
-    .result-col {
+.result-col {
     animation: fadeInResult 0.3s ease;
 }
 
@@ -220,14 +211,18 @@ textarea::-webkit-scrollbar-track {
     left: calc(50% + 6px);
 }
 
+.paste-btn:hover {
+    opacity: 0.9;
+}
 
+.pdf-btn:hover {
+    opacity: 0.9;
+}
 
 /* Скрываем когда textarea заполнен */
 .textarea-wrapper textarea:not(:placeholder-shown) ~ .pdf-btn {
     display: none;
 }
-
-
 
 .textarea-wrapper textarea:not(:placeholder-shown) ~ .paste-btn,
 .textarea-wrapper textarea:not(:placeholder-shown) ~ .pdf-btn {

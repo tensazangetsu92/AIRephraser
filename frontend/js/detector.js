@@ -73,7 +73,13 @@ function renderDetectorResult(data) {
     }
 
     const center = document.getElementById('detectorChartCenter');
-    if (center) center.textContent = `${data.ai_probability}%`;
+    if (center) {
+        const max = Math.max(data.ai_probability, data.human_probability, data.mixed_probability);
+        const color = max === data.human_probability ? '#22c55e' :
+                      max === data.mixed_probability ? '#f59e0b' : '#ef4444';
+        center.textContent = 'AI';
+        center.style.color = color;
+    }
 }
 
 function renderDonutChart(humanPct, mixedPct, aiPct) {
@@ -97,12 +103,36 @@ function renderDonutChart(humanPct, mixedPct, aiPct) {
 async function processDetectText(text) {
     const detectBtn = document.getElementById('detectBtn');
     const resultDiv = document.getElementById('result');
+    const newCheckBtn = document.getElementById('newCheckBtn');
 
     if (detectBtn) {
         detectBtn.disabled = true;
         detectBtn.innerHTML = '<span class="loading"></span> Анализ...';
     }
-    if (resultDiv) resultDiv.textContent = 'Анализ текста...';
+    if (newCheckBtn) newCheckBtn.disabled = true;
+
+    // Очищаем старые данные перед показом колонок
+    if (resultDiv) resultDiv.innerHTML = '';
+
+    const legendHuman = document.getElementById('legendHuman');
+    const legendMixed = document.getElementById('legendMixed');
+    const legendAi = document.getElementById('legendAi');
+    if (legendHuman) legendHuman.textContent = '0%';
+    if (legendMixed) legendMixed.textContent = '0%';
+    if (legendAi) legendAi.textContent = '0%';
+
+    const verdictEl = document.getElementById('detectorVerdict');
+    if (verdictEl) verdictEl.innerHTML = '';
+
+    const center = document.getElementById('detectorChartCenter');
+    if (center) { center.textContent = 'AI'; center.style.color = ''; }
+
+    // Сбрасываем график на серый
+    ['chartHuman', 'chartMixed', 'chartAi'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('stroke-dasharray', `0 ${CIRCLE_CIRCUMFERENCE}`);
+    });
+
     showResultColumns();
     showNotification('Анализ текста');
 
@@ -134,6 +164,7 @@ async function processDetectText(text) {
         detectBtn.disabled = false;
         detectBtn.innerHTML = 'Проверить текст';
     }
+    if (newCheckBtn) newCheckBtn.disabled = false;
 }
 
 async function send() {

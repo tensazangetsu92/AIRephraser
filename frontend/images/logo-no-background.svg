@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<svg width="402" height="402" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" data-guides="{&quot;vertical&quot;:[],&quot;horizontal&quot;:[]}">
+
+ <g class="layer">
+  <title>Layer 1</title>
+  <path d="m194.06,93c52.3,0 94.7,41.87 94.7,93.52c0,51.66 -42.4,93.53 -94.7,93.53c-52.31,0 -94.71,-41.87 -94.71,-93.53c0,-51.65 42.4,-93.52 94.71,-93.52z" fill="#ffffff" id="tSvg426392c585" stroke-opacity="0"/>
+  <path d="m138.73,195.35c0,-16.56 13.43,-30 30,-30l91.03,0c16.57,0 30,13.44 30,30l0,88.65c0,16.57 -13.43,30 -30,30l-91.03,0c-16.57,0 -30,-13.43 -30,-30l0,-88.65z" fill="#ffffff" id="tSvg217701c470" stroke-opacity="0"/>
+  <path d="m247.36,218.65l41.12,-22.47l28.63,52.4l-41.11,22.47l-28.64,-52.4z" fill="#ffffff" id="tSvgff3d3c557a" stroke-opacity="0"/>
+ </g>
+</svg>
