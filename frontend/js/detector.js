@@ -36,8 +36,9 @@ function showResultColumns() {
     const reportCol = document.getElementById('detectorReportCol');
     if (reportCol) reportCol.style.display = 'flex';
     document.getElementById('editorContainer')?.classList.remove('single-col');
-    const controls = document.querySelector('.controls');
-    if (controls) controls.style.display = 'none';
+    const detectorBtnWrapper = document.querySelector('.detector-btn-wrapper');
+    if (detectorBtnWrapper) detectorBtnWrapper.style.display = 'none'; // ← скрыть кнопку
+    document.querySelectorAll('.col').forEach(col => col.style.height = '600px');
 }
 
 function hideResultColumns() {
@@ -46,8 +47,9 @@ function hideResultColumns() {
     document.getElementById('resultCol')?.style.setProperty('display', 'none');
     document.getElementById('detectorReportCol')?.style.setProperty('display', 'none');
     document.getElementById('editorContainer')?.classList.add('single-col');
-    const controls = document.querySelector('.controls');
-    if (controls) controls.style.display = '';
+    const detectorBtnWrapper = document.querySelector('.detector-btn-wrapper');
+    if (detectorBtnWrapper) detectorBtnWrapper.style.display = ''; // ← показать кнопку
+    document.querySelectorAll('.col').forEach(col => col.style.height = '540px');
 }
 
 function renderDetectorResult(data) {
@@ -143,6 +145,9 @@ async function processDetectText(text) {
             renderDetectorResult(data.result);
             localStorage.setItem('detector_result_data', JSON.stringify(data.result));
             clearWarning();
+
+            API.saveHistory('detector', text, JSON.stringify(data.result));
+
             if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
             if (typeof loadCurrentSubscription === 'function') loadCurrentSubscription();
         } else if (status === 401) {

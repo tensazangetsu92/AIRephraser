@@ -196,16 +196,18 @@ function updateTariffsLanguage() {
         }
 
         card.querySelectorAll('.tariff-features li').forEach(item => {
+            const icon = item.querySelector('i')?.outerHTML || '';
             const text = item.innerText;
             const num = text.match(/\d+/)?.[0];
-            if (text.match(/запросов всего|requests total/)) item.innerHTML = `✅ ${num} ${t('requests_total')}`;
-            else if (text.match(/символов за раз|characters per request/)) item.innerHTML = `✅ ${t('up_to')} ${num} ${t('chars_per_request')}`;
-            else if (text.match(/запросов в день|requests per day/)) item.innerHTML = `✅ ${t('up_to')} ${num} ${t('requests_per_day')}`;
-            else if (text.match(/Базовая|Basic text/)) item.innerHTML = `✅ ${t('basic_processing')}`;
-            else if (text.match(/Расширенная|Extended text/)) item.innerHTML = `✅ ${t('extended_processing')}`;
-            else if (text.match(/Профессиональная|Professional text/)) item.innerHTML = `✅ ${t('pro_processing')}`;
-            else if (text.match(/Приоритетная обработка|Priority processing/)) item.innerHTML = `✅ ${t('priority_processing')}`;
-            else if (text.match(/Приоритетная поддержка|Priority support/)) item.innerHTML = `✅ ${t('priority_support')}`;
+
+            if (text.match(/запросов всего|requests total/)) item.innerHTML = `${icon} ${num} ${t('requests_total')}`;
+            else if (text.match(/символов за раз|символов|characters per request/)) item.innerHTML = `${icon} ${t('up_to')} ${num} ${t('chars_per_request')}`;
+            else if (text.match(/запросов в день|requests per day/)) item.innerHTML = `${icon} ${t('up_to')} ${num} ${t('requests_per_day')}`;
+            else if (text.match(/Базовая|Basic/)) item.innerHTML = `${icon} ${t('basic_processing')}`;
+            else if (text.match(/Расширенная|Extended/)) item.innerHTML = `${icon} ${t('extended_processing')}`;
+            else if (text.match(/Профессиональная|Professional/)) item.innerHTML = `${icon} ${t('pro_processing')}`;
+            else if (text.match(/Приоритетная обработка|Priority processing/)) item.innerHTML = `${icon} ${t('priority_processing')}`;
+            else if (text.match(/Поддержка|Priority support|support/i)) item.innerHTML = `${icon} ${t('priority_support')}`;
         });
     });
 }

@@ -39,9 +39,25 @@ function updatePagination() {
 function attachHistoryItemHandlers() {
     document.querySelectorAll('.history-item').forEach(item => {
         item.addEventListener('click', () => {
-            localStorage.setItem('saved_input_text', item.dataset.original);
-            localStorage.setItem('saved_result_text', item.dataset.result);
-            window.location.href = '/humanizer';
+            const toolType = item.querySelector('.history-item-type')?.textContent.trim();
+            console.log('toolType:', JSON.stringify(toolType));
+            const original = item.dataset.original;
+            const result = item.dataset.result;
+
+            if (toolType === 'Детектор ИИ') {
+                localStorage.setItem('detector_input_text', original);
+                try {
+                    const parsed = JSON.parse(result);
+                    localStorage.setItem('detector_result_data', JSON.stringify(parsed));
+                } catch {
+                    localStorage.removeItem('detector_result_data');
+                }
+                window.location.href = '/detector';
+            } else {
+                localStorage.setItem('saved_input_text', original);
+                localStorage.setItem('saved_result_text', result);
+                window.location.href = '/humanizer';
+            }
         });
     });
 }
