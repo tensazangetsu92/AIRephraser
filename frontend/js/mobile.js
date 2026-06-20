@@ -1,15 +1,13 @@
 (function () {
-    const menuBtn = document.createElement('button');
-    menuBtn.className = 'mobile-menu-btn';
-    menuBtn.setAttribute('aria-label', 'Открыть меню');
-    menuBtn.innerHTML = '<i class="fas fa-bars"></i>';
-    document.body.appendChild(menuBtn);
+    const menuBtn = document.getElementById('mobileHeaderToggle');
+    const authBtn = document.getElementById('mobileHeaderAuth');
+    const sidebar = document.querySelector('.sidebar');
+
+    if (!menuBtn || !sidebar) return;
 
     const overlay = document.createElement('div');
     overlay.className = 'sidebar-overlay';
     document.body.appendChild(overlay);
-
-    const sidebar = document.querySelector('.sidebar');
 
     function openSidebar() {
         overlay.style.display = 'block';
@@ -29,6 +27,11 @@
         document.body.style.overflow = '';
     }
 
+    const closeBtn = document.getElementById('sidebarMobileClose');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeSidebar);
+    }
+
     menuBtn.addEventListener('click', () => {
         sidebar.classList.contains('mobile-open') ? closeSidebar() : openSidebar();
     });
@@ -44,4 +47,26 @@
     window.addEventListener('resize', () => {
         if (window.innerWidth > 768) closeSidebar();
     });
+
+    // Кнопка входа в header — показываем только если юзер НЕ авторизован
+    function updateMobileAuthButton() {
+        if (!authBtn) return;
+        const isAuth = typeof Auth !== 'undefined' && Auth.isAuthenticated();
+        authBtn.style.display = isAuth ? 'none' : 'block';
+    }
+
+    if (authBtn) {
+        authBtn.addEventListener('click', () => {
+            if (typeof Auth !== 'undefined') Auth.showAuthModal();
+        });
+    }
+
+    updateMobileAuthButton();
+
+    // Переподписываемся на обновления состояния авторизации
+    const originalUpdateUI = window.updateUI;
+    window.updateUI = function (...args) {
+        if (typeof originalUpdateUI === 'function') originalUpdateUI.apply(this, args);
+        updateMobileAuthButton();
+    };
 })();

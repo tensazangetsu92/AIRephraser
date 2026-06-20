@@ -11,7 +11,16 @@
 </head>
 <body>
 
-<!-- Layout с сайдбаром (без navbar) -->
+<!-- Мобильный header -->
+<header class="mobile-header" id="mobileHeader">
+    <button class="mobile-header-toggle" id="mobileHeaderToggle" aria-label="Открыть меню">
+        <i class="fas fa-bars"></i>
+    </button>
+    <button class="mobile-header-auth" id="mobileHeaderAuth" style="display: none;">Войти</button>
+
+</header>
+
+<!-- Layout с сайдбаром -->
 <div class="layout">
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -21,6 +30,9 @@
             <div class="logo">Humary</div>
             <button class="sidebar-toggle-btn" id="sidebarToggle">
                 <img class="toggle-icon" src="/images/sidebar/sidebar-collapse.svg" alt="Toggle sidebar">
+            </button>
+            <button class="sidebar-mobile-close-btn" id="sidebarMobileClose" aria-label="Закрыть меню">
+                <i class="fas fa-times"></i>
             </button>
         </div>
 
@@ -134,6 +146,13 @@
 </div>
 
 
+<div id="notificationToast" class="notification-toast">
+    <div class="notification-content">
+        <i class="notification-icon" id="notificationIcon"></i>
+        <span id="notificationMessage"></span>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <script src="/js/utils.js" defer></script>
 <script src="/js/api.js" defer></script>
@@ -147,12 +166,7 @@
 {% block scripts %}{% endblock %}
 
 
-<div id="notificationToast" class="notification-toast">
-    <div class="notification-content">
-        <i class="notification-icon" id="notificationIcon"></i>
-        <span id="notificationMessage"></span>
-    </div>
-</div>
+
 
 </body>
 </html>

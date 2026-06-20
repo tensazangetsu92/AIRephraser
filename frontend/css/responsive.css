@@ -282,6 +282,10 @@
     }
 }
 
+.sidebar-mobile-close-btn {
+    display: none;
+}
+
 /* ========================================
    БРЕЙКПОИНТ: совсем маленький экран (≤ 400px)
    ======================================== */
@@ -297,6 +301,19 @@
     textarea, .output {
         height: 200px;
         min-height: 200px;
+    }
+
+    .profile-header {
+        padding: 1rem;
+    }
+
+    .balance-card-large {
+        height: auto;
+        min-height: 90px;
+    }
+
+    .history-item {
+        padding: 0.75rem;
     }
 }
 
@@ -355,5 +372,181 @@
 
     .detector-report-body {
         padding: 1rem 0 0 0;
+    }
+
+    .mobile-menu-btn {
+        display: none !important;
+    }
+
+    .mobile-header {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1rem;
+        background: var(--sidebar-background-color, #1e1e1e);
+        border-bottom: 1px solid var(--sidebar-border-color, #313130);
+        z-index: 250;
+    }
+
+    .mobile-header-toggle {
+        width: 38px;
+        height: 38px;
+        background: rgba(18, 18, 18, 0.3);
+        border: var(--border-button-color);
+        border-radius: 10px;
+        color: var(--text-color, #f0f0f0);
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-header-toggle:hover {
+        background: rgba(18, 18, 18, 0.5);
+    }
+
+    .mobile-header-auth {
+        padding: 8px 16px;
+        background: rgba(18, 18, 18, 0.3);
+        border: var(--border-button-color);
+        border-radius: 20px;
+        color: var(--text-color, #f0f0f0);
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .mobile-header-auth:hover {
+        background: rgba(18, 18, 18, 0.5);
+    }
+
+    .container {
+        padding-top: 4.5rem; /* место под header — уже частично есть, проверь не задублировалось */
+    }
+
+    .mobile-header {
+        z-index: 250;
+    }
+
+    .sidebar {
+        z-index: 260; /* выше header */
+    }
+
+    .sidebar-overlay {
+        z-index: 255; /* между header и сайдбаром */
+    }
+
+    .sidebar-mobile-close-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: var(--text-color, #f0f0f0);
+        font-size: 0.95rem;
+        cursor: pointer;
+        margin-left: auto;
+    }
+
+    .sidebar-mobile-close-btn:hover {
+        background: rgba(18, 18, 18, 0.5);
+    }
+
+    /* На мобиле прячем кнопку сворачивания (она уже скрыта в основном блоке, но на всякий случай) */
+    .sidebar-toggle-btn {
+        display: none;
+    }
+
+    .profile-container {
+        width: 100%;
+    }
+
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+
+    .profile-avatar img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .profile-info h1 {
+        font-size: 1.3rem;
+        word-break: break-word;
+    }
+
+    .profile-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .danger-btn {
+        width: 100%;
+        justify-content: center;
+        margin-right: 0;
+        margin-bottom: 0.75rem;
+    }
+
+    .danger-btn:last-child {
+        margin-bottom: 0;
+    }
+
+    .profile-section h3 {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    /* История */
+    .history-container {
+        width: 100%;
+    }
+
+    .history-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .history-header h1 {
+        font-size: 1.4rem;
+        padding: 10px 0 0 10px;
+    }
+
+    .history-tabs {
+        width: 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 14px;
+    }
+
+    .history-tab {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    .history-item-header {
+        flex-wrap: wrap;
+    }
+
+    .history-pagination {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .history-pagination button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
     }
 }

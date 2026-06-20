@@ -166,26 +166,6 @@
     flex: none;
 }
 
-/* Кнопка - в ряд с остальными */
-.main-btn {
-    width: 100%;
-    padding: 7px 14px;
-    background-color: #1a1a1a;
-    color: white;
-    border: 2px solid #4374c7;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 23px; /* Чтобы выровнять с селектами по высоте */
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-}
-
 .detector-btn-wrapper {
     display: flex;
     justify-content: flex-end;
@@ -199,6 +179,28 @@
 .single-main-btn {
     width: auto;
     margin-top: 0;
+}
+
+/* Кнопка - в ряд с остальными */
+.main-btn {
+    padding: 7px 14px;
+    background-color: #1a1a1a;
+    color: white;
+    border: 2px solid #3463b2;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 23px; /* Чтобы выровнять с селектами по высоте */
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-btn:hover {
+    background-color: #3463b2;
 }
 
 .main-btn img {

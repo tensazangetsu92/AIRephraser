@@ -26,7 +26,7 @@
 /* Лого в сайдбаре */
 .sidebar-logo {
     height: 60px;
-    padding: 24px 15px;
+    padding: 10px 15px;
     border-bottom: 1px solid var(--sidebar-border-color);
     margin-bottom: 20px;
     display: flex;
