@@ -18,17 +18,9 @@
         </div>
     </div>
 
-    <div class="history-list" id="historyList">
-        <div class="history-empty">История пуста</div>
-    </div>
-
-    <div class="history-pagination" id="historyPagination" style="display: none;">
-        <button id="prevPageBtn" disabled>← Назад</button>
-        <span id="pageInfo">Страница 1</span>
-        <button id="nextPageBtn">Вперед →</button>
-    </div>
+    <div class="history-list" id="historyList"></div>
+    <div id="historySentinel" style="height: 1px;"></div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}

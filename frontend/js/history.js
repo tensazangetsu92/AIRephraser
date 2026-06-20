@@ -2,6 +2,8 @@ let currentPage = 1;
 let currentFilter = 'all';
 let currentDateFilter = 'all';
 let totalPages = 1;
+let isLoading = false;
+let observer = null;
 
 function escapeHtmlAttr(text) {
     return text
@@ -22,33 +24,30 @@ function getTypeName(type) {
     return types[type] || 'Обработка';
 }
 
-function updatePagination() {
-    const pagination = document.getElementById('historyPagination');
-    const prevBtn = document.getElementById('prevPageBtn');
-    const nextBtn = document.getElementById('nextPageBtn');
-    const pageInfo = document.getElementById('pageInfo');
-
-    if (!pagination) return;
-
-    pagination.style.display = totalPages > 1 ? 'flex' : 'none';
-    if (prevBtn) prevBtn.disabled = currentPage <= 1;
-    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
-    if (pageInfo) pageInfo.textContent = `Страница ${currentPage} из ${totalPages}`;
+function getResultPreview(toolType, resultText) {
+    if (toolType === 'detector') {
+        try {
+            const data = JSON.parse(resultText);
+            return `${data.verdict || ''} (ИИ: ${data.ai_probability}%, Человек: ${data.human_probability}%)`;
+        } catch {
+            return resultText.substring(0, 250);
+        }
+    }
+    return resultText.substring(0, 250) + (resultText.length > 250 ? '...' : '');
 }
 
 function attachHistoryItemHandlers() {
-    document.querySelectorAll('.history-item').forEach(item => {
+    document.querySelectorAll('.history-item:not([data-bound])').forEach(item => {
+        item.dataset.bound = '1';
         item.addEventListener('click', () => {
             const toolType = item.querySelector('.history-item-type')?.textContent.trim();
-            console.log('toolType:', JSON.stringify(toolType));
             const original = item.dataset.original;
             const result = item.dataset.result;
 
             if (toolType === 'Детектор ИИ') {
                 localStorage.setItem('detector_input_text', original);
                 try {
-                    const parsed = JSON.parse(result);
-                    localStorage.setItem('detector_result_data', JSON.stringify(parsed));
+                    localStorage.setItem('detector_result_data', JSON.stringify(JSON.parse(result)));
                 } catch {
                     localStorage.removeItem('detector_result_data');
                 }
@@ -62,24 +61,58 @@ function attachHistoryItemHandlers() {
     });
 }
 
-async function loadHistory() {
-    const historyList = document.getElementById('historyList');
-    if (!historyList) return;
+function initObserver() {
+    if (observer) observer.disconnect();
 
-    historyList.innerHTML = '<div class="history-empty">Загрузка...</div>';
+    const sentinel = document.getElementById('historySentinel');
+    if (!sentinel) return;
+
+    observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && currentPage < totalPages && !isLoading) {
+            currentPage++;
+            loadHistory(true);
+        }
+    }, { threshold: 0.1 });
+
+    observer.observe(sentinel);
+}
+
+async function loadHistory(append = false) {
+    if (isLoading) return;
+    isLoading = true;
+
+    const historyList = document.getElementById('historyList');
+    if (!historyList) { isLoading = false; return; }
+
+    if (!append) {
+        historyList.innerHTML = '<div class="history-empty">Загрузка...</div>';
+    } else {
+        const loader = document.createElement('div');
+        loader.className = 'history-empty history-loader';
+        loader.textContent = 'Загрузка...';
+        historyList.appendChild(loader);
+    }
 
     try {
-        const response = await fetch(`/user/history?page=${currentPage}&type=${currentFilter}&date=${currentDateFilter}`, {
+        const response = await fetch(`/user/history?page=${currentPage}&limit=5&type=${currentFilter}&date=${currentDateFilter}`, {
             headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
         });
         const data = await response.json();
 
+        historyList.querySelector('.history-loader')?.remove();
+
         if (data.success && data.history?.length > 0) {
-            historyList.innerHTML = data.history.map(item => `
-                <div class="history-item"
-                    data-id="${item.id}"
-                    data-original="${escapeHtmlAttr(item.original_text)}"
-                    data-result="${escapeHtmlAttr(item.result_text)}">
+            if (!append) historyList.innerHTML = '';
+
+            totalPages = data.total_pages || 1;
+
+            data.history.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'history-item';
+                el.dataset.id = item.id;
+                el.dataset.original = escapeHtmlAttr(item.original_text);
+                el.dataset.result = escapeHtmlAttr(item.result_text);
+                el.innerHTML = `
                     <div class="history-item-header">
                         <span class="history-item-type">${getTypeName(item.tool_type)}</span>
                         <span class="history-item-date">${new Date(item.created_at).toLocaleString()}</span>
@@ -88,20 +121,22 @@ async function loadHistory() {
                         ${escapeHtml(item.original_text.substring(0, 250))}${item.original_text.length > 250 ? '...' : ''}
                     </div>
                     <div class="history-item-result">
-                        ${escapeHtml(item.result_text.substring(0, 250))}${item.result_text.length > 250 ? '...' : ''}
+                        ${escapeHtml(getResultPreview(item.tool_type, item.result_text))}
                     </div>
-                </div>
-            `).join('');
+                `;
+                historyList.appendChild(el);
+            });
 
-            totalPages = data.total_pages || 1;
-            updatePagination();
             attachHistoryItemHandlers();
-        } else {
+        } else if (!append) {
             historyList.innerHTML = '<div class="history-empty">История пуста</div>';
         }
     } catch {
-        historyList.innerHTML = '<div class="history-empty">Ошибка загрузки истории</div>';
+        historyList.querySelector('.history-loader')?.remove();
+        if (!append) historyList.innerHTML = '<div class="history-empty">Ошибка загрузки истории</div>';
     }
+
+    isLoading = false;
 }
 
 async function clearHistory() {
@@ -117,7 +152,8 @@ async function clearHistory() {
         if (response.ok) {
             showNotification('История очищена', 'success');
             currentPage = 1;
-            loadHistory();
+            totalPages = 1;
+            loadHistory(false);
         } else {
             showNotification(data.detail || 'Ошибка очистки', 'error');
         }
@@ -127,15 +163,8 @@ async function clearHistory() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    initObserver();
     loadHistory();
-
-    document.getElementById('prevPageBtn')?.addEventListener('click', () => {
-        if (currentPage > 1) { currentPage--; loadHistory(); }
-    });
-
-    document.getElementById('nextPageBtn')?.addEventListener('click', () => {
-        if (currentPage < totalPages) { currentPage++; loadHistory(); }
-    });
 
     document.querySelectorAll('.history-tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -143,14 +172,16 @@ document.addEventListener('DOMContentLoaded', () => {
             tab.classList.add('active');
             currentFilter = tab.dataset.type;
             currentPage = 1;
-            loadHistory();
+            totalPages = 1;
+            loadHistory(false);
         });
     });
 
     document.getElementById('historyFilterDate')?.addEventListener('change', (e) => {
         currentDateFilter = e.target.value;
         currentPage = 1;
-        loadHistory();
+        totalPages = 1;
+        loadHistory(false);
     });
 
     document.getElementById('clearHistoryBtn')?.addEventListener('click', clearHistory);

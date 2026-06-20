@@ -37,7 +37,7 @@ async def get_user_history(
     query = db.query(UserHistory).filter(UserHistory.user_id == current_user.id)
 
     # Фильтр по типу
-    if type != "all" and type != "humanizer":
+    if type != "all":
         query = query.filter(UserHistory.tool_type == type)
 
     # Фильтр по дате
