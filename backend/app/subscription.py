@@ -1,8 +1,7 @@
 # app/subscription.py
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from sqlalchemy import func
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from app.database import User, Subscription, UsageStats
 import pytz
 
@@ -15,22 +14,27 @@ def get_current_datetime():
     return datetime.now(MOSCOW_TZ)
 
 
-# Планы подписки и их лимиты
+# Планы подписки: лимит слов за один запрос + общая месячная квота слов
 SUBSCRIPTION_PLANS = {
     "free": {
-        "total_requests": 5,
-        "max_words": 1000,
+        "max_words_per_request": 300,
+        "word_limit": 300,
         "price_monthly": 0
     },
     "premium": {
-        "total_requests": 300,
-        "max_words": 20000,
+        "max_words_per_request": 5000,
+        "word_limit": 5000,
         "price_monthly": 169
     },
     "pro": {
-        "total_requests": 1000,
-        "max_words": 50000,
+        "max_words_per_request": 25000,
+        "word_limit": 25000,
         "price_monthly": 319
+    },
+    "unlimited": {
+        "max_words_per_request": 25000,
+        "word_limit": None,  # None = безлимит по месячной квоте
+        "price_monthly": 599
     }
 }
 
@@ -51,12 +55,14 @@ def get_user_subscription(db: Session, user_id: int) -> Subscription:
 
     return subscription
 
+
 def get_plan_limits(plan_type: str) -> dict:
     """Получить лимиты для типа подписки"""
     return SUBSCRIPTION_PLANS.get(plan_type, SUBSCRIPTION_PLANS["free"])
 
+
 def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: str = None, duration_days: int = 30):
-    """Обновить подписку пользователя и сбросить статистику"""
+    """Обновить подписку пользователя и сбросить статистику использования слов"""
     if plan_type not in SUBSCRIPTION_PLANS:
         raise HTTPException(status_code=400, detail="Invalid plan type")
 
@@ -79,7 +85,6 @@ def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: 
     return subscription
 
 
-
 def downgrade_to_free(db: Session, user_id: int):
     """Понизить подписку до бесплатной после истечения"""
     subscription = get_user_subscription(db, user_id)
@@ -96,7 +101,7 @@ def downgrade_to_free(db: Session, user_id: int):
 
 
 def check_subscription_expired(db: Session, user_id: int):
-    """Проверить срок подписки и ежемесячный сброс статистики"""
+    """Проверить срок подписки и ежемесячный сброс статистики слов"""
     subscription = get_user_subscription(db, user_id)
     now = get_current_datetime()
 
@@ -115,14 +120,6 @@ def check_subscription_expired(db: Session, user_id: int):
     return False
 
 
-def get_total_requests_count(db: Session, user_id: int) -> int:
-    """Получить общее количество запросов пользователя за всё время"""
-    total = db.query(func.sum(UsageStats.requests_count)).filter(
-        UsageStats.user_id == user_id
-    ).scalar()
-    return total or 0
-
-
 def count_words(text: str) -> int:
     """Подсчёт количества слов в тексте"""
     if not text:
@@ -130,101 +127,103 @@ def count_words(text: str) -> int:
     return len(text.strip().split())
 
 
+def get_or_create_usage_stats(db: Session, user_id: int) -> UsageStats:
+    """Получить (или создать) запись статистики использования слов"""
+    stats = db.query(UsageStats).filter(UsageStats.user_id == user_id).first()
+
+    if not stats:
+        stats = UsageStats(user_id=user_id, words_used=0)
+        db.add(stats)
+        db.commit()
+        db.refresh(stats)
+
+    return stats
+
+
+def get_words_used(db: Session, user_id: int) -> int:
+    """Получить количество слов, использованных в текущем расчётном периоде"""
+    stats = get_or_create_usage_stats(db, user_id)
+    return stats.words_used or 0
+
+
 def check_usage_limit(db: Session, user_id: int, text: str = "") -> bool:
-    """Проверить лимиты использования (по словам)"""
+    """
+    Проверяет два ограничения:
+    1. Лимит слов на один запрос (max_words_per_request) — фиксированный потолок для тарифа
+    2. Месячную квоту слов (word_limit) — суммарно за расчётный период
+    """
     subscription = get_user_subscription(db, user_id)
     check_subscription_expired(db, user_id)
 
     plan_type = subscription.plan_type
     limits = get_plan_limits(plan_type)
+    max_words_per_request = limits["max_words_per_request"]
+    word_limit = limits["word_limit"]
 
     word_count = count_words(text)
 
-    if word_count > limits["max_words"]:
+    # 1. Проверка лимита на один запрос
+    if word_count > max_words_per_request:
         raise HTTPException(
             status_code=400,
-            detail=f"Превышен лимит слов. Максимум {limits['max_words']} слов для вашего тарифа. Сейчас {word_count} слов."
+            detail=f"Превышен лимит слов на один запрос. Максимум {max_words_per_request} слов для вашего тарифа. Сейчас {word_count} слов."
         )
 
-    total_requests = get_total_requests_count(db, user_id)
+    # 2. Проверка месячной квоты (пропускаем для безлимитного тарифа)
+    if word_limit is not None:
+        words_used = get_words_used(db, user_id)
 
-    if total_requests >= limits["total_requests"]:
-        if plan_type == "free":
+        if words_used + word_count > word_limit:
+            remaining = max(0, word_limit - words_used)
             raise HTTPException(
                 status_code=429,
-                detail=f"Достигнут лимит бесплатного тарифа. Вы использовали все {limits['total_requests']} бесплатных запросов. Пожалуйста, приобретите подписку, чтобы продолжить."
-            )
-        else:
-            raise HTTPException(
-                status_code=429,
-                detail=f"Достигнут лимит вашего тарифа — {limits['total_requests']} запросов. Пожалуйста, перейдите на следующий тариф, чтобы продолжить."
+                detail=(
+                    f"Недостаточно слов в рамках месячного лимита. "
+                    f"Осталось {remaining} из {word_limit} слов. "
+                    f"В этом запросе {word_count} слов. "
+                    f"{'Перейдите на более высокий тариф, чтобы продолжить.' if plan_type != 'free' else 'Оформите подписку, чтобы продолжить.'}"
+                )
             )
 
     return True
 
 
 def increment_usage(db: Session, user_id: int, word_count: int):
-    """Увеличить счётчики использования"""
-    today = date.today()
-
-    stats = db.query(UsageStats).filter(
-        UsageStats.user_id == user_id,
-        UsageStats.request_date == today
-    ).first()
-
-    if not stats:
-        stats = UsageStats(
-            user_id=user_id,
-            request_date=today,
-            requests_count=0
-        )
-        db.add(stats)
-
-    stats.requests_count += 1
+    """Увеличить счётчик использованных слов за текущий период"""
+    stats = get_or_create_usage_stats(db, user_id)
+    stats.words_used = (stats.words_used or 0) + word_count
     db.commit()
 
 
 def get_usage_stats(db: Session, user_id: int) -> dict:
-    """Получить статистику использования"""
+    """Получить статистику использования слов для пользователя"""
     subscription = get_user_subscription(db, user_id)
     limits = get_plan_limits(subscription.plan_type)
+    word_limit = limits["word_limit"]
 
-    today = date.today()
-
-    stats_today = db.query(UsageStats).filter(
-        UsageStats.user_id == user_id,
-        UsageStats.request_date == today
-    ).first()
-
-    requests_today = stats_today.requests_count if stats_today else 0
-    total_requests = get_total_requests_count(db, user_id)
-    remaining_requests = max(0, limits["total_requests"] - total_requests)
+    words_used = get_words_used(db, user_id)
+    remaining_words = None if word_limit is None else max(0, word_limit - words_used)
 
     return {
         "plan_type": subscription.plan_type,
-        "total_requests_used": total_requests,
-        "total_requests_limit": limits["total_requests"],
-        "remaining_requests": remaining_requests,
-        "requests_today": requests_today,
-        "max_words": limits["max_words"],
+        "words_used": words_used,
+        "word_limit": word_limit,
+        "remaining_words": remaining_words,
+        "is_unlimited": word_limit is None,
+        "max_words_per_request": limits["max_words_per_request"],
         "end_date": subscription.end_date.isoformat() if subscription.end_date else None
     }
 
 
-# app/subscription.py
-
 def reset_usage_stats(db: Session, user_id: int):
-    """Сбрасывает статистику использования при смене подписки"""
-    today = date.today()
+    """Сбрасывает статистику использования слов (при оплате или ежемесячном цикле)"""
+    stats = db.query(UsageStats).filter(UsageStats.user_id == user_id).first()
 
-    db.query(UsageStats).filter(UsageStats.user_id == user_id).delete()
+    if stats:
+        stats.words_used = 0
+    else:
+        stats = UsageStats(user_id=user_id, words_used=0)
+        db.add(stats)
 
-    new_stats = UsageStats(
-        user_id=user_id,
-        request_date=today,
-        requests_count=0
-    )
-    db.add(new_stats)
     db.commit()
-
-    print(f"🔄 Reset usage stats for user {user_id}")
+    print(f"🔄 Reset word usage stats for user {user_id}")

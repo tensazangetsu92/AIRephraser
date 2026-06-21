@@ -31,17 +31,19 @@ class User(Base):
     # Связь с подпиской
     subscription = relationship("Subscription", back_populates="user", uselist=False)
 
+
 class UserHistory(Base):
     __tablename__ = "user_history"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    tool_type = Column(String(50), default="humanizer")  # 👈 ОСТАВИТЬ
+    tool_type = Column(String(50), default="humanizer")
     original_text = Column(Text, nullable=False)
     result_text = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User")
+
 
 class Subscription(Base):
     __tablename__ = "subscriptions"
@@ -63,17 +65,22 @@ class Subscription(Base):
 
 
 class UsageStats(Base):
+    """
+    Одна запись на пользователя — суммарное количество слов,
+    использованных в текущем расчётном периоде (месяце).
+    Период начинается с last_reset_date подписки и обнуляется
+    через reset_usage_stats при оплате или ежемесячном цикле.
+    """
     __tablename__ = "usage_stats"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    request_date = Column(Date, server_default=func.current_date())
-    requests_count = Column(Integer, default=0)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    words_used = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Связь с пользователем
     user = relationship("User")
+
 
 def delete_old_history(db: Session, days: int = 90):
     """Удаляет записи истории старше N дней"""
@@ -85,6 +92,7 @@ def delete_old_history(db: Session, days: int = 90):
     if deleted:
         print(f"🗑️ Удалено {deleted} старых записей из истории (старше {days} дней)")
     return deleted
+
 
 # Зависимости для FastAPI
 def get_db():

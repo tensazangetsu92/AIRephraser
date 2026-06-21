@@ -40,12 +40,13 @@ function updateSubscriptionUIFromData(data, activePlan = null) {
     activePlan = activePlan || data?.subscription?.plan_type;
     if (!activePlan) return;
 
-    const planLevel = { free: 0, premium: 1, pro: 2 };
+    const planLevel = { free: 0, premium: 1, pro: 2, unlimited: 3 };
     const currentLevel = planLevel[activePlan] || 0;
 
     document.querySelectorAll('.tariff-card').forEach(card => {
         const plan = card.getAttribute('data-plan');
         const btn = card.querySelector('.tariff-btn');
+        if (!btn) return;
         const planLevelValue = planLevel[plan] || 0;
 
         if (planLevelValue <= currentLevel) {
@@ -59,6 +60,7 @@ function updateSubscriptionUIFromData(data, activePlan = null) {
             btn.classList.remove('tariff-btn-current', 'tariff-btn-included');
             if (plan === 'premium') btn.onclick = () => upgradePlan('premium');
             if (plan === 'pro') btn.onclick = () => upgradePlan('pro');
+            if (plan === 'unlimited') btn.onclick = () => upgradePlan('unlimited');
         }
     });
 }
@@ -71,12 +73,21 @@ function updateBalanceDisplayFromData(data) {
     const balanceText = document.getElementById('balanceText');
     if (!balanceBlock || !balanceBarFill || !balanceText) return;
 
-    const used = data.usage.total_requests_used;
-    const limit = data.subscription.total_requests;
-    const remaining = limit - used;
-    const pct = (remaining / limit) * 100;
-
+    const usage = data.usage;
     balanceBlock.style.display = 'block';
+
+    if (usage.is_unlimited) {
+        balanceBarFill.style.width = '100%';
+        balanceBarFill.style.background = 'linear-gradient(90deg, #5787d9, #7c3aed)';
+        balanceText.innerHTML = `Безлимит слов`;
+        return;
+    }
+
+    const used = usage.words_used;
+    const limit = usage.word_limit;
+    const remaining = usage.remaining_words;
+    const pct = limit > 0 ? (remaining / limit) * 100 : 0;
+
     balanceBarFill.style.width = `${pct}%`;
     balanceBarFill.style.background = pct <= 10
         ? 'linear-gradient(90deg, #ef4444, #f59e0b)'
@@ -84,13 +95,18 @@ function updateBalanceDisplayFromData(data) {
             ? 'linear-gradient(90deg, #f59e0b, #eab308)'
             : 'linear-gradient(90deg, #5787d9, #7c3aed)';
 
-    balanceText.innerHTML = `${remaining} / ${limit} Токенов`;
+    balanceText.innerHTML = `${remaining} / ${limit} слов`;
 }
 
 function updateSubscriptionText(data) {
     const el = document.getElementById('subscribeTypeText');
     if (!el || !data?.subscription) return;
-    const labels = { free: 'Базовая подписка', premium: 'Premium подписка', pro: 'Pro подписка' };
+    const labels = {
+        free: 'Базовая подписка',
+        premium: 'Premium подписка',
+        pro: 'Pro подписка',
+        unlimited: 'Безлимитная подписка'
+    };
     el.textContent = labels[data.subscription.plan_type] || 'Подписка';
 }
 
@@ -129,7 +145,7 @@ async function upgradePlan(planType) {
         const data = await response.json();
 
         if (response.ok) {
-            const labels = { premium: 'Premium', pro: 'Pro' };
+            const labels = { premium: 'Premium', pro: 'Pro', unlimited: 'Безлимит' };
             showNotification(`Подписка ${labels[planType]} активирована!`, 'success');
             cachedSubscriptionData = null;
             await refreshAllSubscriptionData();
@@ -164,3 +180,4 @@ window.loadCurrentSubscription = loadCurrentSubscription;
 window.refreshAllSubscriptionData = refreshAllSubscriptionData;
 window.upgradeToPremium = () => upgradePlan('premium');
 window.upgradeToPro = () => upgradePlan('pro');
+window.upgradeToUnlimited = () => upgradePlan('unlimited');

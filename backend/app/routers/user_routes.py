@@ -118,20 +118,3 @@ async def cleanup_old_history(
     deleted = delete_old_history(db, days)
     return {"success": True, "deleted": deleted, "days": days}
 
-
-@router.post("/user/change-password")
-async def change_password(
-        data: dict,
-        current_user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
-):
-    old_password = data.get("old_password")
-    new_password = data.get("new_password")
-
-    if not verify_password(old_password, current_user.password_hash):
-        raise HTTPException(status_code=400, detail="Неверный старый пароль")
-
-    current_user.password_hash = get_hash_password(new_password)
-    db.commit()
-
-    return {"success": True, "message": "Пароль изменён"}

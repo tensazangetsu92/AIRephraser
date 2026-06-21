@@ -94,7 +94,7 @@ async function processText(text) {
 
     if (elements.humanizeBtn) {
         elements.humanizeBtn.disabled = false;
-        elements.humanizeBtn.innerHTML = 'Очеловечить текст';
+        elements.humanizeBtn.innerHTML = '<img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Очеловечить';
     }
 }
 

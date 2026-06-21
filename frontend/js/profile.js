@@ -27,27 +27,43 @@ async function loadProfile() {
         const sub = data.subscription;
         const usage = data.usage;
 
-        const planLabels = { free: 'Бесплатный тариф', premium: 'Premium тариф', pro: 'Pro тариф' };
+        const planLabels = {
+            free: 'Бесплатный тариф',
+            premium: 'Premium тариф',
+            pro: 'Pro тариф',
+            unlimited: 'Безлимитный тариф'
+        };
 
-        document.getElementById('maxWords')?.setAttribute('textContent', sub.max_words) ||
-            (document.getElementById('maxWords') && (document.getElementById('maxWords').textContent = sub.max_words));
+        const maxWordsEl = document.getElementById('maxWords');
+        if (maxWordsEl) {
+            maxWordsEl.textContent = sub.max_words_per_request;
+        }
+
         const profilePlanEl = document.getElementById('profilePlan');
         if (profilePlanEl) profilePlanEl.textContent = planLabels[sub.plan_type] || 'Тариф';
 
         const subscriptionPlanEl = document.getElementById('subscriptionPlan');
         if (subscriptionPlanEl) subscriptionPlanEl.textContent = sub.plan_type.toUpperCase();
 
-        const remaining = usage.remaining_requests;
-        const limit = usage.total_requests_limit;
-        const pct = limit > 0 ? (remaining / limit) * 100 : 0;
-
         const balanceText = document.getElementById('balanceMainText');
-        if (balanceText) balanceText.textContent = `${remaining} / ${limit} токенов осталось`;
-
         const fill = document.getElementById('requestsProgress');
-        if (fill) {
-            fill.style.width = `${pct}%`;
-            fill.style.background = getProgressColor(pct);
+
+        if (usage.is_unlimited) {
+            if (balanceText) balanceText.textContent = `Безлимит слов`;
+            if (fill) {
+                fill.style.width = '100%';
+                fill.style.background = 'linear-gradient(90deg, #5787d9, #7c3aed)';
+            }
+        } else {
+            const remaining = usage.remaining_words;
+            const limit = usage.word_limit;
+            const pct = limit > 0 ? (remaining / limit) * 100 : 0;
+
+            if (balanceText) balanceText.textContent = `${remaining} / ${limit} слов осталось`;
+            if (fill) {
+                fill.style.width = `${pct}%`;
+                fill.style.background = getProgressColor(pct);
+            }
         }
 
         if (sub.end_date) {
@@ -59,7 +75,7 @@ async function loadProfile() {
 
         const upgradeBtn = document.getElementById('upgradeBtn');
         if (upgradeBtn) {
-            upgradeBtn.textContent = sub.plan_type === 'pro' ? 'Посмотреть тарифы' : 'Улучшить подписку';
+            upgradeBtn.textContent = sub.plan_type === 'unlimited' ? 'Посмотреть тарифы' : 'Улучшить подписку';
         }
 
         loadRecentHistory();
