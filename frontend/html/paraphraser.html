@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<div class="editor">
+<div class="editor" id="editorContainer">
     <div class="col">
         <div class="textarea-wrapper">
             <div class="editor-name">Ваш текст</div>
@@ -13,16 +13,21 @@
                 <i class="fas fa-paste"></i>
                 Вставить текст
             </button>
+            <button class="pdf-btn" id="pdfBtn">
+                <i class="fas fa-file-pdf"></i>
+                Загрузить PDF
+            </button>
+            <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;">
         </div>
         <div class="word-counter-wrapper">
             <span class="word-count" id="wordCount"></span>
             <span class="word-warning" id="wordWarning"></span>
-            <button class="copy-text-btn" id="copyInputBtn" title="Копировать результат">
+            <button class="copy-text-btn" id="copyInputBtn" title="Копировать текст">
                 <i class="fa-regular fa-clone"></i>
             </button>
         </div>
     </div>
-    <div class="col">
+    <div class="col result-col" id="resultCol" style="display: none;">
         <div class="editor-name">Результат</div>
         <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10" readonly></textarea>
         <div class="word-counter-wrapper">
@@ -35,11 +40,58 @@
 
 <div class="controls">
     <div class="control-group">
-        <button class="main-btn" id="paraphraseBtn">Перефразировать</button>
+        <div class="label-wrapper">
+            <i class="fa-solid fa-pen-fancy"></i>
+            <label>Стиль</label>
+        </div>
+        <div class="custom-select" data-value="similar">
+            <button type="button" class="custom-select-trigger">
+                <span class="custom-select-label">Похожий</span>
+                <i class="fas fa-chevron-down custom-select-arrow"></i>
+            </button>
+            <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="similar">Похожий</div>
+                <div class="custom-select-option" data-value="simple">Простой</div>
+                <div class="custom-select-option" data-value="formal">Формальный</div>
+                <div class="custom-select-option" data-value="creative">Креативный</div>
+                <div class="custom-select-option" data-value="academic">Академический</div>
+            </div>
+        </div>
+        <input type="hidden" id="style" value="similar">
+    </div>
+
+    <div class="control-group">
+        <div class="label-wrapper">
+            <i class="fa-solid fa-face-smile"></i>
+            <label>Тон</label>
+        </div>
+        <div class="custom-select" data-value="neutral">
+            <button type="button" class="custom-select-trigger">
+                <span class="custom-select-label">Нейтральный</span>
+                <i class="fas fa-chevron-down custom-select-arrow"></i>
+            </button>
+            <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="neutral">Нейтральный</div>
+                <div class="custom-select-option" data-value="formal">Формальный</div>
+                <div class="custom-select-option" data-value="casual">Повседневный</div>
+                <div class="custom-select-option" data-value="friendly">Дружелюбный</div>
+                <div class="custom-select-option" data-value="academic">Академический</div>
+            </div>
+        </div>
+        <input type="hidden" id="tone" value="neutral">
+    </div>
+
+    <div class="control-group">
+        <button class="main-btn" id="paraphraseBtn">
+            <img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">
+            Перефразировать
+        </button>
     </div>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="/js/paraphrase.js" defer></script>
 {% endblock %}

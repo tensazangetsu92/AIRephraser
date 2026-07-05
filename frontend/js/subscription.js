@@ -95,7 +95,7 @@ function updateBalanceDisplayFromData(data) {
             ? 'linear-gradient(90deg, #f59e0b, #eab308)'
             : 'linear-gradient(90deg, #5787d9, #7c3aed)';
 
-    balanceText.innerHTML = `${remaining} / ${limit} слов`;
+    balanceText.innerHTML = `${remaining} / ${limit} Слов`;
 }
 
 function updateSubscriptionText(data) {

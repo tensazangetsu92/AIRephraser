@@ -5,7 +5,8 @@ import asyncio
 import json
 
 from app.config import OPENROUTER_API_KEY, MODEL_NAME, TEMPERATURE
-from prompts import SYSTEM_PROMPT, format_humanize_prompt, DETECTOR_SYSTEM_PROMPT, format_detector_prompt
+from prompts import SYSTEM_PROMPT, format_humanize_prompt, DETECTOR_SYSTEM_PROMPT, format_detector_prompt, \
+    format_paraphraser_prompt, PARAPHRASER_SYSTEM_PROMPT
 
 client = AsyncOpenAI(
     api_key=OPENROUTER_API_KEY,
@@ -201,6 +202,59 @@ async def detect_ai_pipeline(text: str) -> dict:
             "explanation": "Не удалось проанализировать текст из-за технической ошибки.",
             "sentences": [{"text": text, "label": "mixed"}]
         }
+
+
+
+async def paraphrase_pipeline(text: str, style: str, tone: str) -> str:
+    """Пайплайн перефразирования текста"""
+
+    original_length = len(text)
+    print(f"Перефразер. Оригинал: {original_length} символов")
+
+    prompt = format_paraphraser_prompt(text, style, tone)
+
+    try:
+        response = await client.chat.completions.create(
+            model=OPENROUTER_CONFIG["model"],
+            temperature=0.7,
+            messages=[
+                {"role": "system", "content": PARAPHRASER_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        result = response.choices[0].message.content.strip()
+
+        result_length = len(result)
+        print(f"Перефразер. Результат: {result_length} символов")
+
+        # Если результат слишком короткий — повторная попытка
+        if result_length < original_length * 0.6:
+            print("⚠️ Перефразер: результат слишком короткий, повторная попытка...")
+            fallback_prompt = f"""Ты сократил текст слишком сильно. Было {original_length} символов, стало {result_length}.
+
+Перефразируй заново, сохранив ВСЕ идеи и детали оригинала. Длина результата должна быть примерно {original_length} символов (±20%).
+
+【ОРИГИНАЛЬНЫЙ ТЕКСТ】
+{text}
+
+Ответь ТОЛЬКО готовым перефразированным текстом."""
+
+            response2 = await client.chat.completions.create(
+                model=OPENROUTER_CONFIG["model"],
+                temperature=0.5,
+                messages=[
+                    {"role": "system", "content": PARAPHRASER_SYSTEM_PROMPT},
+                    {"role": "user", "content": fallback_prompt}
+                ]
+            )
+            result = response2.choices[0].message.content.strip()
+            print(f"Перефразер. Результат после повтора: {len(result)} символов")
+
+        return result
+
+    except Exception as e:
+        print(f"Error in paraphrase_pipeline: {e}")
+        return text
 
 
 def get_available_models():

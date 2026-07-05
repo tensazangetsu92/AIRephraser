@@ -1,13 +1,12 @@
 (function() {
-let pendingText = null;
-
-const RESULT_MAX_AGE_MS = 16 * 60 * 60 * 1000;
+let pendingParaphraseText  = null;
+const RESULT_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 часа
 
 function loadTextFromLocalStorage() {
     const elements = window.elements || {};
-    const savedInput = localStorage.getItem('saved_input_text');
-    const savedResult = localStorage.getItem('saved_result_text');
-    const savedTime = localStorage.getItem('saved_result_time');
+    const savedInput = localStorage.getItem('paraphrase_input_text');
+    const savedResult = localStorage.getItem('paraphrase_result_text');
+    const savedTime = localStorage.getItem('paraphrase_result_time');
 
     if (elements.input) {
         elements.input.value = savedInput || '';
@@ -15,8 +14,8 @@ function loadTextFromLocalStorage() {
     }
 
     if (!savedInput || !savedInput.trim()) {
-        localStorage.removeItem('saved_result_text');
-        localStorage.removeItem('saved_result_time');
+        localStorage.removeItem('paraphrase_result_text');
+        localStorage.removeItem('paraphrase_result_time');
         if (elements.result) elements.result.value = '';
         hideResultColumn();
         return;
@@ -28,10 +27,10 @@ function loadTextFromLocalStorage() {
         elements.result.value = savedResult;
         showResultColumn();
     } else {
-        localStorage.removeItem('saved_result_text');
-        localStorage.removeItem('saved_result_time');
-        localStorage.removeItem('saved_input_text'); // ← добавь
-        if (elements.input) elements.input.value = ''; // ← добавь
+        localStorage.removeItem('paraphrase_result_text');
+        localStorage.removeItem('paraphrase_result_time');
+        if (elements.input) elements.input.value = '';
+        localStorage.removeItem('paraphrase_input_text');
         if (elements.result) elements.result.value = '';
         hideResultColumn();
     }
@@ -55,39 +54,38 @@ function initAutoSave() {
     const elements = window.elements || {};
     if (elements.input) {
         elements.input.addEventListener('input', () => {
-            localStorage.setItem('saved_input_text', elements.input.value);
+            localStorage.setItem('paraphrase_input_text', elements.input.value);
         });
     }
 }
 
 async function processText(text) {
     const elements = window.elements || {};
+    const paraphraseBtn = document.getElementById('paraphraseBtn');
 
-    if (elements.humanizeBtn) {
-        elements.humanizeBtn.disabled = true;
-        elements.humanizeBtn.innerHTML = '<span class="loading"></span> Обработка...';
+    if (paraphraseBtn) {
+        paraphraseBtn.disabled = true;
+        paraphraseBtn.innerHTML = '<span class="loading"></span> Перефразирование...';
     }
     if (elements.result) {
-        elements.result.value = 'Обработка текста...';
-        showNotification('Обработка текста');
+        elements.result.value = 'Перефразирование текста...';
+        showNotification('Перефразирование текста');
     }
 
     try {
-        const { ok, status, data } = await API.humanize(
+        const { ok, status, data } = await API.paraphrase(
             text,
-            elements.intensity?.value || 'medium',
             elements.tone?.value || 'neutral',
-            elements.style?.value || 'simple',
-            elements.length?.value || 'same'
+            elements.style?.value || 'similar'
         );
 
         if (ok) {
             if (elements.result) elements.result.value = data.result;
-            localStorage.setItem('saved_result_text', data.result);
-            localStorage.setItem('saved_result_time', Date.now());
+            localStorage.setItem('paraphrase_result_text', data.result);
+            localStorage.setItem('paraphrase_result_time', Date.now());
             clearWarning();
             showResultColumn();
-            API.saveHistory('humanizer', text, data.result);
+            API.saveHistory('paraphraser', text, data.result);
             if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
         } else if (status === 401) {
             if (elements.result) elements.result.value = '❌ Сессия истекла. Пожалуйста, войдите заново.';
@@ -104,9 +102,9 @@ async function processText(text) {
         if (elements.result) elements.result.value = '❌ Ошибка соединения с сервером';
     }
 
-    if (elements.humanizeBtn) {
-        elements.humanizeBtn.disabled = false;
-        elements.humanizeBtn.innerHTML = '<img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Очеловечить';
+    if (paraphraseBtn) {
+        paraphraseBtn.disabled = false;
+        paraphraseBtn.innerHTML = '<img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Перефразировать';
     }
 }
 
@@ -120,8 +118,8 @@ async function send() {
     clearWarning();
 
     if (!text.trim()) {
-        showWarning('⚠️ Пожалуйста, введите текст для обработки');
-        if (elements.result) elements.result.value = '⚠️ Пожалуйста, введите текст для обработки';
+        showWarning('⚠️ Пожалуйста, введите текст для перефразирования');
+        if (elements.result) elements.result.value = '⚠️ Пожалуйста, введите текст для перефразирования';
         return;
     }
 
@@ -136,7 +134,7 @@ async function send() {
     }
 
     if (!Auth.isAuthenticated()) {
-        pendingText = text;
+        pendingParaphraseText  = text;
         showWarning('🔐 Для использования сервиса необходимо войти в аккаунт');
         if (elements.result) elements.result.value = '🔐 Для использования сервиса необходимо войти в аккаунт';
         Auth.showAuthModal();
@@ -147,15 +145,14 @@ async function send() {
 }
 
 async function processPendingText() {
-    if (!pendingText || !Auth.isAuthenticated()) return;
-
-    if (isWithinWordLimit(pendingText)) {
-        const text = pendingText;
-        pendingText = null;
+    if (!pendingParaphraseText  || !Auth.isAuthenticated()) return;
+    if (isWithinWordLimit(pendingParaphraseText )) {
+        const text = pendingParaphraseText ;
+        pendingParaphraseText  = null;
         await processText(text);
     } else {
         showWarning(`❌ Максимальное количество слов: ${currentMaxWords}`, true);
-        pendingText = null;
+        pendingParaphraseText  = null;
     }
 }
 
@@ -174,7 +171,7 @@ window.copyResultText = () => {
     const btn = document.getElementById('copyResultBtn');
     copyButtonText(btn, () => {
         const val = window.elements?.result?.value;
-        if (!val || val.startsWith('⚠️') || val.startsWith('❌') || val.startsWith('🔐') || val === 'Обработка текста...') return '';
+        if (!val || val.startsWith('⚠️') || val.startsWith('❌') || val.startsWith('🔐') || val === 'Перефразирование текста...') return '';
         return val;
     });
 };
@@ -183,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pasteBtn')?.addEventListener('click', pasteFromClipboard);
     document.getElementById('copyInputBtn')?.addEventListener('click', window.copyInputText);
     document.getElementById('copyResultBtn')?.addEventListener('click', window.copyResultText);
+    document.getElementById('paraphraseBtn')?.addEventListener('click', send);
 
     loadTextFromLocalStorage();
     initAutoSave();

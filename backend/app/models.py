@@ -83,3 +83,8 @@ class ApiResponse(BaseModel):
     success: bool
     message: str
     data: Optional[dict] = None
+
+class ParaphraseRequest(BaseModel):
+    text: str
+    style: str = "similar"
+    tone: str = "neutral"
