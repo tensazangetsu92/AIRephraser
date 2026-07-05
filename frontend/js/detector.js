@@ -1,9 +1,12 @@
 let pendingDetectText = null;
 const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 50;
+const RESULT_MAX_AGE_MS = 16 * 60 * 60 * 1000;
 
 function loadTextFromLocalStorage() {
     const elements = window.elements || {};
     const savedInput = localStorage.getItem('detector_input_text');
+    const savedResult = localStorage.getItem('detector_result_data');
+    const savedTime = localStorage.getItem('detector_result_time');
 
     if (elements.input) {
         elements.input.value = savedInput || '';
@@ -12,12 +15,14 @@ function loadTextFromLocalStorage() {
 
     if (!savedInput || !savedInput.trim()) {
         localStorage.removeItem('detector_result_data');
+        localStorage.removeItem('detector_result_time');
         hideResultColumns();
         return;
     }
 
-    const savedResult = localStorage.getItem('detector_result_data');
-    if (savedResult) {
+    const isExpired = !savedTime || (Date.now() - parseInt(savedTime)) > RESULT_MAX_AGE_MS;
+
+    if (savedResult && !isExpired) {
         try {
             renderDetectorResult(JSON.parse(savedResult));
             showResultColumns();
@@ -25,6 +30,10 @@ function loadTextFromLocalStorage() {
             hideResultColumns();
         }
     } else {
+        localStorage.removeItem('detector_result_data');
+        localStorage.removeItem('detector_result_time');
+        localStorage.removeItem('detector_input_text'); // ← добавь
+        if (elements.input) elements.input.value = ''; // ← добавь
         hideResultColumns();
     }
 }
@@ -37,7 +46,7 @@ function showResultColumns() {
     if (reportCol) reportCol.style.display = 'flex';
     document.getElementById('editorContainer')?.classList.remove('single-col');
     const detectorBtnWrapper = document.querySelector('.detector-btn-wrapper');
-    if (detectorBtnWrapper) detectorBtnWrapper.style.display = 'none'; // ← скрыть кнопку
+    if (detectorBtnWrapper) detectorBtnWrapper.style.display = 'none';
     document.querySelectorAll('.col').forEach(col => col.style.height = '600px');
 }
 
@@ -48,7 +57,7 @@ function hideResultColumns() {
     document.getElementById('detectorReportCol')?.style.setProperty('display', 'none');
     document.getElementById('editorContainer')?.classList.add('single-col');
     const detectorBtnWrapper = document.querySelector('.detector-btn-wrapper');
-    if (detectorBtnWrapper) detectorBtnWrapper.style.display = ''; // ← показать кнопку
+    if (detectorBtnWrapper) detectorBtnWrapper.style.display = '';
     document.querySelectorAll('.col').forEach(col => col.style.height = '540px');
 }
 
@@ -113,7 +122,6 @@ async function processDetectText(text) {
     }
     if (newCheckBtn) newCheckBtn.disabled = true;
 
-    // Очищаем старые данные перед показом колонок
     if (resultDiv) resultDiv.innerHTML = '';
 
     const legendHuman = document.getElementById('legendHuman');
@@ -129,7 +137,6 @@ async function processDetectText(text) {
     const center = document.getElementById('detectorChartCenter');
     if (center) { center.textContent = 'AI'; center.style.color = ''; }
 
-    // Сбрасываем график на серый
     ['chartHuman', 'chartMixed', 'chartAi'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.setAttribute('stroke-dasharray', `0 ${CIRCLE_CIRCUMFERENCE}`);
@@ -144,20 +151,18 @@ async function processDetectText(text) {
         if (ok) {
             renderDetectorResult(data.result);
             localStorage.setItem('detector_result_data', JSON.stringify(data.result));
+            localStorage.setItem('detector_result_time', Date.now());
             clearWarning();
-
             API.saveHistory('detector', text, JSON.stringify(data.result));
-
-            if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-            if (typeof loadCurrentSubscription === 'function') loadCurrentSubscription();
+            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
         } else if (status === 401) {
             if (resultDiv) resultDiv.textContent = '❌ Сессия истекла. Пожалуйста, войдите заново.';
             Auth.logout();
             if (typeof window.updateUI === 'function') window.updateUI();
             setTimeout(() => Auth.showAuthModal(), 1500);
         } else if (status === 429) {
-            if (resultDiv) resultDiv.textContent = '❌ ' + (data.detail || 'Лимит токенов исчерпан');
-            if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+            if (resultDiv) resultDiv.textContent = '❌ ' + (data.detail || 'Лимит слов исчерпан');
+            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
         } else {
             if (resultDiv) resultDiv.textContent = '❌ Ошибка: ' + (data.detail || 'Неизвестная ошибка');
         }
@@ -167,7 +172,7 @@ async function processDetectText(text) {
 
     if (detectBtn) {
         detectBtn.disabled = false;
-        detectBtn.innerHTML = 'Проверить текст';
+        detectBtn.innerHTML = '<img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Проверить текст';
     }
     if (newCheckBtn) newCheckBtn.disabled = false;
 }
@@ -257,6 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('newCheckBtn')?.addEventListener('click', () => {
         localStorage.removeItem('detector_input_text');
         localStorage.removeItem('detector_result_data');
+        localStorage.removeItem('detector_result_time');
         const elements = window.elements || {};
         if (elements.input) elements.input.value = '';
         hideResultColumns();

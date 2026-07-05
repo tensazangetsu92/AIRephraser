@@ -1,9 +1,12 @@
 let pendingText = null;
 
+const RESULT_MAX_AGE_MS = 16 * 60 * 60 * 1000;
+
 function loadTextFromLocalStorage() {
     const elements = window.elements || {};
     const savedInput = localStorage.getItem('saved_input_text');
     const savedResult = localStorage.getItem('saved_result_text');
+    const savedTime = localStorage.getItem('saved_result_time');
 
     if (elements.input) {
         elements.input.value = savedInput || '';
@@ -12,15 +15,23 @@ function loadTextFromLocalStorage() {
 
     if (!savedInput || !savedInput.trim()) {
         localStorage.removeItem('saved_result_text');
+        localStorage.removeItem('saved_result_time');
         if (elements.result) elements.result.value = '';
         hideResultColumn();
         return;
     }
 
-    if (elements.result && savedResult) {
+    const isExpired = !savedTime || (Date.now() - parseInt(savedTime)) > RESULT_MAX_AGE_MS;
+
+    if (elements.result && savedResult && !isExpired) {
         elements.result.value = savedResult;
         showResultColumn();
     } else {
+        localStorage.removeItem('saved_result_text');
+        localStorage.removeItem('saved_result_time');
+        localStorage.removeItem('saved_input_text'); // ← добавь
+        if (elements.input) elements.input.value = ''; // ← добавь
+        if (elements.result) elements.result.value = '';
         hideResultColumn();
     }
 }
@@ -72,19 +83,19 @@ async function processText(text) {
         if (ok) {
             if (elements.result) elements.result.value = data.result;
             localStorage.setItem('saved_result_text', data.result);
+            localStorage.setItem('saved_result_time', Date.now());
             clearWarning();
             showResultColumn();
             API.saveHistory('humanizer', text, data.result);
-            if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-            if (typeof loadCurrentSubscription === 'function') loadCurrentSubscription();
+            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
         } else if (status === 401) {
             if (elements.result) elements.result.value = '❌ Сессия истекла. Пожалуйста, войдите заново.';
             Auth.logout();
             if (typeof window.updateUI === 'function') window.updateUI();
             setTimeout(() => Auth.showAuthModal(), 1500);
         } else if (status === 429) {
-            if (elements.result) elements.result.value = '❌ ' + (data.detail || 'Лимит токенов исчерпан');
-            if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+            if (elements.result) elements.result.value = '❌ ' + (data.detail || 'Лимит слов исчерпан');
+            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
         } else {
             if (elements.result) elements.result.value = '❌ Ошибка: ' + (data.detail || 'Неизвестная ошибка');
         }
