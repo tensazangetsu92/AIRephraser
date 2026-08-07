@@ -2,7 +2,8 @@
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from app.database import User, Subscription, UsageStats
+from app.database import User, Subscription, UsageStats, WordTransaction
+from uuid import uuid4
 import pytz
 
 # Часовой пояс Москвы
@@ -37,6 +38,55 @@ SUBSCRIPTION_PLANS = {
         "price_monthly": 599
     }
 }
+
+PURCHASE_PACKAGES = {
+    "words_2000": {"words": 2000, "price_rub": 100},
+    "words_5000": {"words": 5000, "price_rub": 200},
+    "words_10000": {"words": 10000, "price_rub": 300},
+}
+
+
+def get_word_balance(db: Session, user_id: int) -> dict:
+    subscription = get_user_subscription(db, user_id)
+    limits = get_plan_limits(subscription.plan_type)
+    subscription_words = None if limits["word_limit"] is None else max(0, limits["word_limit"] - get_words_used(db, user_id))
+    available = {}
+    totals = {}
+    for bucket in ("bonus", "purchased"):
+        rows = db.query(WordTransaction).filter(
+            WordTransaction.user_id == user_id, WordTransaction.kind == "credit",
+            WordTransaction.bucket == bucket, WordTransaction.status == "confirmed",
+        ).all()
+        available[bucket] = sum(row.remaining_words for row in rows)
+        totals[bucket] = sum(row.words for row in rows)
+    return {
+        "subscription_words": subscription_words,
+        "bonus_words": available["bonus"],
+        "purchased_words": available["purchased"],
+        "bonus_total_words": totals["bonus"],
+        "purchased_total_words": totals["purchased"],
+        "total_words": None if subscription_words is None else subscription_words + available["bonus"] + available["purchased"],
+        "is_unlimited": subscription_words is None,
+    }
+
+
+def grant_words(db: Session, user_id: int, bucket: str, words: int, reason: str, payment_id: str = None):
+    """Credit a confirmed bonus or paid package. Call from a verified payment webhook."""
+    if bucket not in {"bonus", "purchased"} or words <= 0:
+        raise ValueError("Invalid word credit")
+    row = WordTransaction(user_id=user_id, operation_id=str(uuid4()), kind="credit", bucket=bucket,
+                          reason=reason, words=words, remaining_words=words, payment_id=payment_id)
+    db.add(row); db.commit(); db.refresh(row)
+    return row
+
+
+def purchase_word_package(db: Session, user_id: int, package_id: str, payment_id: str = None):
+    """Activate a package for MVP; production should call this from a verified payment webhook."""
+    package = PURCHASE_PACKAGES.get(package_id)
+    if not package:
+        raise HTTPException(status_code=400, detail="Invalid word package")
+    row = grant_words(db, user_id, "purchased", package["words"], f"purchase:{package_id}", payment_id or f"mvp_{uuid4()}")
+    return package, row
 
 
 def get_user_subscription(db: Session, user_id: int) -> Subscription:
@@ -175,6 +225,9 @@ def check_usage_limit(db: Session, user_id: int, text: str = "") -> bool:
 
         if words_used + word_count > word_limit:
             remaining = max(0, word_limit - words_used)
+            extra_words = get_word_balance(db, user_id)["bonus_words"] + get_word_balance(db, user_id)["purchased_words"]
+            if remaining + extra_words >= word_count:
+                return True
             raise HTTPException(
                 status_code=429,
                 detail=(
@@ -191,7 +244,29 @@ def check_usage_limit(db: Session, user_id: int, text: str = "") -> bool:
 def increment_usage(db: Session, user_id: int, word_count: int):
     """Увеличить счётчик использованных слов за текущий период"""
     stats = get_or_create_usage_stats(db, user_id)
-    stats.words_used = (stats.words_used or 0) + word_count
+    subscription = get_user_subscription(db, user_id)
+    limit = get_plan_limits(subscription.plan_type)["word_limit"]
+    credits_left = word_count
+    if credits_left:
+        credits = db.query(WordTransaction).filter(
+            WordTransaction.user_id == user_id,
+            WordTransaction.kind == "credit",
+            WordTransaction.bucket.in_(["bonus", "purchased"]),
+            WordTransaction.status == "confirmed",
+            WordTransaction.remaining_words > 0,
+        ).order_by(WordTransaction.id.asc()).with_for_update().all()
+        for credit in credits:
+            used = min(credits_left, credit.remaining_words)
+            credit.remaining_words -= used
+            credits_left -= used
+            if credits_left == 0:
+                break
+        if credits_left:
+            raise HTTPException(status_code=409, detail="Insufficient word balance")
+
+    # The remaining part is charged to the subscription quota.
+    if limit is not None:
+        stats.words_used = (stats.words_used or 0) + credits_left
     db.commit()
 
 

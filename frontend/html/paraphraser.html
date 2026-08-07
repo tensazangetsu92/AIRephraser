@@ -38,55 +38,55 @@
     </div>
 </div>
 
-<div class="controls">
-    <div class="control-group">
-        <div class="label-wrapper">
-            <i class="fa-solid fa-pen-fancy"></i>
-            <label>Стиль</label>
-        </div>
-        <div class="custom-select" data-value="similar">
-            <button type="button" class="custom-select-trigger">
-                <span class="custom-select-label">Похожий</span>
-                <i class="fas fa-chevron-down custom-select-arrow"></i>
-            </button>
-            <div class="custom-select-options">
-                <div class="custom-select-option selected" data-value="similar">Похожий</div>
-                <div class="custom-select-option" data-value="simple">Простой</div>
-                <div class="custom-select-option" data-value="formal">Формальный</div>
-                <div class="custom-select-option" data-value="creative">Креативный</div>
-                <div class="custom-select-option" data-value="academic">Академический</div>
+<div class="paraphrase-controls">
+    <div class="paraphrase-selects">
+        <div class="control-group">
+            <div class="label-wrapper">
+                <i class="fa-solid fa-pen-fancy"></i>
+                <label>Стиль</label>
             </div>
+            <div class="custom-select" data-value="similar">
+                <button type="button" class="custom-select-trigger">
+                    <span class="custom-select-label">Похожий</span>
+                    <i class="fas fa-chevron-down custom-select-arrow"></i>
+                </button>
+                <div class="custom-select-options">
+                    <div class="custom-select-option selected" data-value="similar">Похожий</div>
+                    <div class="custom-select-option" data-value="simple">Простой</div>
+                    <div class="custom-select-option" data-value="formal">Формальный</div>
+                    <div class="custom-select-option" data-value="creative">Креативный</div>
+                    <div class="custom-select-option" data-value="academic">Академический</div>
+                </div>
+            </div>
+            <input type="hidden" id="style" value="similar">
         </div>
-        <input type="hidden" id="style" value="similar">
+
+        <div class="control-group">
+            <div class="label-wrapper">
+                <i class="fa-solid fa-face-smile"></i>
+                <label>Тон</label>
+            </div>
+            <div class="custom-select" data-value="neutral">
+                <button type="button" class="custom-select-trigger">
+                    <span class="custom-select-label">Нейтральный</span>
+                    <i class="fas fa-chevron-down custom-select-arrow"></i>
+                </button>
+                <div class="custom-select-options">
+                    <div class="custom-select-option selected" data-value="neutral">Нейтральный</div>
+                    <div class="custom-select-option" data-value="formal">Формальный</div>
+                    <div class="custom-select-option" data-value="casual">Повседневный</div>
+                    <div class="custom-select-option" data-value="friendly">Дружелюбный</div>
+                    <div class="custom-select-option" data-value="academic">Академический</div>
+                </div>
+            </div>
+            <input type="hidden" id="tone" value="neutral">
+        </div>
     </div>
 
-    <div class="control-group">
-        <div class="label-wrapper">
-            <i class="fa-solid fa-face-smile"></i>
-            <label>Тон</label>
-        </div>
-        <div class="custom-select" data-value="neutral">
-            <button type="button" class="custom-select-trigger">
-                <span class="custom-select-label">Нейтральный</span>
-                <i class="fas fa-chevron-down custom-select-arrow"></i>
-            </button>
-            <div class="custom-select-options">
-                <div class="custom-select-option selected" data-value="neutral">Нейтральный</div>
-                <div class="custom-select-option" data-value="formal">Формальный</div>
-                <div class="custom-select-option" data-value="casual">Повседневный</div>
-                <div class="custom-select-option" data-value="friendly">Дружелюбный</div>
-                <div class="custom-select-option" data-value="academic">Академический</div>
-            </div>
-        </div>
-        <input type="hidden" id="tone" value="neutral">
-    </div>
-
-    <div class="control-group">
-        <button class="main-btn" id="paraphraseBtn">
-            <img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">
-            Перефразировать
-        </button>
-    </div>
+    <button class="main-btn" id="paraphraseBtn">
+        <img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">
+        Перефразировать
+    </button>
 </div>
 
 {% endblock %}

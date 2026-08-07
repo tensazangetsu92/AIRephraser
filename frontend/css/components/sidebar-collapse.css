@@ -117,15 +117,19 @@
 /* ===== Контентная область ===== */
 .container {
     margin-left: 240px;
-    flex: 1;
+    width: calc(100% - 240px);
+    flex: 0 0 calc(100% - 240px);
+    min-width: 0;
     padding: 2rem;
     min-height: 100vh;
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.3s ease, width 0.3s ease, flex-basis 0.3s ease;
 }
 
 /* Когда сайдбар свёрнут - контент смещается */
 .sidebar.collapsed + .container {
     margin-left: 70px;
+    width: calc(100% - 70px);
+    flex-basis: calc(100% - 70px);
 }
 
 /* Шкала токенов — плавно скрываем */

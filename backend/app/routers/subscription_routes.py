@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from app.models import SubscriptionCreate
+from app.models import SubscriptionCreate, WordPackagePurchase
 from app.database import get_db, User
 from auth import get_current_user
 from app.subscription import (
@@ -13,6 +13,9 @@ from app.subscription import (
     get_plan_limits,
     check_subscription_expired,
     SUBSCRIPTION_PLANS,
+    PURCHASE_PACKAGES,
+    purchase_word_package,
+    get_word_balance,
 )
 
 router = APIRouter(tags=["subscription"])
@@ -40,6 +43,24 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: S
         },
         "usage": usage_stats,
         "available_plans": SUBSCRIPTION_PLANS
+        ,"word_balance": get_word_balance(db, current_user.id)
+        ,"available_word_packages": PURCHASE_PACKAGES
+    }
+
+
+@router.post("/subscription/word-packages/purchase")
+async def purchase_word_package_endpoint(
+    purchase: WordPackagePurchase,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    package, transaction = purchase_word_package(db, current_user.id, purchase.package_id, purchase.payment_id)
+    return {
+        "success": True,
+        "message": "Word package activated",
+        "package": {"id": purchase.package_id, **package},
+        "transaction_id": transaction.id,
+        "word_balance": get_word_balance(db, current_user.id),
     }
 
 

@@ -71,14 +71,26 @@ function updateBalanceDisplayFromData(data) {
     const balanceBlock = document.getElementById('balanceBlock');
     const balanceBarFill = document.getElementById('balanceBarFill');
     const balanceText = document.getElementById('balanceText');
+    const extraBalanceBlock = document.getElementById('extraBalanceBlock');
+    const extraBalanceBarFill = document.getElementById('extraBalanceBarFill');
+    const extraBalanceText = document.getElementById('extraBalanceText');
     if (!balanceBlock || !balanceBarFill || !balanceText) return;
 
     const usage = data.usage;
     balanceBlock.style.display = 'block';
 
+    const wordBalance = data.word_balance || {};
+    const extraWords = (wordBalance.bonus_words || 0) + (wordBalance.purchased_words || 0);
+    if (extraBalanceBlock && extraBalanceBarFill && extraBalanceText) {
+        extraBalanceBlock.style.display = extraWords > 0 ? 'block' : 'none';
+        const extraTotal = (wordBalance.bonus_total_words || 0) + (wordBalance.purchased_total_words || 0);
+        const extraPct = extraTotal > 0 ? Math.min(100, (extraWords / extraTotal) * 100) : 0;
+        extraBalanceBarFill.style.setProperty('--visible-percent', `${extraPct}%`);
+        extraBalanceText.textContent = `${extraWords} слов`;
+    }
+
     if (usage.is_unlimited) {
-        balanceBarFill.style.width = '100%';
-        balanceBarFill.style.background = 'linear-gradient(90deg, #5787d9, #7c3aed)';
+        balanceBarFill.style.setProperty('--visible-percent', '100%');
         balanceText.innerHTML = `Безлимит слов`;
         return;
     }
@@ -88,12 +100,7 @@ function updateBalanceDisplayFromData(data) {
     const remaining = usage.remaining_words;
     const pct = limit > 0 ? (remaining / limit) * 100 : 0;
 
-    balanceBarFill.style.width = `${pct}%`;
-    balanceBarFill.style.background = pct <= 10
-        ? 'linear-gradient(90deg, #ef4444, #f59e0b)'
-        : pct <= 30
-            ? 'linear-gradient(90deg, #f59e0b, #eab308)'
-            : 'linear-gradient(90deg, #5787d9, #7c3aed)';
+    balanceBarFill.style.setProperty('--visible-percent', `${pct}%`);
 
     balanceText.innerHTML = `${remaining} / ${limit} Слов`;
 }
@@ -172,7 +179,56 @@ async function updateBalanceDisplay() {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (Auth.isAuthenticated()) refreshAllSubscriptionData();
+
+    document.querySelectorAll('.word-pack-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            if (!Auth.isAuthenticated()) {
+                showNotification('Войдите в аккаунт, чтобы купить пакет слов', 'warning');
+                Auth.showAuthModal();
+                return;
+            }
+            showNotification('Оплата пакетов слов будет подключена после настройки эквайринга', 'info');
+        });
+    });
 });
+
+// Handle package purchases before the legacy placeholder click handler below.
+document.addEventListener('click', (event) => {
+    const button = event.target.closest('.word-pack-btn');
+    if (!button) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    if (!Auth.isAuthenticated()) {
+        showNotification('Войдите в аккаунт, чтобы купить пакет слов', 'warning');
+        Auth.showAuthModal();
+        return;
+    }
+
+    purchaseWordPackage(button.dataset.package);
+}, true);
+
+async function purchaseWordPackage(packageId) {
+    try {
+        const response = await fetch('/subscription/word-packages/purchase', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Auth.getToken()}`
+            },
+            body: JSON.stringify({ package_id: packageId })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Не удалось купить пакет');
+
+        showNotification(`Пакет активирован: ${data.package.words} слов`, 'success');
+        cachedSubscriptionData = null;
+        await refreshAllSubscriptionData();
+    } catch (error) {
+        showNotification(error.message || 'Ошибка покупки пакета', 'error');
+    }
+}
 
 window.forceUpdateBalance = refreshAllSubscriptionData;
 window.updateBalanceDisplay = updateBalanceDisplay;

@@ -7,17 +7,18 @@
     margin-bottom: 1.5rem;
     align-items: flex-end; /* Выравнивание по нижнему краю */
     justify-content: center;
-    margin: 0 2rem;
+    margin: 0 2rem 1.5rem;
 }
 
 .control-group {
+    flex: 1;
     justify-content: center;
 }
 
 /* Убираем лишнее у кнопки */
 .control-group:last-child {
     flex: 0.5;            /* Кнопка может быть немного уже */
-    min-width: auto;
+    max-width: 220px;
 
 }
 
@@ -50,7 +51,7 @@
 /* Кастомный select */
 .custom-select {
     position: relative;
-    width: 200px;
+    width: 100%;
 }
 
 .custom-select-trigger {
@@ -168,16 +169,22 @@
 .detector-btn-wrapper {
     display: flex;
     justify-content: flex-end;
-    width: 100%;
+    width: auto;
     max-width: calc(1000px + 4rem); /* 1000px + margin по бокам от .editor */
-    margin: 0 auto 1rem;
-    padding: 0 2rem;
+    margin: 0 2rem 1.5rem;
+    padding: 0;
     box-sizing: border-box;
+    max-width: none;
+}
+
+.detector-btn-wrapper .main-btn {
+    flex: 0 1 220px;
+    max-width: 220px;
 }
 
 .single-main-btn {
     width: auto;
-    margin-top: 0;
+    margin-top: 23px;
 }
 
 /* Кнопка - в ряд с остальными */
@@ -197,7 +204,8 @@
     align-items: center;
     justify-content: center;
     height: 48px;
-    width: 176px;
+    width: 100%;
+    max-width: 220px;
 }
 
 .main-btn:hover {
@@ -226,4 +234,39 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+.paraphrase-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    gap: 1rem;
+    margin: 0 2rem 1.5rem 2rem; /* те же отступы что у .editor */
+}
+
+.paraphrase-selects {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.paraphrase-controls .control-group {
+    flex: 0 0 160px;
+}
+
+.paraphrase-controls .main-btn {
+    width: 100%;
+    max-width: 220px;
+    margin-top: 23px; /* выравнивание с селектами по высоте */
+}
+
+.grammar-controls {
+    justify-content: flex-end;
+    margin: 0 2rem 1.5rem;
+}
+
+.grammar-controls .control-group,
+.grammar-controls .control-group:last-child {
+    flex: 0 1 220px;
+    max-width: 220px;
 }

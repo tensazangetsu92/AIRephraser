@@ -5,13 +5,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, B
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from sqlalchemy.sql import func
-from fastapi import Depends
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
+from app.config import DATABASE_URL
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -78,6 +72,27 @@ class UsageStats(Base):
     words_used = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    user = relationship("User")
+
+
+class WordTransaction(Base):
+    """Append-only word-credit ledger; positive rows retain their unused balance."""
+    __tablename__ = "word_transactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    operation_id = Column(String(36), nullable=False, index=True)
+    kind = Column(String(16), nullable=False)  # credit or debit
+    bucket = Column(String(24), nullable=False)  # bonus, purchased, subscription
+    reason = Column(String(64), nullable=False)
+    words = Column(Integer, nullable=False)
+    remaining_words = Column(Integer, nullable=False, default=0)
+    status = Column(String(16), nullable=False, default="confirmed")
+    source_transaction_id = Column(Integer, ForeignKey("word_transactions.id"), nullable=True)
+    payment_id = Column(String(255), nullable=True, unique=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User")
 

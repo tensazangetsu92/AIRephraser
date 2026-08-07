@@ -1,55 +1,74 @@
-# main.py - точка входа
-import secrets
+"""FastAPI application entry point."""
 
+import logging
+from contextlib import asynccontextmanager
+
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 from starlette.middleware.sessions import SessionMiddleware
-from app.api import router
-from app.config import CORS_ORIGINS, CORS_CREDENTIALS, CORS_METHODS, CORS_HEADERS, SECRET_KEY
-from app.oauth import router as google_router
-from contextlib import asynccontextmanager
-from apscheduler.schedulers.background import BackgroundScheduler
-from app.database import delete_old_history, SessionLocal
 
+from app.api import router
+from app.config import (
+    API_DESCRIPTION,
+    API_TITLE,
+    API_VERSION,
+    COOKIE_SECURE,
+    CORS_CREDENTIALS,
+    CORS_HEADERS,
+    CORS_METHODS,
+    CORS_ORIGINS,
+    ENABLE_IN_APP_SCHEDULER,
+    FRONTEND_DIR,
+    SECRET_KEY,
+)
+from app.database import SessionLocal, delete_old_history
+from app.oauth import router as google_router
+
+
+logger = logging.getLogger(__name__)
 scheduler = BackgroundScheduler()
 
-def cleanup_job():
-    print("🧹 Запуск очистки старых записей истории...")
+
+def cleanup_job() -> None:
+    """Remove history records older than the retention period."""
     db = SessionLocal()
     try:
         deleted = delete_old_history(db, days=90)
-        print(f"🧹 Очистка завершена. Удалено записей: {deleted}")
-    except Exception as e:
-        print(f"❌ Ошибка при очистке: {e}")
+        logger.info("History cleanup completed; deleted=%s", deleted)
+    except Exception:
+        logger.exception("History cleanup failed")
     finally:
         db.close()
 
-scheduler.add_job(cleanup_job, 'interval', days=1, id='history_cleanup')
-scheduler.start()
-
-cleanup_job()
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Запуск приложения
-    print("🚀 Запуск приложения...")
+async def lifespan(_: FastAPI):
+    if ENABLE_IN_APP_SCHEDULER:
+        scheduler.add_job(
+            cleanup_job,
+            "interval",
+            days=1,
+            id="history_cleanup",
+            replace_existing=True,
+        )
+        scheduler.start()
+        cleanup_job()
     yield
-    # Остановка приложения
-    print("🛑 Остановка приложения...")
-    scheduler.shutdown()
+    if scheduler.running:
+        scheduler.shutdown(wait=False)
 
-# Создаем приложение
+
 app = FastAPI(
-    title="Humary API",
-    description="AI Text Humanizer API",
-    version="1.0.0",
+    title=API_TITLE,
+    description=API_DESCRIPTION,
+    version=API_VERSION,
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
-# Добавляем CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -57,41 +76,29 @@ app.add_middleware(
     allow_methods=CORS_METHODS,
     allow_headers=CORS_HEADERS,
 )
-
 app.add_middleware(
     SessionMiddleware,
-    secret_key=SECRET_KEY,  # используй свой SECRET_KEY
+    secret_key=SECRET_KEY,
     session_cookie="humary_session",
-    max_age=3600,  # сессия живет 1 час
-    same_site="lax",  # для разработки
-    https_only=False  # для разработки (HTTP)
+    max_age=3600,
+    same_site="lax",
+    https_only=COOKIE_SECURE,
 )
 
 app.include_router(router)
 app.include_router(google_router)
 
-# Монтируем статические файлы (CSS, JS)
-frontend_path = Path(__file__).parent.parent / "frontend"
+for directory, mount_path in (("css", "/css"), ("js", "/js"), ("images", "/images")):
+    path = FRONTEND_DIR / directory
+    if path.exists():
+        app.mount(mount_path, StaticFiles(directory=str(path)), name=directory)
 
-if (frontend_path / "css").exists():
-    app.mount("/css", StaticFiles(directory=str(frontend_path / "css")), name="css")
 
-if (frontend_path / "js").exists():
-    app.mount("/js", StaticFiles(directory=str(frontend_path / "js")), name="js")
-
-if (frontend_path / "images").exists():
-    app.mount("/images", StaticFiles(directory=str(frontend_path / "images")), name="images")
-
-# Подключаем все роуты
-app.include_router(router)
-
-# Корневой эндпоинт для проверки
 @app.get("/api", tags=["info"])
 async def api_info():
-    """Информация об API"""
-    return {
-        "name": "Humary API",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "status": "running"
-    }
+    return {"name": API_TITLE, "version": API_VERSION, "docs": "/docs", "status": "running"}
+
+
+@app.get("/health", tags=["info"])
+async def health_check():
+    return {"status": "ok"}

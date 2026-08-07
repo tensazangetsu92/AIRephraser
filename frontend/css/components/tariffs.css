@@ -157,11 +157,130 @@
     opacity: 1;
 }
 
+/* ========== WORD PACKS ========== */
+.word-packs {
+    margin-top: 4.5rem;
+    padding-top: 3rem;
+    border-top: 1px solid #444444;
+}
+
+.word-packs-heading {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.word-packs-heading h2 {
+    color: #f0f0f0;
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.word-packs-heading p,
+.word-pack-note {
+    color: #a0a0a0;
+    font-size: 0.9rem;
+}
+
+.word-packs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.word-pack-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 250px;
+    padding: 1.75rem 1.5rem 1.5rem;
+    background: #2d2d2d;
+    border: 1px solid #444444;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.word-pack-card:hover {
+    transform: translateY(-4px);
+    border-color: #5787d9;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+}
+
+.word-pack-card-featured {
+    border: 2px solid #6366f1;
+}
+
+.word-pack-badge {
+    position: absolute;
+    top: -12px;
+    right: 18px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #6366f1, #10b981);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.word-pack-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    color: #fff;
+    background: rgba(87, 135, 217, 0.25);
+}
+
+.word-pack-card h3 {
+    color: #f0f0f0;
+    font-size: 1.25rem;
+}
+
+.word-pack-price {
+    margin: 0.7rem 0 0.35rem;
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.word-pack-price span {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.word-pack-btn {
+    width: 100%;
+    margin-top: auto;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary-gradient);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.word-pack-btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
 /* Адаптация для мобильных */
 @media (max-width: 768px) {
     .tariffs-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+    }
+
+    .word-packs-grid {
+        grid-template-columns: 1fr;
+        max-width: 420px;
     }
 
     .tariff-card.recommended {

@@ -58,7 +58,6 @@ function hideResultColumns() {
     document.getElementById('editorContainer')?.classList.add('single-col');
     const detectorBtnWrapper = document.querySelector('.detector-btn-wrapper');
     if (detectorBtnWrapper) detectorBtnWrapper.style.display = '';
-    document.querySelectorAll('.col').forEach(col => col.style.height = '540px');
 }
 
 function renderDetectorResult(data) {

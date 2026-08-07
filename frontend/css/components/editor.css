@@ -2,9 +2,11 @@
 
 /* Контентная область */
 .container {
-    margin-left: 260px;
-    flex: 1;
-    padding: 0 2rem;
+    margin-left: 240px;
+    width: calc(100% - 240px);
+    flex: 0 0 calc(100% - 240px);
+    min-width: 0;
+    padding: clamp(1rem, 2vw, 2rem);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -13,16 +15,26 @@
 .editor {
     display: flex;
     gap: 2rem;
-    margin: 1rem 2rem 1.5rem 2rem;
+    margin: 1rem 0 1.5rem;
+    width: 100%;
+    min-width: 0;
+}
+
+/* A comparison layout remains comfortable to read on very wide displays. */
+.editor:not(.single-col) {
+    max-width: 1450px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .col {
     flex: 1;
+    min-width: 0;
     background-color: #2c2c2a;
     border: 2px solid #313130;
     padding: 15px;
     border-radius: 20px;
-    height: 540px;
+    height: clamp(540px, calc(100vh - 13rem), 820px);
     display: flex;
     flex-direction: column;
     overflow: hidden; /* подстраховка чтобы ничего не вылезало за скруглённые края */
@@ -176,7 +188,7 @@ textarea::-webkit-scrollbar-track {
 }
 
 .editor.single-col .col:first-child {
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
     width: 100%;
 }

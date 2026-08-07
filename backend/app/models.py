@@ -55,6 +55,11 @@ class SubscriptionCreate(BaseModel):
     payment_id: Optional[str] = None
 
 
+class WordPackagePurchase(BaseModel):
+    package_id: Literal["words_2000", "words_5000", "words_10000"]
+    payment_id: Optional[str] = None
+
+
 class UsageStatsResponse(BaseModel):
     """Модель для статистики использования"""
     user_id: int
