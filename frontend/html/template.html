@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Humary - {% block title %}{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="/images/logo1.svg">
-    <link rel="stylesheet" href="/css/style.css?v=20260804-word-packs">
+    <link rel="stylesheet" href="/css/style.css?v=20260817-upgrade-modal">
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -13,10 +13,10 @@
 
 <!-- Мобильный header -->
 <header class="mobile-header" id="mobileHeader">
-    <button class="mobile-header-toggle" id="mobileHeaderToggle" aria-label="Открыть меню">
+    <button class="mobile-header-toggle" id="mobileHeaderToggle" aria-label="Открыть меню" data-i18n-aria-label="open_menu">
         <i class="fas fa-bars"></i>
     </button>
-    <button class="mobile-header-auth" id="mobileHeaderAuth" style="display: none;">Войти</button>
+    <button class="mobile-header-auth" id="mobileHeaderAuth" style="display: none;" data-i18n="login">Войти</button>
 
 </header>
 
@@ -26,12 +26,14 @@
     <aside class="sidebar">
         <!-- Лого вверху сайдбара -->
         <div class="sidebar-logo">
-            <img class="logo-img" src="/images/logo1.svg" alt="Humary Logo" width="32" height="32">
-            <div class="logo">Humary</div>
+            <a class="sidebar-brand" href="/" aria-label="На главную" data-i18n-aria-label="home">
+                <img class="logo-img" src="/images/logo1.svg" alt="Humary Logo" width="32" height="32">
+                <div class="logo">Humary</div>
+            </a>
             <button class="sidebar-toggle-btn" id="sidebarToggle">
                 <img class="toggle-icon" src="/images/sidebar/sidebar-collapse.svg" alt="Toggle sidebar">
             </button>
-            <button class="sidebar-mobile-close-btn" id="sidebarMobileClose" aria-label="Закрыть меню">
+            <button class="sidebar-mobile-close-btn" id="sidebarMobileClose" aria-label="Закрыть меню" data-i18n-aria-label="close_menu">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -40,38 +42,42 @@
         <div class="sidebar-menu">
             <a href="/pricing" class="sidebar-item {% if request.url.path == '/pricing' %}active{% endif %}">
                 <i class="fas fa-crown"></i>
-                <span>Тарифы</span>
+                <span data-i18n="nav_pricing">Тарифы</span>
             </a>
-            <span class="sidebar-menu-name">Инструменты</span>
-            <a href="/humanizer" class="sidebar-item {% if request.url.path == '/humanizer' %}active{% endif %}">
+            <span class="sidebar-menu-name" data-i18n="nav_tools">Инструменты</span>
+            <a href="/study-work" class="sidebar-item {% if request.url.path == '/study-work' %}active{% endif %}">
+                <i class="fas fa-graduation-cap"></i>
+                <span data-i18n="nav_study_work">Учебная работа</span>
+            </a>
+            <a href="/humanize" class="sidebar-item {% if request.url.path == '/humanize' %}active{% endif %}">
                 <i class="fas fa-pen-fancy"></i>
-                <span>Гуманайзер</span>
+                <span data-i18n="nav_humanizer">Гуманайзер</span>
             </a>
             <a href="/detector" class="sidebar-item {% if request.url.path == '/detector' %}active{% endif %}">
                 <i class="fas fa-search"></i>
-                <span>ДетекторИИ</span>
+                <span data-i18n="nav_detector">Детектор ИИ</span>
             </a>
             <a href="/paraphraser" class="sidebar-item {% if request.url.path == '/paraphraser' %}active{% endif %}">
                 <i class="fas fa-exchange-alt"></i>
-                <span>Перефразер</span>
+                <span data-i18n="nav_paraphraser">Перефразер</span>
             </a>
             <a href="/grammar" class="sidebar-item {% if request.url.path == '/grammar' %}active{% endif %}">
                 <i class="fas fa-spell-check"></i>
-                <span>Грамматика</span>
+                <span data-i18n="nav_grammar">Грамматика</span>
             </a>
         </div>
 
 
         <div class="sidebar-footer">
             <div class="balance-block extra-balance-block" id="extraBalanceBlock" style="display: none;">
-                <div class="balance-title">Доп. слова</div>
+                <div class="balance-title" data-i18n="extra_words">Доп. слова</div>
                 <div class="balance-bar-container">
                     <div class="balance-bar-fill extra-balance-bar-fill" id="extraBalanceBarFill"></div>
                 </div>
                 <div class="balance-text" id="extraBalanceText"></div>
             </div>
             <div class="balance-block" id="balanceBlock" style="display: none;">
-                <div class="balance-title">Баланс</div>
+                <div class="balance-title" data-i18n="balance">Баланс</div>
                 <div class="balance-bar-container">
                     <div class="balance-bar-fill" id="balanceBarFill"></div>
                 </div>
@@ -94,11 +100,11 @@
                 <div class="user-popup" id="userPopup">
                     <button class="user-popup-item" id="profileBtn">
                         <i class="fas fa-user"></i>
-                        <span>Профиль</span>
+                        <span data-i18n="profile">Профиль</span>
                     </button>
                     <button class="user-popup-item" id="historyPopupBtn">
                         <i class="fas fa-history"></i>
-                        <span>История</span>
+                        <span data-i18n="history">История</span>
                     </button>
                     <button class="user-popup-item" id="langToggle">
                         <i class="fas fa-globe"></i>
@@ -107,12 +113,12 @@
                     <div class="user-popup-divider"></div>
                     <button class="user-popup-item user-popup-logout" id="logoutBtn">
                         <i class="fas fa-sign-out-alt"></i>
-                        <span>Выйти</span>
+                        <span data-i18n="logout">Выйти</span>
                     </button>
                 </div>
             </div>
 
-            <button class="sidebar-footer-btn" id="authBtn">Войти</button>
+            <button class="sidebar-footer-btn" id="authBtn" data-i18n="login">Войти</button>
         </div>
     </aside>
 
@@ -127,16 +133,16 @@
 <div id="authModal" class="modal">
     <div class="modal-content">
         <span class="modal-close">&times;</span>
-        <h2><i class="fa-solid fa-unlock"></i><div id="authTitle">Вход</div></h2>
+        <h2><i class="fa-solid fa-unlock"></i><div id="authTitle" data-i18n="auth_login_title">Вход</div></h2>
         <div id="authError" class="error-message" style="display: none;"></div>
         <div id="authForm">
             <input type="email" id="authEmail" placeholder="Email" autocomplete="email" required>
-            <input type="password" id="authPassword" placeholder="Пароль" autocomplete="current-password" required>
-            <input type="password" id="authConfirmPassword" placeholder="Подтвердите пароль" style="display: none;" autocomplete="new-password">
-            <button id="authSubmitBtn">Войти</button>
+        <input type="password" id="authPassword" placeholder="Пароль" data-i18n-placeholder="password" autocomplete="current-password" required>
+        <input type="password" id="authConfirmPassword" placeholder="Подтвердите пароль" data-i18n-placeholder="confirm_password" style="display: none;" autocomplete="new-password">
+        <button id="authSubmitBtn" data-i18n="auth_login_btn">Войти</button>
         </div>
-        <button id="googleLoginBtn" class="google-btn"><i class="fab fa-google"></i>Войти через Google</button>
-        <div class="modal-link" id="toggleAuthMode">Нет аккаунта? Зарегистрироваться</div>
+        <button id="googleLoginBtn" class="google-btn"><i class="fab fa-google"></i><span data-i18n="login_google">Войти через Google</span></button>
+        <div class="modal-link" id="toggleAuthMode" data-i18n="auth_toggle_register">Нет аккаунта? Зарегистрироваться</div>
     </div>
 </div>
 
@@ -144,12 +150,24 @@
 <div id="verificationModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeVerificationModal()">&times;</span>
-        <h2>📧 Подтверждение email</h2>
+        <h2 data-i18n="email_verification">📧 Подтверждение email</h2>
         <p id="verificationEmail"></p>
         <div id="verificationError" class="error-message" style="display: none;"></div>
-        <input type="text" id="verificationCode" placeholder="Введите код из письма" maxlength="6">
-        <button onclick="verifyCode()">Подтвердить регистрацию</button>
-        <button onclick="resendCode()" class="google-btn">Отправить код повторно</button>
+        <input type="text" id="verificationCode" placeholder="Введите код из письма" data-i18n-placeholder="verification_code" maxlength="6">
+        <button onclick="verifyCode()" data-i18n="confirm_registration">Подтвердить регистрацию</button>
+        <button onclick="resendCode()" class="google-btn" data-i18n="resend_code">Отправить код повторно</button>
+    </div>
+</div>
+
+<div id="upgradeModal" class="modal" aria-hidden="true">
+    <div class="modal-content upgrade-modal-content" role="dialog" aria-modal="true" aria-labelledby="upgradeModalTitle">
+        <button type="button" class="modal-close" data-upgrade-close aria-label="Закрыть">&times;</button>
+        <h2 id="upgradeModalTitle"><i class="fas fa-crown"></i><span data-i18n="upgrade_modal_title">Продолжить работу</span></h2>
+        <p id="upgradeModalText"></p>
+        <div class="upgrade-modal-actions">
+            <a href="/pricing" class="upgrade-modal-primary" data-i18n="upgrade_view_pricing">Выбрать тариф</a>
+            <button type="button" class="upgrade-modal-secondary" data-upgrade-close data-i18n="upgrade_later">Позже</button>
+        </div>
     </div>
 </div>
 
@@ -162,14 +180,14 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-<script src="/js/utils.js" defer></script>
-<script src="/js/api.js" defer></script>
-<script src="/js/auth.js" defer></script>
-<script src="/js/lang.js" defer></script>
-<script src="/js/subscription.js" defer></script>
+<script src="/js/utils.js?v=20260817-upgrade-modal" defer></script>
+<script src="/js/api.js?v=20260816-auth-403" defer></script>
+<script src="/js/auth.js?v=20260816-auth-403" defer></script>
+<script src="/js/lang.js?v=20260817-upgrade-modal" defer></script>
+<script src="/js/subscription.js?v=20260816-auth-403" defer></script>
 <script src="/js/ui.js" defer></script>
 <script src="/js/mobile.js" defer></script>
-<script src="/js/humanize.js" defer></script>
+<script src="/js/humanize.js?v=20260818-auth-gate" defer></script>
 <script src="/js/main.js" defer></script>
 {% block scripts %}{% endblock %}
 

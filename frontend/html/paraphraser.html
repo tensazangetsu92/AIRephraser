@@ -4,34 +4,38 @@
 
 {% block content %}
 
+<header class="tool-page-intro">
+    <h1><i class="fa-solid fa-arrow-right-arrow-left"></i> <span data-i18n="paraphraser_page_title">Перефразировать текст</span></h1>
+    <p data-i18n="paraphraser_page_description">Сформулируем текст по-новому, сохранив исходный смысл.</p>
+</header>
+
 <div class="editor" id="editorContainer">
     <div class="col">
         <div class="textarea-wrapper">
-            <div class="editor-name">Ваш текст</div>
-            <textarea id="input" placeholder="Вставьте текст для перефразирования..."></textarea>
-            <button class="paste-btn" id="pasteBtn">
-                <i class="fas fa-paste"></i>
-                Вставить текст
-            </button>
-            <button class="pdf-btn" id="pdfBtn">
-                <i class="fas fa-file-pdf"></i>
-                Загрузить PDF
-            </button>
-            <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;">
+            <div class="editor-name" data-i18n="your_text">Ваш текст</div>
+            <textarea id="input" placeholder="Вставьте текст для перефразирования..." data-i18n-placeholder="paraphraser_placeholder"></textarea>
+            <div class="document-actions">
+                <button class="paste-btn" id="pasteBtn"><i class="fas fa-paste"></i><span data-i18n="paste_text">Вставить текст</span></button>
+                <button class="pdf-btn" id="pdfBtn"><i class="fas fa-file-pdf"></i><span data-i18n="upload_pdf">Загрузить PDF</span></button>
+                <button class="word-btn" id="wordBtn"><i class="fas fa-file-word"></i><span data-i18n="upload_word">Загрузить Word</span></button>
+                <input type="file" id="pdfFileInput" accept=".pdf" hidden>
+                <input type="file" id="wordFileInput" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+            </div>
         </div>
         <div class="word-counter-wrapper">
             <span class="word-count" id="wordCount"></span>
             <span class="word-warning" id="wordWarning"></span>
-            <button class="copy-text-btn" id="copyInputBtn" title="Копировать текст">
+            <button class="copy-text-btn" id="copyInputBtn" title="Копировать текст" data-i18n-title="copy_text">
                 <i class="fa-regular fa-clone"></i>
             </button>
         </div>
     </div>
     <div class="col result-col" id="resultCol" style="display: none;">
-        <div class="editor-name">Результат</div>
-        <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10" readonly></textarea>
+        <div class="editor-name" data-i18n="result">Результат</div>
+        <textarea id="result" class="output" placeholder="Результат появится здесь..." data-i18n-placeholder="result_placeholder" rows="10" readonly></textarea>
         <div class="word-counter-wrapper">
-            <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат">
+            <span class="word-count" id="resultWordCount">0/1000</span>
+            <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат" data-i18n-title="copy_result">
                 <i class="fa-regular fa-clone"></i>
             </button>
         </div>
@@ -39,11 +43,10 @@
 </div>
 
 <div class="paraphrase-controls">
-    <div class="paraphrase-selects">
-        <div class="control-group">
+    <div class="control-group">
             <div class="label-wrapper">
                 <i class="fa-solid fa-pen-fancy"></i>
-                <label>Стиль</label>
+                <label data-i18n="style_label">Стиль</label>
             </div>
             <div class="custom-select" data-value="similar">
                 <button type="button" class="custom-select-trigger">
@@ -59,12 +62,12 @@
                 </div>
             </div>
             <input type="hidden" id="style" value="similar">
-        </div>
+    </div>
 
-        <div class="control-group">
+    <div class="control-group">
             <div class="label-wrapper">
                 <i class="fa-solid fa-face-smile"></i>
-                <label>Тон</label>
+                <label data-i18n="tone_label">Тон</label>
             </div>
             <div class="custom-select" data-value="neutral">
                 <button type="button" class="custom-select-trigger">
@@ -80,12 +83,11 @@
                 </div>
             </div>
             <input type="hidden" id="tone" value="neutral">
-        </div>
     </div>
 
     <button class="main-btn" id="paraphraseBtn">
-        <img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">
-        Перефразировать
+        <i class="fas fa-exchange-alt"></i>
+        <span data-i18n="paraphrase_btn">Перефразировать</span>
     </button>
 </div>
 
@@ -93,5 +95,6 @@
 
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="/js/paraphrase.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
+<script src="/js/paraphrase.js?v=20260818-auth-gate" defer></script>
 {% endblock %}

@@ -4,42 +4,55 @@
 
 {% block content %}
 
-<div class="editor">
+<header class="tool-page-intro">
+    <h1><i class="fa-solid fa-spell-check"></i> <span data-i18n="grammar_page_title">Проверка грамматики</span></h1>
+    <p data-i18n="grammar_page_description">Исправим орфографию и пунктуацию, сохранив ваш стиль и смысл.</p>
+</header>
+
+<div class="editor single-col" id="editorContainer">
     <div class="col">
         <div class="textarea-wrapper">
-            <div class="editor-name">Ваш текст</div>
-            <textarea id="input" placeholder="Вставьте текст для проверки грамматики..."></textarea>
-            <button class="paste-btn" id="pasteBtn">
-                <i class="fas fa-paste"></i>
-                Вставить текст
-            </button>
+            <div class="editor-name" data-i18n="your_text">Ваш текст</div>
+            <textarea id="input" placeholder="Вставьте текст для проверки грамматики..." data-i18n-placeholder="grammar_placeholder"></textarea>
+            <div class="document-actions">
+                <button class="paste-btn" id="pasteBtn"><i class="fas fa-paste"></i><span data-i18n="paste_text">Вставить текст</span></button>
+                <button class="pdf-btn" id="pdfBtn"><i class="fas fa-file-pdf"></i><span data-i18n="upload_pdf">Загрузить PDF</span></button>
+                <button class="word-btn" id="wordBtn"><i class="fas fa-file-word"></i><span data-i18n="upload_word">Загрузить Word</span></button>
+                <input type="file" id="pdfFileInput" accept=".pdf" hidden>
+                <input type="file" id="wordFileInput" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+            </div>
         </div>
         <div class="word-counter-wrapper">
             <span class="word-count" id="wordCount"></span>
             <span class="word-warning" id="wordWarning"></span>
-            <button class="copy-text-btn" id="copyInputBtn" title="Копировать результат">
+            <button class="copy-text-btn" id="copyInputBtn" title="Копировать текст" data-i18n-title="copy_text">
                 <i class="fa-regular fa-clone"></i>
             </button>
         </div>
     </div>
-    <div class="col">
-        <div class="editor-name">Результат</div>
-        <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10" readonly></textarea>
+    <div class="col" id="grammarResultCol" style="display: none;">
+        <div class="editor-name" data-i18n="result">Результат</div>
+        <textarea id="result" class="output" placeholder="Результат появится здесь..." data-i18n-placeholder="result_placeholder" rows="10" readonly></textarea>
         <div class="word-counter-wrapper">
-            <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат">
+            <span class="word-count" id="resultWordCount">0/1000</span>
+            <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат" data-i18n-title="copy_result">
                 <i class="fa-regular fa-clone"></i>
             </button>
         </div>
     </div>
 </div>
 
-<div class="controls grammar-controls">
-    <div class="control-group">
-        <button class="main-btn" id="checkGrammarBtn">Исправить грамматику</button>
-    </div>
+<div class="single-action-wrapper">
+    <button class="single-main-btn main-btn" id="checkGrammarBtn">
+        <i class="fas fa-spell-check"></i>
+        <span data-i18n="grammar_btn">Исправить грамматику</span>
+    </button>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
+<script src="/js/grammar.js?v=20260818-auth-gate" defer></script>
 {% endblock %}

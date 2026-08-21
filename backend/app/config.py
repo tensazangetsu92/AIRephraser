@@ -31,14 +31,23 @@ APP_ENV = os.getenv("APP_ENV", "development").strip().lower()
 IS_PRODUCTION = APP_ENV == "production"
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gigachat").strip().lower()
+GIGACHAT_AUTH_KEY = os.getenv("GIGACHAT_AUTH_KEY")
+GIGACHAT_SCOPE = os.getenv("GIGACHAT_SCOPE", "GIGACHAT_API_PERS")
+GIGACHAT_API_BASE_URL = os.getenv("GIGACHAT_API_BASE_URL", "https://api.giga.chat/v1").rstrip("/")
+GIGACHAT_AUTH_URL = os.getenv(
+    "GIGACHAT_AUTH_URL", "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
+)
+GIGACHAT_VERIFY_SSL = _as_bool(os.getenv("GIGACHAT_VERIFY_SSL"), True)
 SECRET_KEY = os.getenv("SECRET_KEY")
 SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY")
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL must be configured.")
-if not OPENROUTER_API_KEY:
-    raise RuntimeError("OPENROUTER_API_KEY must be configured.")
+if LLM_PROVIDER != "gigachat":
+    raise RuntimeError("LLM_PROVIDER must be set to 'gigachat'.")
+if not GIGACHAT_AUTH_KEY:
+    raise RuntimeError("GIGACHAT_AUTH_KEY must be configured.")
 if IS_PRODUCTION and (not SECRET_KEY or not SESSION_SECRET_KEY):
     raise RuntimeError("SECRET_KEY and SESSION_SECRET_KEY must be configured in production.")
 
@@ -68,10 +77,10 @@ RELOAD = _as_bool(os.getenv("RELOAD"), True)
 COOKIE_SECURE = _as_bool(os.getenv("COOKIE_SECURE"), IS_PRODUCTION)
 ENABLE_IN_APP_SCHEDULER = _as_bool(os.getenv("ENABLE_IN_APP_SCHEDULER"), not IS_PRODUCTION)
 
-FREE_MODEL_NAME = os.getenv("FREE_MODEL_NAME", "meta-llama/llama-3-8b-instruct")
-PAID_MODEL_NAME = os.getenv("PAID_MODEL_NAME", FREE_MODEL_NAME)
-MODEL_NAME = os.getenv("MODEL_NAME", FREE_MODEL_NAME)
+MODEL_NAME = os.getenv("MODEL_NAME", "GigaChat-2")
+DETECTOR_MODEL_NAME = os.getenv("DETECTOR_MODEL_NAME", MODEL_NAME)
 TEMPERATURE = float(os.getenv("TEMPERATURE", "0.7"))
+LLM_REQUEST_TIMEOUT_SECONDS = float(os.getenv("LLM_REQUEST_TIMEOUT_SECONDS", "60"))
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")

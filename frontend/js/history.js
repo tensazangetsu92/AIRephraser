@@ -16,12 +16,12 @@ function escapeHtmlAttr(text) {
 
 function getTypeName(type) {
     const types = {
-        humanizer: 'Гуманайзер',
-        detector: 'Детектор ИИ',
-        paraphraser: 'Перефразер',
-        grammar: 'Грамматика'
+        humanizer: 'nav_humanizer',
+        detector: 'nav_detector',
+        paraphraser: 'nav_paraphraser',
+        grammar: 'nav_grammar'
     };
-    return types[type] || 'Обработка';
+    return typeof window.t === 'function' ? window.t(types[type] || 'nav_tools') : type;
 }
 
 function getResultPreview(toolType, resultText) {
@@ -40,23 +40,25 @@ function attachHistoryItemHandlers() {
     document.querySelectorAll('.history-item:not([data-bound])').forEach(item => {
         item.dataset.bound = '1';
         item.addEventListener('click', () => {
-            const toolType = item.querySelector('.history-item-type')?.textContent.trim();
+            const toolType = item.dataset.toolType;
             const original = item.dataset.original;
             const result = item.dataset.result;
 
-            if (toolType === 'Детектор ИИ') {
-                localStorage.setItem('detector_input_text', original);
-                try {
-                    localStorage.setItem('detector_result_data', JSON.stringify(JSON.parse(result)));
-                } catch {
-                    localStorage.removeItem('detector_result_data');
-                }
-                window.location.href = '/detector';
-            } else {
-                localStorage.setItem('saved_input_text', original);
-                localStorage.setItem('saved_result_text', result);
-                window.location.href = '/humanizer';
-            }
+            const destinations = {
+                humanizer: '/humanize',
+                detector: '/detector',
+                paraphraser: '/paraphraser',
+                grammar: '/grammar'
+            };
+            const destination = destinations[toolType];
+            if (!destination) return;
+
+            sessionStorage.setItem('history_restore', JSON.stringify({
+                toolType,
+                original,
+                result
+            }));
+            window.location.href = destination;
         });
     });
 }
@@ -85,11 +87,11 @@ async function loadHistory(append = false) {
     if (!historyList) { isLoading = false; return; }
 
     if (!append) {
-        historyList.innerHTML = '<div class="history-empty">Загрузка...</div>';
+        historyList.innerHTML = `<div class="history-empty">${typeof window.t === 'function' ? window.t('loading') : 'Загрузка...'}</div>`;
     } else {
         const loader = document.createElement('div');
         loader.className = 'history-empty history-loader';
-        loader.textContent = 'Загрузка...';
+        loader.textContent = typeof window.t === 'function' ? window.t('loading') : 'Загрузка...';
         historyList.appendChild(loader);
     }
 
@@ -110,12 +112,13 @@ async function loadHistory(append = false) {
                 const el = document.createElement('div');
                 el.className = 'history-item';
                 el.dataset.id = item.id;
-                el.dataset.original = escapeHtmlAttr(item.original_text);
-                el.dataset.result = escapeHtmlAttr(item.result_text);
+                el.dataset.toolType = item.tool_type;
+                el.dataset.original = item.original_text;
+                el.dataset.result = item.result_text;
                 el.innerHTML = `
                     <div class="history-item-header">
                         <span class="history-item-type">${getTypeName(item.tool_type)}</span>
-                        <span class="history-item-date">${new Date(item.created_at).toLocaleString()}</span>
+                        <span class="history-item-date">${new Date(item.created_at).toLocaleString(window.currentLang === 'en' ? 'en-US' : 'ru-RU')}</span>
                     </div>
                     <div class="history-item-original">
                         ${escapeHtml(item.original_text.substring(0, 250))}${item.original_text.length > 250 ? '...' : ''}
@@ -129,11 +132,11 @@ async function loadHistory(append = false) {
 
             attachHistoryItemHandlers();
         } else if (!append) {
-            historyList.innerHTML = '<div class="history-empty">История пуста</div>';
+            historyList.innerHTML = `<div class="history-empty">${typeof window.t === 'function' ? window.t('history_empty') : 'История пуста'}</div>`;
         }
     } catch {
         historyList.querySelector('.history-loader')?.remove();
-        if (!append) historyList.innerHTML = '<div class="history-empty">Ошибка загрузки истории</div>';
+        if (!append) historyList.innerHTML = `<div class="history-empty">${typeof window.t === 'function' ? window.t('history_load_error') : 'Ошибка загрузки истории'}</div>`;
     }
 
     isLoading = false;

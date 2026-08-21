@@ -19,7 +19,15 @@ const API = {
             body: body ? JSON.stringify(body) : undefined,
         });
 
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch {
+            data = { detail: 'Сервер вернул некорректный ответ. Попробуйте ещё раз.' };
+        }
+        if (requiresAuth && response.status === 401) {
+            Auth.clearExpiredSession();
+        }
         return { ok: response.ok, status: response.status, data };
     },
 
@@ -39,8 +47,18 @@ const API = {
         return this.request('/me', 'GET', null, true);
     },
 
-    humanize(text, intensity, tone, style, length) {
-        return this.request('/humanize', 'POST', { text, intensity, tone, style, length }, true);
+    humanize(text, tone, style) {
+        return this.request('/humanize', 'POST', { text, tone, style }, true);
+    },
+
+    prepareStudyWork(text, workType, preserveOptions) {
+        return this.request('/study-work/process', 'POST', {
+            text,
+            tone: 'academic',
+            style: 'professional',
+            academic_work_type: workType,
+            preserve_options: preserveOptions
+        }, true);
     },
 
     detect(text) {

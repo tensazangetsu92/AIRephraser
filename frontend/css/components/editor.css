@@ -14,8 +14,8 @@
 
 .editor {
     display: flex;
-    gap: 2rem;
-    margin: 1rem 0 1.5rem;
+    gap: 32px;
+    margin: 16px 0 24px;
     width: 100%;
     min-width: 0;
 }
@@ -34,7 +34,7 @@
     border: 2px solid #313130;
     padding: 15px;
     border-radius: 20px;
-    height: clamp(540px, calc(100vh - 13rem), 820px);
+    height: clamp(500px, calc(100vh - 13rem), 820px);
     display: flex;
     flex-direction: column;
     overflow: hidden; /* подстраховка чтобы ничего не вылезало за скруглённые края */
@@ -134,13 +134,13 @@ textarea::-webkit-scrollbar-track {
     flex-direction: column;
 }
 
-/* Когда textarea не пустой - скрываем кнопку */
-.textarea-wrapper textarea:not(:placeholder-shown) ~ .paste-btn {
+/* Когда textarea не пустой - скрываем действия загрузки */
+.textarea-wrapper textarea:not(:placeholder-shown) ~ .document-actions {
     display: none;
 }
 
 /* Или скрываем когда есть фокус */
-.textarea-wrapper textarea:focus ~ .paste-btn {
+.textarea-wrapper textarea:focus ~ .document-actions {
     opacity: 0;
     visibility: hidden;
 }
@@ -193,10 +193,10 @@ textarea::-webkit-scrollbar-track {
     width: 100%;
 }
 
-.paste-btn, .pdf-btn {
+.paste-btn, .pdf-btn, .word-btn {
     position: absolute;
     width: auto;
-    top: 50%;
+    top: calc(50% + 20px);
     transform: translateY(-50%);
     background: rgba(18, 18, 18, 0.2);
     border: transparent;
@@ -223,6 +223,33 @@ textarea::-webkit-scrollbar-track {
     left: calc(50% + 6px);
 }
 
+.word-btn {
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.document-actions {
+    position: absolute;
+    top: calc(50% + 20px);
+    left: 50%;
+    z-index: 10;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 12px;
+    transform: translate(-50%, -50%);
+}
+
+.document-actions .paste-btn,
+.document-actions .pdf-btn,
+.document-actions .word-btn {
+    position: static;
+    top: auto;
+    right: auto;
+    left: auto;
+    transform: none;
+}
+
 .paste-btn:hover {
     opacity: 0.9;
 }
@@ -231,18 +258,3 @@ textarea::-webkit-scrollbar-track {
     opacity: 0.9;
 }
 
-/* Скрываем когда textarea заполнен */
-.textarea-wrapper textarea:not(:placeholder-shown) ~ .pdf-btn {
-    display: none;
-}
-
-.textarea-wrapper textarea:not(:placeholder-shown) ~ .paste-btn,
-.textarea-wrapper textarea:not(:placeholder-shown) ~ .pdf-btn {
-    display: none;
-}
-
-.textarea-wrapper textarea:focus ~ .paste-btn,
-.textarea-wrapper textarea:focus ~ .pdf-btn {
-    opacity: 0;
-    visibility: hidden;
-}

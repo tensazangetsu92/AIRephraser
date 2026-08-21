@@ -30,6 +30,32 @@ const Auth = {
 
     isAuthenticated() { return !!this.token; },
 
+    clearExpiredSession() {
+        this.setToken(null);
+        this.setUser(null);
+        if (typeof window.clearSubscriptionData === 'function') window.clearSubscriptionData();
+        if (typeof updateUI === 'function') updateUI();
+    },
+
+    async restoreSession() {
+        if (!this.getToken()) {
+            this.setUser(null);
+            return false;
+        }
+
+        try {
+            const result = await API.getMe();
+            if (result.ok && result.data?.success && result.data.user) {
+                this.setUser(result.data.user);
+                return true;
+            }
+            if (result.status === 401) this.clearExpiredSession();
+        } catch {
+            // Do not log the user out just because the network is temporarily unavailable.
+        }
+        return false;
+    },
+
     async login(email, password) {
         const result = await API.login(email, password);
         if (result.ok) {
@@ -67,6 +93,7 @@ const Auth = {
                 if (typeof updateUserMenu === 'function') updateUserMenu();
                 showNotification('Вход через Google выполнен успешно!', 'success');
             } else {
+                this.clearExpiredSession();
                 showNotification('Не удалось получить данные пользователя', 'error');
             }
         } catch {
@@ -77,8 +104,7 @@ const Auth = {
     },
 
     logout() {
-        this.setToken(null);
-        this.setUser(null);
+        this.clearExpiredSession();
         this.closeAuthModal();
         window.location.reload();
     },
@@ -118,15 +144,18 @@ const Auth = {
 
     updateUIMode() {
         const isReg = this.isRegisterMode;
+        const translate = (key, fallback) => typeof window.t === 'function' ? window.t(key) : fallback;
         const title = document.getElementById('authTitle');
         const submitBtn = document.getElementById('authSubmitBtn');
         const confirmField = document.getElementById('authConfirmPassword');
         const toggleLink = document.getElementById('toggleAuthMode');
 
-        if (title) title.textContent = isReg ? 'Регистрация' : 'Вход';
-        if (submitBtn) submitBtn.textContent = isReg ? 'Зарегистрироваться' : 'Войти';
+        if (title) title.textContent = isReg ? translate('auth_register_title', 'Регистрация') : translate('auth_login_title', 'Вход');
+        if (submitBtn) submitBtn.textContent = isReg ? translate('auth_register_btn', 'Зарегистрироваться') : translate('auth_login_btn', 'Войти');
         if (confirmField) confirmField.style.display = isReg ? 'block' : 'none';
-        if (toggleLink) toggleLink.innerHTML = isReg ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться';
+        if (toggleLink) toggleLink.textContent = isReg
+            ? translate('auth_toggle_login', 'Уже есть аккаунт? Войти')
+            : translate('auth_toggle_register', 'Нет аккаунта? Зарегистрироваться');
     },
 
     toggleMode() {
@@ -137,10 +166,10 @@ const Auth = {
         if (passwordField) {
             if (this.isRegisterMode) {
                 passwordField.setAttribute('autocomplete', 'new-password');
-                passwordField.setAttribute('placeholder', 'Пароль (мин. 4 символа)');
+                passwordField.setAttribute('placeholder', `${translate('password', 'Пароль')} (${translate('password_min', 'мин. 4 символа')})`);
             } else {
                 passwordField.setAttribute('autocomplete', 'current-password');
-                passwordField.setAttribute('placeholder', 'Пароль');
+                passwordField.setAttribute('placeholder', translate('password', 'Пароль'));
             }
         }
     },
@@ -284,32 +313,13 @@ function initAuthModal() {
     });
 }
 
-(function handleTokenOnLoad() {
-    const token = new URLSearchParams(window.location.search).get('token');
-    if (!token || Auth.getToken()) return;
-
-    Auth.setToken(token);
-    window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
-
-    fetch('/me', { headers: { 'Authorization': `Bearer ${token}` } })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success && data.user) {
-                Auth.setUser(data.user);
-                if (typeof updateUI === 'function') updateUI();
-                if (typeof updateUserMenu === 'function') updateUserMenu();
-                showNotification('Вход через Google выполнен успешно!', 'success');
-            }
-        })
-        .catch(() => {});
-})();
-
 window.showAuthModal = () => Auth.showAuthModal();
 window.closeAuthModal = () => Auth.closeAuthModal();
 
-document.addEventListener('DOMContentLoaded', () => {
-    Auth.handleGoogleCallback();
+document.addEventListener('DOMContentLoaded', async () => {
+    const handledGoogleCallback = await Auth.handleGoogleCallback();
     initAuthModal();
     document.getElementById('authBtn')?.addEventListener('click', () => Auth.showAuthModal());
-    setTimeout(() => { if (typeof updateUI === 'function') updateUI(); }, 0);
+    if (!handledGoogleCallback) await Auth.restoreSession();
+    if (typeof updateUI === 'function') updateUI();
 });

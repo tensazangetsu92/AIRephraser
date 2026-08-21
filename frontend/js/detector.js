@@ -4,6 +4,12 @@ const RESULT_MAX_AGE_MS = 16 * 60 * 60 * 1000;
 
 function loadTextFromLocalStorage() {
     const elements = window.elements || {};
+    const historyRestore = typeof takeHistoryRestore === 'function' ? takeHistoryRestore('detector') : null;
+    if (historyRestore) {
+        localStorage.setItem('detector_input_text', historyRestore.original || '');
+        localStorage.setItem('detector_result_data', historyRestore.result || '');
+        localStorage.setItem('detector_result_time', Date.now());
+    }
     const savedInput = localStorage.getItem('detector_input_text');
     const savedResult = localStorage.getItem('detector_result_data');
     const savedTime = localStorage.getItem('detector_result_time');
@@ -61,21 +67,27 @@ function hideResultColumns() {
 }
 
 function renderDetectorResult(data) {
+    data = data && typeof data === 'object' ? data : {};
+    const humanProbability = Number.isFinite(Number(data.human_probability)) ? Number(data.human_probability) : 0;
+    const mixedProbability = Number.isFinite(Number(data.mixed_probability)) ? Number(data.mixed_probability) : 0;
+    const aiProbability = Number.isFinite(Number(data.ai_probability)) ? Number(data.ai_probability) : 0;
+    const sentences = Array.isArray(data.sentences) ? data.sentences.filter(Boolean) : [];
     const resultDiv = document.getElementById('result');
-    if (resultDiv && Array.isArray(data.sentences)) {
-        resultDiv.innerHTML = data.sentences.map(s =>
-            `<span class="detector-sentence sentence-${s.label}">${escapeHtml(s.text)}</span>`
+    if (resultDiv) {
+        resultDiv.innerHTML = sentences.map(s =>
+            `<span class="detector-sentence sentence-${['human', 'mixed', 'ai'].includes(s.label) ? s.label : 'mixed'}">${escapeHtml(String(s.text || ''))}</span>`
         ).join(' ');
     }
+    updateResultWordCounter(sentences.map(s => String(s.text || '')).join(' '));
 
-    renderDonutChart(data.human_probability, data.mixed_probability, data.ai_probability);
+    renderDonutChart(humanProbability, mixedProbability, aiProbability);
 
     const legendHuman = document.getElementById('legendHuman');
     const legendMixed = document.getElementById('legendMixed');
     const legendAi = document.getElementById('legendAi');
-    if (legendHuman) legendHuman.textContent = `${data.human_probability}%`;
-    if (legendMixed) legendMixed.textContent = `${data.mixed_probability}%`;
-    if (legendAi) legendAi.textContent = `${data.ai_probability}%`;
+    if (legendHuman) legendHuman.textContent = `${humanProbability}%`;
+    if (legendMixed) legendMixed.textContent = `${mixedProbability}%`;
+    if (legendAi) legendAi.textContent = `${aiProbability}%`;
 
     const verdictEl = document.getElementById('detectorVerdict');
     if (verdictEl) {
@@ -84,9 +96,9 @@ function renderDetectorResult(data) {
 
     const center = document.getElementById('detectorChartCenter');
     if (center) {
-        const max = Math.max(data.ai_probability, data.human_probability, data.mixed_probability);
-        const color = max === data.human_probability ? '#22c55e' :
-                      max === data.mixed_probability ? '#f59e0b' : '#ef4444';
+        const max = Math.max(aiProbability, humanProbability, mixedProbability);
+        const color = max === humanProbability ? '#22c55e' :
+                      max === mixedProbability ? '#f59e0b' : '#ef4444';
         center.textContent = 'AI';
         center.style.color = color;
     }
@@ -114,6 +126,7 @@ async function processDetectText(text) {
     const detectBtn = document.getElementById('detectBtn');
     const resultDiv = document.getElementById('result');
     const newCheckBtn = document.getElementById('newCheckBtn');
+    if (!startTextProcessing('detector')) return;
 
     if (detectBtn) {
         detectBtn.disabled = true;
@@ -122,6 +135,7 @@ async function processDetectText(text) {
     if (newCheckBtn) newCheckBtn.disabled = true;
 
     if (resultDiv) resultDiv.innerHTML = '';
+    updateResultWordCounter('');
 
     const legendHuman = document.getElementById('legendHuman');
     const legendMixed = document.getElementById('legendMixed');
@@ -141,39 +155,47 @@ async function processDetectText(text) {
         if (el) el.setAttribute('stroke-dasharray', `0 ${CIRCLE_CIRCUMFERENCE}`);
     });
 
-    showResultColumns();
-    showNotification('Анализ текста');
-
     try {
         const { ok, status, data } = await API.detect(text);
 
         if (ok) {
             renderDetectorResult(data.result);
+            showResultColumns();
             localStorage.setItem('detector_result_data', JSON.stringify(data.result));
             localStorage.setItem('detector_result_time', Date.now());
             clearWarning();
             API.saveHistory('detector', text, JSON.stringify(data.result));
             if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
+            showToolSuccess('detector');
         } else if (status === 401) {
-            if (resultDiv) resultDiv.textContent = '❌ Сессия истекла. Пожалуйста, войдите заново.';
+            const errorMessage = showToolError(status, data);
+            if (resultDiv) resultDiv.textContent = errorMessage;
+            showResultColumns();
             Auth.logout();
             if (typeof window.updateUI === 'function') window.updateUI();
             setTimeout(() => Auth.showAuthModal(), 1500);
         } else if (status === 429) {
-            if (resultDiv) resultDiv.textContent = '❌ ' + (data.detail || 'Лимит слов исчерпан');
+            const errorMessage = showToolError(status, data);
+            if (resultDiv) resultDiv.textContent = errorMessage;
+            showResultColumns();
             if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
         } else {
-            if (resultDiv) resultDiv.textContent = '❌ Ошибка: ' + (data.detail || 'Неизвестная ошибка');
+            const errorMessage = showToolError(status, data, 'Не удалось проанализировать текст');
+            if (resultDiv) resultDiv.textContent = errorMessage;
+            showResultColumns();
         }
     } catch {
-        if (resultDiv) resultDiv.textContent = '❌ Ошибка соединения с сервером';
+        const errorMessage = showToolNetworkError();
+        if (resultDiv) resultDiv.textContent = errorMessage;
+        showResultColumns();
+    } finally {
+        if (detectBtn) {
+            detectBtn.disabled = false;
+            detectBtn.innerHTML = '<img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Проверить текст';
+        }
+        if (newCheckBtn) newCheckBtn.disabled = false;
+        finishTextProcessing();
     }
-
-    if (detectBtn) {
-        detectBtn.disabled = false;
-        detectBtn.innerHTML = '<img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Проверить текст';
-    }
-    if (newCheckBtn) newCheckBtn.disabled = false;
 }
 
 async function send() {
@@ -186,7 +208,19 @@ async function send() {
     clearWarning();
 
     if (!text.trim()) {
+        showEmptyTextError(elements.input);
+        return;
+    }
+
+    if (!text.trim()) {
         showWarning('⚠️ Пожалуйста, введите текст для анализа');
+        return;
+    }
+
+    if (!Auth.isAuthenticated()) {
+        pendingDetectText = text;
+        showWarning('🔐 Для использования сервиса необходимо войти в аккаунт');
+        Auth.showAuthModal();
         return;
     }
 
@@ -196,14 +230,7 @@ async function send() {
     }
 
     if (!isWithinWordLimit(text)) {
-        showWarning(`❌ Максимальное количество слов: ${currentMaxWords}`, true);
-        return;
-    }
-
-    if (!Auth.isAuthenticated()) {
-        pendingDetectText = text;
-        showWarning('🔐 Для использования сервиса необходимо войти в аккаунт');
-        Auth.showAuthModal();
+        showRequestLimitError(text);
         return;
     }
 
@@ -270,4 +297,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadTextFromLocalStorage();
     initAutoSave();
+    initPdfUpload();
+    initWordUpload();
 });

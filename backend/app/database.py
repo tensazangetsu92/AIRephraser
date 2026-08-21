@@ -97,6 +97,20 @@ class WordTransaction(Base):
     user = relationship("User")
 
 
+class StudyWorkTrial(Base):
+    """One free Study Work processing granted to each newly registered user."""
+    __tablename__ = "study_work_trials"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True, index=True)
+    status = Column(String(16), nullable=False, default="available")  # available, processing, used
+    reserved_at = Column(DateTime(timezone=True), nullable=True)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")
+
+
 def delete_old_history(db: Session, days: int = 90):
     """Удаляет записи истории старше N дней"""
     cutoff_date = datetime.now() - timedelta(days=days)
@@ -114,6 +128,9 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 

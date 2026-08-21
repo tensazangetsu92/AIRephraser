@@ -18,36 +18,36 @@
 
     <div class="profile-row">
         <div class="profile-section">
-            <h3><i class="fas fa-coins"></i> Баланс слов</h3>
+            <h3><i class="fas fa-coins"></i><span data-i18n="word_balance">Баланс слов</span></h3>
             <div class="balance-card-large">
                 <div class="balance-bar-container-large">
                     <div class="balance-bar-fill-large" id="requestsProgress"></div>
                 </div>
                 <div class="balance-card-text" id="balanceMainText"></div>
             </div>
-            <a href="/pricing" class="upgrade-btn" id="addTokensBtn">Увеличить лимит</a>
+            <a href="/pricing" class="upgrade-btn" id="addTokensBtn" data-i18n="increase_limit">Увеличить лимит</a>
         </div>
 
         <div class="profile-section">
-            <h3><i class="fas fa-crown"></i> Подписка <span class="balance-card-plan" id="subscriptionPlan">Free</span></h3>
+            <h3><i class="fas fa-crown"></i><span data-i18n="subscription">Подписка</span> <span class="balance-card-plan" id="subscriptionPlan">Free</span></h3>
             <div class="balance-card-large">
                 <div class="balance-card-details">
                     <div class="balance-detail-item">
                         <i class="fas fa-file-word"></i>
-                        <span>Лимит слов за один запрос: <strong id="maxWords">300</strong></span>
+                        <span data-i18n="words_per_request">Лимит слов за один запрос:</span> <strong id="maxWords">300</strong>
                     </div>
                     <div class="balance-detail-item" id="expiryRow" style="display: none;">
                         <i class="fas fa-calendar-alt"></i>
-                        <span>Действует до: <strong id="subscriptionExpiry"></strong></span>
+                        <span data-i18n="valid_until">Действует до:</span> <strong id="subscriptionExpiry"></strong>
                     </div>
                 </div>
             </div>
-            <a href="/pricing" class="upgrade-btn" id="upgradeBtn">Изменить тариф</a>
+            <a href="/pricing" class="upgrade-btn" id="upgradeBtn" data-i18n="change_plan">Изменить тариф</a>
         </div>
     </div>
     <div style="display: flex;">
         <button class="danger-btn red" id="deleteAccountBtn">
-            <i class="fas fa-trash"></i> Удалить аккаунт
+            <i class="fas fa-trash"></i><span data-i18n="delete_account">Удалить аккаунт</span>
         </button>
     </div>
 

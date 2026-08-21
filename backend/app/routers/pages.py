@@ -1,6 +1,6 @@
 # app/routers/pages.py
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
@@ -14,17 +14,26 @@ templates = Jinja2Templates(directory=str(templates_dir))
 async def root(request: Request):
     return templates.TemplateResponse(
         request=request,
-        name="humanizer.html"
+        name="home.html"
     )
 
 
-@router.get("/humanizer")
-async def humanizer_page(request: Request):
+@router.get("/humanize", response_class=HTMLResponse)
+async def humanize_page(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="humanizer.html"
     )
 
+
+@router.get("/humanizer", include_in_schema=False)
+async def legacy_humanizer_route():
+    return RedirectResponse(url="/humanize", status_code=307)
+
+
+@router.get("/study-work", response_class=HTMLResponse)
+async def study_work_page(request: Request):
+    return templates.TemplateResponse(request=request, name="study-work.html")
 
 @router.get("/pricing", response_class=HTMLResponse)
 async def pricing(request: Request):

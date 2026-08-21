@@ -11,6 +11,7 @@ from app.subscription import (
     upgrade_subscription,
     get_usage_stats,
     get_plan_limits,
+    get_study_work_max_words,
     check_subscription_expired,
     SUBSCRIPTION_PLANS,
     PURCHASE_PACKAGES,
@@ -39,7 +40,8 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: S
             "start_date": subscription.start_date,
             "end_date": subscription.end_date,
             "word_limit": limits["word_limit"],
-            "max_words_per_request": limits["max_words_per_request"]
+            "max_words_per_request": limits["max_words_per_request"],
+            "study_work_max_words_per_request": get_study_work_max_words(subscription.plan_type),
         },
         "usage": usage_stats,
         "available_plans": SUBSCRIPTION_PLANS

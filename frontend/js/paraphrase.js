@@ -4,6 +4,12 @@ const RESULT_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 часа
 
 function loadTextFromLocalStorage() {
     const elements = window.elements || {};
+    const historyRestore = typeof takeHistoryRestore === 'function' ? takeHistoryRestore('paraphraser') : null;
+    if (historyRestore) {
+        localStorage.setItem('paraphrase_input_text', historyRestore.original || '');
+        localStorage.setItem('paraphrase_result_text', historyRestore.result || '');
+        localStorage.setItem('paraphrase_result_time', Date.now());
+    }
     const savedInput = localStorage.getItem('paraphrase_input_text');
     const savedResult = localStorage.getItem('paraphrase_result_text');
     const savedTime = localStorage.getItem('paraphrase_result_time');
@@ -25,6 +31,7 @@ function loadTextFromLocalStorage() {
 
     if (elements.result && savedResult && !isExpired) {
         elements.result.value = savedResult;
+        updateResultWordCounter(savedResult);
         showResultColumn();
     } else {
         localStorage.removeItem('paraphrase_result_text');
@@ -32,6 +39,7 @@ function loadTextFromLocalStorage() {
         if (elements.input) elements.input.value = '';
         localStorage.removeItem('paraphrase_input_text');
         if (elements.result) elements.result.value = '';
+        updateResultWordCounter('');
         hideResultColumn();
     }
 }
@@ -62,6 +70,7 @@ function initAutoSave() {
 async function processText(text) {
     const elements = window.elements || {};
     const paraphraseBtn = document.getElementById('paraphraseBtn');
+    if (!startTextProcessing('paraphrase')) return;
 
     if (paraphraseBtn) {
         paraphraseBtn.disabled = true;
@@ -69,7 +78,7 @@ async function processText(text) {
     }
     if (elements.result) {
         elements.result.value = 'Перефразирование текста...';
-        showNotification('Перефразирование текста');
+        updateResultWordCounter('');
     }
 
     try {
@@ -81,30 +90,41 @@ async function processText(text) {
 
         if (ok) {
             if (elements.result) elements.result.value = data.result;
+            updateResultWordCounter(data.result);
             localStorage.setItem('paraphrase_result_text', data.result);
             localStorage.setItem('paraphrase_result_time', Date.now());
             clearWarning();
             showResultColumn();
             API.saveHistory('paraphraser', text, data.result);
             if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
+            showToolSuccess('paraphrase');
         } else if (status === 401) {
-            if (elements.result) elements.result.value = '❌ Сессия истекла. Пожалуйста, войдите заново.';
+            const errorMessage = showToolError(status, data);
+            if (elements.result) elements.result.value = errorMessage;
+            showResultColumn();
             Auth.logout();
             if (typeof window.updateUI === 'function') window.updateUI();
             setTimeout(() => Auth.showAuthModal(), 1500);
         } else if (status === 429) {
-            if (elements.result) elements.result.value = '❌ ' + (data.detail || 'Лимит слов исчерпан');
+            const errorMessage = showToolError(status, data);
+            if (elements.result) elements.result.value = errorMessage;
+            showResultColumn();
             if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
         } else {
-            if (elements.result) elements.result.value = '❌ Ошибка: ' + (data.detail || 'Неизвестная ошибка');
+            const errorMessage = showToolError(status, data, 'Не удалось перефразировать текст');
+            if (elements.result) elements.result.value = errorMessage;
+            showResultColumn();
         }
     } catch {
-        if (elements.result) elements.result.value = '❌ Ошибка соединения с сервером';
-    }
-
-    if (paraphraseBtn) {
-        paraphraseBtn.disabled = false;
-        paraphraseBtn.innerHTML = '<img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Перефразировать';
+        const errorMessage = showToolNetworkError();
+        if (elements.result) elements.result.value = errorMessage;
+        showResultColumn();
+    } finally {
+        if (paraphraseBtn) {
+            paraphraseBtn.disabled = false;
+            paraphraseBtn.innerHTML = '<img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Перефразировать';
+        }
+        finishTextProcessing();
     }
 }
 
@@ -118,8 +138,21 @@ async function send() {
     clearWarning();
 
     if (!text.trim()) {
+        showEmptyTextError(elements.input);
+        return;
+    }
+
+    if (!text.trim()) {
         showWarning('⚠️ Пожалуйста, введите текст для перефразирования');
         if (elements.result) elements.result.value = '⚠️ Пожалуйста, введите текст для перефразирования';
+        return;
+    }
+
+    if (!Auth.isAuthenticated()) {
+        pendingParaphraseText  = text;
+        showWarning('🔐 Для использования сервиса необходимо войти в аккаунт');
+        if (elements.result) elements.result.value = '🔐 Для использования сервиса необходимо войти в аккаунт';
+        Auth.showAuthModal();
         return;
     }
 
@@ -129,15 +162,7 @@ async function send() {
     }
 
     if (!isWithinWordLimit(text)) {
-        showWarning(`Максимальное количество слов: ${currentMaxWords}`, true);
-        return;
-    }
-
-    if (!Auth.isAuthenticated()) {
-        pendingParaphraseText  = text;
-        showWarning('🔐 Для использования сервиса необходимо войти в аккаунт');
-        if (elements.result) elements.result.value = '🔐 Для использования сервиса необходимо войти в аккаунт';
-        Auth.showAuthModal();
+        showRequestLimitError(text);
         return;
     }
 
@@ -185,5 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTextFromLocalStorage();
     initAutoSave();
     initPdfUpload();
+    initWordUpload();
 });
 })();

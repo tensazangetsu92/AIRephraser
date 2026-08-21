@@ -298,6 +298,14 @@
     transition: width 0.3s ease;
 }
 
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    text-decoration: none;
+}
+
 .balance-text {
     font-size: 13px;
     color: var(--text-color);

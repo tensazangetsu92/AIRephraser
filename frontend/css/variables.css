@@ -9,6 +9,27 @@
     --sidebar-border: 1px solid #303030;
     --sidebar-border-color: #303030;
 
+    /* Основная тёмная тема: использовать для новых страниц и компонентов */
+    --surface-card: #292928;
+    --surface-card-muted: #282827;
+    --surface-card-hover: #2d2d2c;
+    --surface-overlay: rgba(20, 20, 20, 0.42);
+    --border-subtle: #363636;
+    --border-card: #3b3b3b;
+    --border-accent: #6578c8;
+    --text-strong: #f5f6fb;
+    --text-muted: #bdbec6;
+    --text-subtle: #9b9ca3;
+    --accent-blue: #466cd6;
+    --accent-purple: #654bc3;
+    --accent-gradient: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    --accent-border: #7597ff;
+    --accent-text: #bbcbff;
+    --accent-soft: rgba(83, 108, 206, 0.16);
+    --accent-soft-hover: rgba(76, 98, 185, 0.24);
+    --accent-glow: rgba(83, 104, 206, 0.2);
+    --card-shadow: 0 12px 26px rgba(0, 0, 0, 0.18);
+
     --primary-gradient: linear-gradient(135deg, #526ace, #4b63ce);
     --primary-color: #6366f1;
     --secondary-color: #10b981;
@@ -23,6 +44,7 @@
     --radius-md: 10px;
     --radius-lg: 12px;
     --radius-xl: 1rem;
+    --control-group-max-width: 230px;
     --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
 }

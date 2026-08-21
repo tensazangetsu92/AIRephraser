@@ -4,113 +4,119 @@
 
 {% block content %}
 <section class="tariffs">
-    <h2 class="tariffs-title">Выберите свой тариф</h2>
-    <p class="tariffs-subtitle">Премиум доступ к расширенным возможностям</p>
+    <h2 class="tariffs-title" data-i18n="tariffs_title">Выберите свой тариф</h2>
+    <p class="tariffs-subtitle" data-i18n="tariffs_subtitle">Больше слов, крупнее запросы и доступ к более мощной обработке текста</p>
 
     <div class="tariffs-grid">
         <div class="tariff-card" data-plan="free">
-            <div class="tariff-badge">Бесплатно</div>
-            <h3 class="tariff-name">Базовая</h3>
+            <div class="tariff-badge" data-i18n="badge_free">Бесплатно</div>
+            <h3 class="tariff-name" data-i18n="plan_free">Базовая</h3>
             <div class="tariff-price">
                 <span class="price">0</span>
                 <span class="currency">₽</span>
-                <span class="period">/месяц</span>
+                <span class="period" data-i18n="per_month">/месяц</span>
             </div>
+            <p class="tariff-description" data-i18n="plan_free_desc">Для знакомства с сервисом и коротких текстов.</p>
             <ul class="tariff-features">
-                <li><i class="fa-solid fa-check"></i> 300 слов в месяц</li>
-                <li><i class="fa-solid fa-check"></i> До 300 слов за один запрос</li>
-                <li><i class="fa-solid fa-check"></i> Базовая обработка</li>
+                <li data-i18n="feature_free_1"><i class="fa-solid fa-file-word"></i> 500 слов в месяц</li>
+                <li data-i18n="feature_free_2"><i class="fa-solid fa-file-lines"></i> До 500 слов за один запрос</li>
+                <li data-i18n="feature_free_3"><i class="fa-solid fa-toolbox"></i> Все основные инструменты</li>
+                <li data-i18n="feature_free_4"><i class="fa-solid fa-bolt"></i> Базовая модель для обычных задач</li>
+                <li data-i18n="feature_free_5"><i class="fa-solid fa-align-left"></i> Подходит для проверки коротких фрагментов</li>
             </ul>
-            <button class="tariff-btn tariff-btn-current" disabled>Текущий план</button>
+            <button class="tariff-btn tariff-btn-current" disabled data-i18n="current_plan">Текущий план</button>
         </div>
 
         <div class="tariff-card" data-plan="premium">
-            <div class="tariff-badge premium-badge">Рекомендуемый</div>
-            <h3 class="tariff-name">Премиум</h3>
+            <div class="tariff-badge premium-badge" data-i18n="badge_recommended">Рекомендуемый</div>
+            <h3 class="tariff-name" data-i18n="plan_premium">Премиум</h3>
             <div class="tariff-price">
                 <span class="price">169</span>
                 <span class="currency">₽</span>
-                <span class="period">/месяц</span>
+                <span class="period" data-i18n="per_month">/месяц</span>
             </div>
+            <p class="tariff-description" data-i18n="plan_premium_desc">Для регулярной работы с учёбой, статьями и рабочими текстами.</p>
             <ul class="tariff-features">
-                <li><i class="fa-solid fa-check"></i> 5000 слов в месяц</li>
-                <li><i class="fa-solid fa-check"></i> До 5000 слов за один запрос</li>
-                <li><i class="fa-solid fa-check"></i> Расширенная обработка</li>
+                <li data-i18n="feature_premium_1"><i class="fa-solid fa-file-word"></i> 20 000 слов в месяц</li>
+                <li data-i18n="feature_premium_2"><i class="fa-solid fa-file-lines"></i> До 10 000 слов за один запрос</li>
+                <li data-i18n="feature_premium_3"><i class="fa-solid fa-layer-group"></i> Всё из базового тарифа</li>
+                <li data-i18n="feature_premium_4"><i class="fa-solid fa-bolt"></i> Базовая модель для быстрых обработок</li>
+                <li data-i18n="feature_premium_5"><i class="fa-solid fa-book-open"></i> Удобно для текстов среднего объёма</li>
             </ul>
-            <button class="tariff-btn" id="upgradePremiumBtn">Выбрать тариф</button>
+            <button class="tariff-btn" id="upgradePremiumBtn" data-i18n="select_plan">Выбрать тариф</button>
         </div>
 
         <div class="tariff-card" data-plan="pro">
-            <div class="tariff-badge pro-badge">Профессионально</div>
-            <h3 class="tariff-name">Про</h3>
+            <div class="tariff-badge pro-badge" data-i18n="badge_professional">Профессионально</div>
+            <h3 class="tariff-name" data-i18n="plan_pro">Про</h3>
             <div class="tariff-price">
                 <span class="price">319</span>
                 <span class="currency">₽</span>
-                <span class="period">/месяц</span>
+                <span class="period" data-i18n="per_month">/месяц</span>
             </div>
+            <p class="tariff-description" data-i18n="plan_pro_desc">Для частой работы с большими текстами и требовательными задачами.</p>
             <ul class="tariff-features">
-                <li><i class="fa-solid fa-check"></i> 25000 слов в месяц</li>
-                <li><i class="fa-solid fa-check"></i> До 25000 слов за один запрос</li>
-                <li><i class="fa-solid fa-check"></i> Профессиональная обработка</li>
-                <li><i class="fa-solid fa-check"></i> Поддержка 24/7</li>
+                <li data-i18n="feature_pro_1"><i class="fa-solid fa-file-word"></i> 50 000 слов в месяц</li>
+                <li data-i18n="feature_pro_2"><i class="fa-solid fa-file-lines"></i> До 25 000 слов за один запрос</li>
+                <li data-i18n="feature_pro_3"><i class="fa-solid fa-chart-line"></i> В 2,5 раза больше слов, чем в «Премиум»</li>
+                <li data-i18n="feature_pro_4"><i class="fa-solid fa-brain"></i> Глубокая модель для сложной переработки</li>
+                <li data-i18n="feature_pro_5"><i class="fa-solid fa-headset"></i> Приоритетная поддержка</li>
             </ul>
-            <button class="tariff-btn" id="upgradeProBtn">Выбрать тариф</button>
+            <button class="tariff-btn" id="upgradeProBtn" data-i18n="select_plan">Выбрать тариф</button>
         </div>
 
         <div class="tariff-card" data-plan="unlimited">
-            <div class="tariff-badge unlimited-badge">Максимум</div>
-            <h3 class="tariff-name">Безлимит</h3>
+            <div class="tariff-badge unlimited-badge" data-i18n="badge_maximum">Максимум</div>
+            <h3 class="tariff-name" data-i18n="plan_unlimited">Безлимит</h3>
             <div class="tariff-price">
                 <span class="price">599</span>
                 <span class="currency">₽</span>
-                <span class="period">/месяц</span>
+                <span class="period" data-i18n="per_month">/месяц</span>
             </div>
+            <p class="tariff-description" data-i18n="plan_unlimited_desc">Для постоянной работы без месячного лимита слов.</p>
             <ul class="tariff-features">
-                <li><i class="fa-solid fa-check"></i> Безлимитное количество слов в месяц</li>
-                <li><i class="fa-solid fa-check"></i> До 25000 слов за один запрос</li>
-                <li><i class="fa-solid fa-check"></i> Профессиональная обработка</li>
-                <li><i class="fa-solid fa-check"></i> Поддержка 24/7</li>
+                <li data-i18n="feature_unlimited_1"><i class="fa-solid fa-infinity"></i> Безлимитное количество слов в месяц</li>
+                <li data-i18n="feature_unlimited_2"><i class="fa-solid fa-file-lines"></i> До 30 000 слов за один запрос</li>
+                <li data-i18n="feature_unlimited_3"><i class="fa-solid fa-microchip"></i> Базовая и глубокая модели после подключения</li>
+                <li data-i18n="feature_unlimited_4"><i class="fa-solid fa-gauge-high"></i> Приоритетная обработка запросов</li>
+                <li data-i18n="feature_unlimited_5"><i class="fa-solid fa-headset"></i> Приоритетная поддержка</li>
             </ul>
-            <button class="tariff-btn" id="upgradeUnlimitedBtn">Выбрать тариф</button>
+            <button class="tariff-btn" id="upgradeUnlimitedBtn" data-i18n="select_plan">Выбрать тариф</button>
         </div>
     </div>
 
     <section class="word-packs" aria-labelledby="wordPacksTitle">
         <div class="word-packs-heading">
-            <h2 id="wordPacksTitle">Пакеты слов</h2>
-            <p>Покупные слова не сгорают и используются после слов по подписке и бонусов.</p>
+            <h2 id="wordPacksTitle" data-i18n="word_packs">Пакеты слов</h2>
+            <p data-i18n="word_packs_note">Покупные слова не сгорают и используются после слов по подписке и бонусов.</p>
         </div>
 
         <div class="word-packs-grid">
             <article class="word-pack-card" data-package="words_2000">
                 <div class="word-pack-icon"><i class="fas fa-file-word"></i></div>
-                <h3>2 000 слов</h3>
+                <h3 data-i18n="package_2000">2 000 слов</h3>
                 <p class="word-pack-price">100 <span>₽</span></p>
-                <p class="word-pack-note">Без срока действия</p>
-                <button class="word-pack-btn" type="button" data-package="words_2000">Купить пакет</button>
+                <p class="word-pack-note" data-i18n="no_expiry">Без срока действия</p>
+                <button class="word-pack-btn" type="button" data-package="words_2000" data-i18n="buy_package">Купить пакет</button>
             </article>
 
             <article class="word-pack-card word-pack-card-featured" data-package="words_5000">
-                <span class="word-pack-badge">Выгодно</span>
+                <span class="word-pack-badge" data-i18n="best_value">Выгодно</span>
                 <div class="word-pack-icon"><i class="fas fa-layer-group"></i></div>
-                <h3>5 000 слов</h3>
+                <h3 data-i18n="package_5000">5 000 слов</h3>
                 <p class="word-pack-price">200 <span>₽</span></p>
-                <p class="word-pack-note">Без срока действия</p>
-                <button class="word-pack-btn" type="button" data-package="words_5000">Купить пакет</button>
+                <p class="word-pack-note" data-i18n="no_expiry">Без срока действия</p>
+                <button class="word-pack-btn" type="button" data-package="words_5000" data-i18n="buy_package">Купить пакет</button>
             </article>
 
             <article class="word-pack-card" data-package="words_10000">
                 <div class="word-pack-icon"><i class="fas fa-rocket"></i></div>
-                <h3>10 000 слов</h3>
+                <h3 data-i18n="package_10000">10 000 слов</h3>
                 <p class="word-pack-price">300 <span>₽</span></p>
-                <p class="word-pack-note">Без срока действия</p>
-                <button class="word-pack-btn" type="button" data-package="words_10000">Купить пакет</button>
+                <p class="word-pack-note" data-i18n="no_expiry">Без срока действия</p>
+                <button class="word-pack-btn" type="button" data-package="words_10000" data-i18n="buy_package">Купить пакет</button>
             </article>
         </div>
     </section>
 </section>
-{% endblock %}
-
-{% block scripts %}
-<script src="/js/subscription.js" defer></script>
 {% endblock %}

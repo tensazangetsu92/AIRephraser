@@ -4,37 +4,43 @@
 
 {% block content %}
 
+<header class="tool-page-intro">
+    <h1><i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="detector_page_title">Проверка шаблонных AI-паттернов</span></h1>
+    <p data-i18n="detector_page_description">Находим фрагменты, которые могут звучать шаблонно. Результат — ориентир для редактуры.</p>
+</header>
+
 <div class="editor" id="editorContainer">
     <div class="col" id="inputCol">
         <div class="textarea-wrapper">
-            <div class="editor-name">Ваш текст</div>
-            <textarea id="input" placeholder="Вставьте текст для проверки на ИИ..."></textarea>
-            <button class="paste-btn" id="pasteBtn">
-                <i class="fas fa-paste"></i>
-                Вставить текст
-            </button>
-            <button class="pdf-btn" id="pdfBtn">
-                <i class="fas fa-file-pdf"></i>
-                Загрузить PDF
-            </button>
-            <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;">
+            <div class="editor-name" data-i18n="your_text">Ваш текст</div>
+            <textarea id="input" placeholder="Вставьте текст для проверки на ИИ..." data-i18n-placeholder="detector_placeholder"></textarea>
+            <div class="document-actions">
+                <button class="paste-btn" id="pasteBtn"><i class="fas fa-paste"></i><span data-i18n="paste_text">Вставить текст</span></button>
+                <button class="pdf-btn" id="pdfBtn"><i class="fas fa-file-pdf"></i><span data-i18n="upload_pdf">Загрузить PDF</span></button>
+                <button class="word-btn" id="wordBtn"><i class="fas fa-file-word"></i><span data-i18n="upload_word">Загрузить Word</span></button>
+                <input type="file" id="pdfFileInput" accept=".pdf" hidden>
+                <input type="file" id="wordFileInput" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+            </div>
         </div>
         <div class="word-counter-wrapper">
             <span class="word-count" id="wordCount"></span>
             <span class="word-warning" id="wordWarning"></span>
-            <button class="copy-text-btn" id="copyInputBtn" title="Копировать текст">
+            <button class="copy-text-btn" id="copyInputBtn" title="Копировать текст" data-i18n-title="copy_text">
                 <i class="fa-regular fa-clone"></i>
             </button>
         </div>
     </div>
 
     <div class="col result-col" id="resultCol" style="display: none;">
-        <div class="editor-name">Результат</div>
-        <div id="result" class="output detector-output" placeholder="Результат появится здесь..."></div>
+        <div class="editor-name" data-i18n="result">Результат</div>
+        <div id="result" class="output detector-output" placeholder="Результат появится здесь..." data-i18n-placeholder="result_placeholder"></div>
+        <div class="word-counter-wrapper">
+            <span class="word-count" id="resultWordCount">0/1000</span>
+        </div>
     </div>
 
     <div class="col detector-report-col" id="detectorReportCol" style="display: none;">
-        <div class="editor-name">Вероятный анализ</div>
+        <div class="editor-name" data-i18n="probable_analysis">Вероятный анализ</div>
         <div class="detector-report-body">
             <div class="detector-chart-wrapper">
                 <svg viewBox="0 0 120 120" class="detector-chart" id="detectorChart">
@@ -48,34 +54,34 @@
             <div class="detector-legend">
                 <div class="detector-legend-item">
                     <span class="detector-dot detector-dot-human"></span>
-                    <span class="detector-legend-label">Человек</span>
+                    <span class="detector-legend-label" data-i18n="detector_human">Человек</span>
                     <span class="detector-legend-value" id="legendHuman">0%</span>
                 </div>
                 <div class="detector-legend-item">
                     <span class="detector-dot detector-dot-mixed"></span>
-                    <span class="detector-legend-label">Смешанный</span>
+                    <span class="detector-legend-label" data-i18n="detector_mixed">Смешанный</span>
                     <span class="detector-legend-value" id="legendMixed">0%</span>
                 </div>
                 <div class="detector-legend-item">
                     <span class="detector-dot detector-dot-ai"></span>
-                    <span class="detector-legend-label">ИИ</span>
+                    <span class="detector-legend-label" data-i18n="detector_ai">ИИ</span>
                     <span class="detector-legend-value" id="legendAi">0%</span>
                 </div>
             </div>
             <div class="detector-verdict" id="detectorVerdict"></div>
         </div>
         <button class="detector-new-check-btn" id="newCheckBtn">
-            <i class="fas fa-redo"></i> Новая проверка
+            <i class="fas fa-redo"></i><span data-i18n="new_check">Новая проверка</span>
         </button>
     </div>
 
 
 </div>
 
-<div class="detector-btn-wrapper">
+<div class="single-action-wrapper">
     <button class="single-main-btn main-btn" id="detectBtn">
-        <img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">
-        Проверить текст
+        <i class="fas fa-search"></i>
+        <span data-i18n="detect_btn">Проверить текст</span>
     </button>
 </div>
 
@@ -83,5 +89,6 @@
 
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="/js/detector.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
+<script src="/js/detector.js?v=20260818-auth-gate" defer></script>
 {% endblock %}

@@ -305,6 +305,7 @@
     .main-btn {
         margin-top: 0;
         padding: 0.85rem 1.5rem;
+        width: 100%;
         max-width: none;
     }
 
@@ -323,32 +324,26 @@
 
     /* ---------- Перефразер ---------- */
     .paraphrase-controls {
-        flex-direction: column;
-        align-items: stretch;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        align-items: end;
         margin: 0 0 1.5rem;
         padding: 0;
     }
 
-    .paraphrase-selects {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .paraphrase-controls .control-group {
+    .paraphrase-controls > .control-group {
         flex: none;
         width: 100%;
+        min-width: 0;
+        max-width: none;
     }
 
     .paraphrase-controls .main-btn {
+        grid-column: 1 / -1;
         width: 100%;
         max-width: none;
         margin-top: 0;
-    }
-
-    .grammar-controls .control-group,
-    .grammar-controls .control-group:last-child {
-        width: 100%;
-        max-width: none;
     }
 
     /* ---------- Модалка ---------- */
@@ -400,48 +395,6 @@
         gap: 6px;
     }
 
-
-    /* ---------- История ---------- */
-    .history-container {
-        width: 100%;
-    }
-
-    .history-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-
-    .history-header h1 {
-        font-size: 1.4rem;
-        padding: 10px 0 0 10px;
-    }
-
-    .history-tabs {
-        width: 100%;
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        padding-bottom: 14px;
-    }
-
-    .history-tab {
-        flex-shrink: 0;
-        white-space: nowrap;
-    }
-
-    .history-item-header {
-        flex-wrap: wrap;
-    }
-
-    .history-pagination {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .history-pagination button {
-        padding: 8px 12px;
-        font-size: 0.85rem;
-    }
 }
 
 /* ========================================
@@ -465,7 +418,4 @@
         min-height: 90px;
     }
 
-    .history-item {
-        padding: 0.75rem;
-    }
 }

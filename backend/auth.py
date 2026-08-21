@@ -9,7 +9,7 @@ import os
 
 from app.database import get_db, User
 from app.config import SECRET_KEY
-from app.subscription import get_user_subscription
+from app.subscription import get_user_subscription, grant_study_work_trial
 from app.email_utils import generate_verification_code, send_verification_email, store_verification_code, verify_code
 
 ALGORITHM = "HS256"
@@ -44,6 +44,7 @@ def create_user(db: Session, email: str, password: str):
 
     # Автоматически создаём бесплатную подписку для нового пользователя
     get_user_subscription(db, db_user.id)
+    grant_study_work_trial(db, db_user.id)
 
     return db_user
 
@@ -142,6 +143,9 @@ def verify_and_create_user(db: Session, email: str, code: str):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+
+    get_user_subscription(db, db_user.id)
+    grant_study_work_trial(db, db_user.id)
 
     # Удаляем из временного хранилища
     del pending_users[email]

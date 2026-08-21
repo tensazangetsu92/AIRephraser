@@ -1,0 +1,81 @@
+{% extends "template.html" %}
+
+{% block title %}Учебная работа{% endblock %}
+
+{% block content %}
+<h1 class="study-work-page-title"><i class="fa-solid fa-graduation-cap"></i> Учебная работа</h1>
+<section class="study-work-page">
+    <header class="study-work-header">
+        <p>Сохраним смысл, термины, числа, цитаты и ссылки. После обработки при желании можно отдельно проверить грамматику.</p>
+    </header>
+
+        <section class="study-work-card" id="studyWorkForm">
+        <fieldset class="study-work-types">
+            <span class="study-work-types-title">Тип работы:</span>
+            <label><input type="radio" name="workType" value="report" checked><span>Реферат</span></label>
+            <label><input type="radio" name="workType" value="essay"><span>Эссе</span></label>
+            <label><input type="radio" name="workType" value="presentation"><span>Доклад</span></label>
+            <label><input type="radio" name="workType" value="coursework"><span>Курсовая</span></label>
+            <label><input type="radio" name="workType" value="other"><span>Другое</span></label>
+        </fieldset>
+
+        <div class="study-work-input-heading">
+            <span class="study-work-word-note" id="studyWorkWordNote" hidden></span>
+        </div>
+        <div class="study-work-textarea-wrapper">
+            <textarea id="studyWorkInput" class="study-work-input" placeholder="Вставьте текст учебной работы"></textarea>
+            <div class="study-work-input-actions">
+                <button type="button" class="study-work-input-action" id="studyWorkWordUpload"><i class="fa-solid fa-file-word"></i><span>Загрузить Word</span></button>
+                <input type="file" id="studyWorkWordFile" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+                <button type="button" class="study-work-input-action" id="studyWorkPasteBtn"><i class="fas fa-paste"></i><span>Вставить текст</span></button>
+                <button type="button" class="study-work-input-action" id="studyWorkPdfBtn"><i class="fas fa-file-pdf"></i><span>Загрузить PDF</span></button>
+                <input type="file" id="studyWorkPdfFile" accept=".pdf,application/pdf" hidden>
+            </div>
+        </div>
+        <div class="study-work-counter" id="studyWorkCounter">0/500</div>
+
+        <div class="study-work-preserve-row">
+            <fieldset class="study-work-preserve">
+                <div class="study-work-preserve-heading">
+                    <span class="study-work-preserve-title">Сохранить</span>
+                </div>
+                <label><input type="checkbox" value="numbers" checked> <span>Числа и даты</span></label>
+                <label><input type="checkbox" value="terms" checked> <span>Термины</span></label>
+                <label><input type="checkbox" value="sources" checked> <span>Ссылки и цитаты</span></label>
+                <label><input type="checkbox" value="formulas" checked> <span>Формулы и обозначения</span></label>
+            </fieldset>
+            <button class="main-btn study-work-submit" id="studyWorkSubmit"><i class="fas fa-graduation-cap"></i><span>Попробовать<br>бесплатно</span></button>
+        </div>
+    </section>
+
+    <section class="study-work-result" id="studyWorkResult" hidden>
+        <div class="study-work-result-head">
+            <div><span class="study-eyebrow">Результат</span><h2>Проверьте готовый вариант</h2></div>
+            <button class="study-work-link" id="studyWorkRedo"><i class="fa-solid fa-rotate-right"></i> Обработать заново</button>
+        </div>
+        <div class="study-work-columns">
+            <article class="study-work-text-card"><h3>Готовый текст</h3><div class="study-work-text" id="studyWorkEdited"></div></article>
+        </div>
+        <p class="study-work-hint"><i class="fa-solid fa-highlighter"></i> Цветом выделены предложения, которые были изменены при редактуре.</p>
+        <div class="study-work-actions">
+            <button id="studyWorkCopy"><i class="fa-regular fa-copy"></i> Скопировать</button>
+            <button id="studyWorkDownload"><i class="fa-solid fa-download"></i> Скачать .txt</button>
+            <button id="studyWorkRestore"><i class="fa-solid fa-arrow-left"></i> Вернуть исходный текст</button>
+        </div>
+        <section class="study-work-checklist">
+            <h2>Проверка перед сдачей</h2>
+            <ul id="studyWorkChecklist"></ul>
+            <div class="study-work-next-actions">
+                <a href="/grammar"><i class="fa-solid fa-spell-check"></i> Проверить грамматику</a>
+                <a href="/paraphraser"><i class="fa-solid fa-pen-to-square"></i> Перефразировать фрагмент</a>
+            </div>
+        </section>
+    </section>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="/js/study-work.js?v=20260818-auth-gate" defer></script>
+{% endblock %}

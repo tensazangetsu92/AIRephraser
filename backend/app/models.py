@@ -1,6 +1,6 @@
 # app/models.py
 from datetime import datetime, date
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Literal, Optional
 
 
@@ -51,7 +51,7 @@ class SubscriptionResponse(BaseModel):
 
 class SubscriptionCreate(BaseModel):
     """Модель для создания подписки"""
-    plan_type: Literal["premium", "pro"]
+    plan_type: Literal["premium", "pro", "unlimited"]
     payment_id: Optional[str] = None
 
 
@@ -73,13 +73,17 @@ class UsageStatsResponse(BaseModel):
 class HumanizeRequest(BaseModel):
     """Модель запроса на обработку текста"""
     text: str
-    intensity: Literal["low", "medium", "high"] = "medium"
     tone: Literal["neutral", "formal", "casual", "friendly", "academic"] = "neutral"
     style: Literal["simple", "creative", "professional"] = "simple"
-    length: Literal["same", "shorter", "longer"] = "same"
     target_language: Literal["ru", "en"] = "ru"
+    academic_work_type: Optional[Literal["report", "essay", "presentation", "coursework", "other"]] = None
+    preserve_options: list[Literal["numbers", "terms", "sources", "formulas"]] = Field(default_factory=list)
 
 class DetectRequest(BaseModel):
+    text: str
+
+
+class GrammarRequest(BaseModel):
     text: str
 
 

@@ -1,6 +1,33 @@
 let cachedSubscriptionData = null;
 let isFetching = false;
 
+function getSubscriptionErrorMessage(detail, fallback) {
+    if (typeof detail === 'string' && detail.trim()) return detail;
+    if (Array.isArray(detail)) {
+        const messages = detail
+            .map(item => typeof item?.msg === 'string' ? item.msg : '')
+            .filter(Boolean);
+        if (messages.length) return messages.join('. ');
+    }
+    return fallback;
+}
+
+function subscriptionLabel(planType) {
+    const key = `subscription_${planType}`;
+    return typeof window.t === 'function' ? window.t(key) : planType;
+}
+
+function clearSubscriptionData() {
+    cachedSubscriptionData = null;
+    window.currentSubscription = null;
+    ['balanceBlock', 'extraBalanceBlock'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.style.display = 'none';
+    });
+}
+
+window.clearSubscriptionData = clearSubscriptionData;
+
 async function fetchSubscriptionData(force = false) {
     if (!Auth.isAuthenticated()) return null;
 
@@ -22,6 +49,11 @@ async function fetchSubscriptionData(force = false) {
             headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
         });
         const data = await response.json();
+
+        if (response.status === 401) {
+            Auth.clearExpiredSession();
+            return null;
+        }
 
         if (data.success) {
             cachedSubscriptionData = data;
@@ -50,12 +82,14 @@ function updateSubscriptionUIFromData(data, activePlan = null) {
         const planLevelValue = planLevel[plan] || 0;
 
         if (planLevelValue <= currentLevel) {
-            btn.textContent = plan === activePlan ? 'Текущий план' : 'Уже доступен';
+            btn.textContent = plan === activePlan
+                ? (typeof window.t === 'function' ? window.t('current_plan') : 'Текущий план')
+                : (typeof window.t === 'function' ? window.t('already_available') : 'Уже доступен');
             btn.disabled = true;
             btn.classList.add('tariff-btn-current');
             if (plan !== activePlan) btn.classList.add('tariff-btn-included');
         } else {
-            btn.textContent = 'Выбрать тариф';
+            btn.textContent = typeof window.t === 'function' ? window.t('select_plan') : 'Выбрать тариф';
             btn.disabled = false;
             btn.classList.remove('tariff-btn-current', 'tariff-btn-included');
             if (plan === 'premium') btn.onclick = () => upgradePlan('premium');
@@ -86,12 +120,12 @@ function updateBalanceDisplayFromData(data) {
         const extraTotal = (wordBalance.bonus_total_words || 0) + (wordBalance.purchased_total_words || 0);
         const extraPct = extraTotal > 0 ? Math.min(100, (extraWords / extraTotal) * 100) : 0;
         extraBalanceBarFill.style.setProperty('--visible-percent', `${extraPct}%`);
-        extraBalanceText.textContent = `${extraWords} слов`;
+        extraBalanceText.textContent = `${extraWords} ${typeof window.t === 'function' ? window.t('words') : 'слов'}`;
     }
 
     if (usage.is_unlimited) {
         balanceBarFill.style.setProperty('--visible-percent', '100%');
-        balanceText.innerHTML = `Безлимит слов`;
+        balanceText.textContent = typeof window.t === 'function' ? window.t('unlimited_words') : 'Безлимит';
         return;
     }
 
@@ -102,25 +136,27 @@ function updateBalanceDisplayFromData(data) {
 
     balanceBarFill.style.setProperty('--visible-percent', `${pct}%`);
 
-    balanceText.innerHTML = `${remaining} / ${limit} Слов`;
+    balanceText.textContent = `${remaining} / ${limit} ${typeof window.t === 'function' ? window.t('words') : 'Слов'}`;
 }
 
 function updateSubscriptionText(data) {
     const el = document.getElementById('subscribeTypeText');
     if (!el || !data?.subscription) return;
-    const labels = {
-        free: 'Базовая подписка',
-        premium: 'Premium подписка',
-        pro: 'Pro подписка',
-        unlimited: 'Безлимитная подписка'
-    };
-    el.textContent = labels[data.subscription.plan_type] || 'Подписка';
+    el.textContent = subscriptionLabel(data.subscription.plan_type);
 }
 
 function updateMaxWordsLimit(data) {
     if (typeof window.updateMaxWordsFromSubscription === 'function' && data?.subscription) {
         window.updateMaxWordsFromSubscription(data.subscription);
     }
+}
+
+function updateStudyWorkMaxWordsLimit(data) {
+    const maxWords = Number(data?.subscription?.study_work_max_words_per_request);
+    window.currentStudyWorkMaxWords = Number.isFinite(maxWords) && maxWords > 0 ? maxWords : 5000;
+    window.dispatchEvent(new CustomEvent('studyWorkLimitUpdated', {
+        detail: { maxWords: window.currentStudyWorkMaxWords }
+    }));
 }
 
 async function refreshAllSubscriptionData() {
@@ -130,6 +166,7 @@ async function refreshAllSubscriptionData() {
         updateSubscriptionUIFromData(data);
         updateSubscriptionText(data);
         updateMaxWordsLimit(data);
+        updateStudyWorkMaxWordsLimit(data);
     }
 }
 
@@ -158,7 +195,7 @@ async function upgradePlan(planType) {
             await refreshAllSubscriptionData();
             if (typeof window.updateUI === 'function') window.updateUI();
         } else {
-            showNotification(data.detail || 'Не удалось активировать подписку', 'error');
+            showNotification(getSubscriptionErrorMessage(data.detail, 'Не удалось активировать подписку'), 'error');
         }
     } catch {
         showNotification('Ошибка соединения с сервером', 'error');
@@ -220,7 +257,7 @@ async function purchaseWordPackage(packageId) {
             body: JSON.stringify({ package_id: packageId })
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.detail || 'Не удалось купить пакет');
+        if (!response.ok) throw new Error(getSubscriptionErrorMessage(data.detail, 'Не удалось купить пакет'));
 
         showNotification(`Пакет активирован: ${data.package.words} слов`, 'success');
         cachedSubscriptionData = null;

@@ -8,13 +8,12 @@ from app.database import get_db, User
 from auth import (
     authenticate_user,
     create_access_token,
-    create_user,
     get_user_by_email,
     get_hash_password,
     pending_users,
     create_pending_user,
 )
-from app.subscription import get_user_subscription
+from app.subscription import get_user_subscription, grant_study_work_trial
 
 router = APIRouter(tags=["auth"])
 
@@ -26,11 +25,13 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
         if existing_user:
             raise HTTPException(status_code=400, detail="Email уже зарегистрирован")
 
-        user = create_user(db, user_data.email, user_data.password)
+        password_hash = get_hash_password(user_data.password)
+        create_pending_user(user_data.email, password_hash)
         return {
             "success": True,
-            "message": "Пользователь успешно зарегистрирован",
-            "user": {"email": user.email}
+            "message": "Код подтверждения отправлен на email",
+            "email": user_data.email,
+            "requires_verification": True,
         }
     except HTTPException as e:
         raise e
@@ -111,6 +112,7 @@ async def verify_registration_code(data: dict, db: Session = Depends(get_db)):
     del pending_users[email]
 
     get_user_subscription(db, db_user.id)
+    grant_study_work_trial(db, db_user.id)
 
     access_token = create_access_token(data={"sub": db_user.email})
 

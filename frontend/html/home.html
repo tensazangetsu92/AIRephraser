@@ -1,0 +1,56 @@
+{% extends "template.html" %}
+
+{% block title %}Учебная работа{% endblock %}
+
+{% block content %}
+<section class="study-hero">
+    <div class="study-hero-copy">
+        <span class="study-eyebrow"><i class="fa-solid fa-graduation-cap"></i><span data-i18n="home_eyebrow">AI-редактор учебных текстов</span></span>
+        <h1 data-i18n="home_title">Сделайте черновик понятным, естественным и аккуратным</h1>
+        <p class="study-lead" data-i18n="home_lead">Для рефератов, эссе, докладов и курсовых. Сохраняем смысл, термины, числа, цитаты и ссылки.</p>
+        <a class="study-primary-action" href="/study-work">
+            <i class="fa-solid fa-arrow-right"></i>
+            <span data-i18n="home_cta">Проверить текст бесплатно</span>
+        </a>
+        <p class="study-note" data-i18n="home_free_note">Попробуйте «Учебную работу» бесплатно и получите ещё 500 слов для остальных инструментов.</p>
+    </div>
+
+    <div class="study-flow" aria-label="Этапы подготовки текста" data-i18n-aria-label="home_flow_aria">
+        <div class="study-flow-step">
+            <span class="study-flow-icon"><i class="fa-solid fa-file-lines"></i></span>
+            <span data-i18n="home_step_1">Черновик от ИИ или свой текст</span>
+        </div>
+        <i class="fa-solid fa-arrow-down study-flow-arrow" aria-hidden="true"></i>
+        <div class="study-flow-step">
+            <span class="study-flow-icon"><i class="fa-solid fa-shield-halved"></i></span>
+            <span data-i18n="home_step_2">Сохранить термины, ссылки и цитаты</span>
+        </div>
+        <i class="fa-solid fa-arrow-down study-flow-arrow" aria-hidden="true"></i>
+        <div class="study-flow-step">
+            <span class="study-flow-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+            <span data-i18n="home_step_3">Сделать стиль естественнее</span>
+        </div>
+        <i class="fa-solid fa-arrow-down study-flow-arrow" aria-hidden="true"></i>
+        <div class="study-flow-step">
+            <span class="study-flow-icon"><i class="fa-solid fa-spell-check"></i></span>
+            <span data-i18n="home_step_4">Исправить грамматику</span>
+        </div>
+        <i class="fa-solid fa-arrow-down study-flow-arrow" aria-hidden="true"></i>
+        <div class="study-flow-step">
+            <span class="study-flow-icon"><i class="fa-solid fa-code-compare"></i></span>
+            <span data-i18n="home_step_5">Показать, что именно изменилось</span>
+        </div>
+    </div>
+</section>
+
+<section class="study-tools">
+    <h2 data-i18n="home_tools_title">Отдельные инструменты — когда нужен конкретный результат</h2>
+    <p data-i18n="home_tools_text">Можно сразу проверить грамматику, перефразировать фрагмент или сделать стиль текста естественнее.</p>
+    <div class="study-tools-links">
+        <a href="/humanize"><i class="fa-solid fa-wand-magic-sparkles"></i><span data-i18n="nav_humanizer">Гуманайзер</span></a>
+        <a href="/grammar"><i class="fa-solid fa-spell-check"></i><span data-i18n="nav_grammar">Грамматика</span></a>
+        <a href="/paraphraser"><i class="fa-solid fa-pen-to-square"></i><span data-i18n="nav_paraphraser">Перефразер</span></a>
+        <a href="/detector"><i class="fa-solid fa-magnifying-glass-chart"></i><span data-i18n="nav_detector">Проверка AI-паттернов</span></a>
+    </div>
+</section>
+{% endblock %}

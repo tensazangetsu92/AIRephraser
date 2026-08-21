@@ -119,8 +119,10 @@ function updateUI() {
             authBtn.onclick = () => Auth.showAuthModal();
         }
         if (typeof resetTariffCards === 'function') resetTariffCards();
-        const balanceBlock = document.getElementById('balanceBlock');
-        if (balanceBlock) balanceBlock.style.display = 'none';
+        ['balanceBlock', 'extraBalanceBlock'].forEach(id => {
+            const balanceBlock = document.getElementById(id);
+            if (balanceBlock) balanceBlock.style.display = 'none';
+        });
     }
 }
 
@@ -137,7 +139,8 @@ function initSidebarToggle() {
         if (container) container.style.marginLeft = collapsed ? '70px' : '240px';
     };
 
-    applyCollapsed(localStorage.getItem('sidebarCollapsed') === 'true');
+    const savedSidebarState = localStorage.getItem('sidebarCollapsed');
+    applyCollapsed(savedSidebarState === null || savedSidebarState === 'true');
 
     toggleBtn.addEventListener('click', () => {
         const collapsed = !sidebar.classList.contains('collapsed');

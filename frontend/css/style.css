@@ -12,5 +12,7 @@
 @import url('components/profile.css');
 @import url('components/history.css');
 @import url('components/detector.css');
+@import url('components/home.css');
+@import url('components/study-work.css?v=20260817-toast-errors');
 @import url('responsive.css');
 

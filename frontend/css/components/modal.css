@@ -205,3 +205,71 @@
 #authConfirmPassword {
     transition: display 0.2s;
 }
+
+.upgrade-modal-content {
+    max-width: 420px;
+}
+
+.upgrade-modal-content h2 i {
+    color: var(--accent-text);
+}
+
+.upgrade-modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.upgrade-modal-actions a,
+.upgrade-modal-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    margin: 0;
+    text-decoration: none;
+}
+
+.upgrade-modal-primary {
+    color: #fff;
+    border: 1px solid var(--accent-border);
+    border-radius: 10px;
+    background: var(--accent-blue);
+}
+
+.upgrade-modal-secondary {
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    background: transparent;
+}
+
+.modal-content.upgrade-modal-content .modal-close {
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    color: #888;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.modal-content .upgrade-modal-actions a,
+.modal-content .upgrade-modal-actions button {
+    width: 100%;
+    margin: 0;
+    padding: 0.75rem;
+}
+
+.modal-content .upgrade-modal-actions .upgrade-modal-primary {
+    color: #fff;
+    border: 1px solid var(--accent-border);
+    background: var(--accent-blue);
+}
+
+.modal-content .upgrade-modal-actions .upgrade-modal-secondary {
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+}

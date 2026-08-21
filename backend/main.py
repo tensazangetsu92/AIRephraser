@@ -4,9 +4,11 @@ import logging
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.api import router
@@ -84,6 +86,15 @@ app.add_middleware(
     same_site="lax",
     https_only=COOKIE_SECURE,
 )
+
+
+@app.exception_handler(SQLAlchemyError)
+async def database_error_handler(request: Request, exc: SQLAlchemyError):
+    logger.exception("Database error while handling %s", request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Временная ошибка базы данных. Попробуйте ещё раз позже."},
+    )
 
 app.include_router(router)
 app.include_router(google_router)

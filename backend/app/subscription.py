@@ -1,8 +1,12 @@
 # app/subscription.py
 from datetime import datetime, timedelta
+from collections import defaultdict, deque
+from threading import Lock
+from time import monotonic
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from app.database import User, Subscription, UsageStats, WordTransaction
+from app.database import User, Subscription, UsageStats, WordTransaction, StudyWorkTrial
 from uuid import uuid4
 import pytz
 
@@ -15,28 +19,92 @@ def get_current_datetime():
     return datetime.now(MOSCOW_TZ)
 
 
+STUDY_WORK_TRIAL_RESERVATION_MINUTES = 15
+
+
+def grant_study_work_trial(db: Session, user_id: int) -> None:
+    """Give a new user one separate, no-word-cost Study Work processing."""
+    if db.query(StudyWorkTrial).filter(StudyWorkTrial.user_id == user_id).first():
+        return
+    db.add(StudyWorkTrial(user_id=user_id, status="available"))
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+
+
+def reserve_study_work_trial(db: Session, user_id: int) -> bool:
+    """Reserve the registration trial so concurrent requests cannot spend it twice."""
+    trial = db.query(StudyWorkTrial).filter(StudyWorkTrial.user_id == user_id).first()
+    if not trial:
+        return False
+
+    now = get_current_datetime()
+    if trial.status == "processing":
+        reservation_expires_at = trial.reserved_at + timedelta(minutes=STUDY_WORK_TRIAL_RESERVATION_MINUTES)
+        if reservation_expires_at > now:
+            return False
+        trial.status = "available"
+        trial.reserved_at = None
+
+    if trial.status != "available":
+        return False
+
+    trial.status = "processing"
+    trial.reserved_at = now
+    db.commit()
+    return True
+
+
+def complete_study_work_trial(db: Session, user_id: int) -> None:
+    trial = db.query(StudyWorkTrial).filter(StudyWorkTrial.user_id == user_id).first()
+    if not trial or trial.status != "processing":
+        return
+    trial.status = "used"
+    trial.used_at = get_current_datetime()
+    db.commit()
+
+
+def release_study_work_trial(db: Session, user_id: int) -> None:
+    """Return the trial if the provider failed before a result was delivered."""
+    trial = db.query(StudyWorkTrial).filter(StudyWorkTrial.user_id == user_id).first()
+    if not trial or trial.status != "processing":
+        return
+    trial.status = "available"
+    trial.reserved_at = None
+    db.commit()
+
+
 # Планы подписки: лимит слов за один запрос + общая месячная квота слов
 SUBSCRIPTION_PLANS = {
     "free": {
-        "max_words_per_request": 300,
-        "word_limit": 300,
+        "max_words_per_request": 500,
+        "word_limit": 500,
         "price_monthly": 0
     },
     "premium": {
-        "max_words_per_request": 5000,
-        "word_limit": 5000,
+        "max_words_per_request": 10000,
+        "word_limit": 20000,
         "price_monthly": 169
     },
     "pro": {
         "max_words_per_request": 25000,
-        "word_limit": 25000,
+        "word_limit": 50000,
         "price_monthly": 319
     },
     "unlimited": {
-        "max_words_per_request": 25000,
+        "max_words_per_request": 30000,
         "word_limit": None,  # None = безлимит по месячной квоте
         "price_monthly": 599
     }
+}
+
+# "Study Work" can process larger documents than the standalone tools.
+STUDY_WORK_MAX_WORDS_PER_REQUEST = {
+    "free": 5_000,
+    "premium": 10_000,
+    "pro": 15_000,
+    "unlimited": 15_000,
 }
 
 PURCHASE_PACKAGES = {
@@ -44,6 +112,41 @@ PURCHASE_PACKAGES = {
     "words_5000": {"words": 5000, "price_rub": 200},
     "words_10000": {"words": 10000, "price_rub": 300},
 }
+
+# Защита безлимитного тарифа от частых тяжёлых запросов. Небольшие запросы
+# не ограничиваются этим правилом; остаётся и отдельный потолок 30 000 слов.
+UNLIMITED_LARGE_REQUEST_WORDS = 10_000
+UNLIMITED_LARGE_REQUEST_MAX = 2
+UNLIMITED_LARGE_REQUEST_WINDOW_SECONDS = 5 * 60
+_unlimited_large_request_times = defaultdict(deque)
+_unlimited_large_request_lock = Lock()
+
+
+def check_unlimited_large_request_rate(user_id: int, word_count: int) -> None:
+    """Allow no more than two requests of 10k+ words per five minutes per user."""
+    if word_count < UNLIMITED_LARGE_REQUEST_WORDS:
+        return
+
+    now = monotonic()
+    with _unlimited_large_request_lock:
+        request_times = _unlimited_large_request_times[user_id]
+        while request_times and now - request_times[0] >= UNLIMITED_LARGE_REQUEST_WINDOW_SECONDS:
+            request_times.popleft()
+
+        if len(request_times) >= UNLIMITED_LARGE_REQUEST_MAX:
+            retry_after = max(1, int(UNLIMITED_LARGE_REQUEST_WINDOW_SECONDS - (now - request_times[0])))
+            raise HTTPException(
+                status_code=429,
+                detail=(
+                    f"Для безлимитного тарифа доступно не более "
+                    f"{UNLIMITED_LARGE_REQUEST_MAX} запросов от "
+                    f"10 000 слов за 5 минут. "
+                    f"Повторите через {retry_after} сек."
+                ),
+                headers={"Retry-After": str(retry_after)},
+            )
+
+        request_times.append(now)
 
 
 def get_word_balance(db: Session, user_id: int) -> dict:
@@ -109,6 +212,10 @@ def get_user_subscription(db: Session, user_id: int) -> Subscription:
 def get_plan_limits(plan_type: str) -> dict:
     """Получить лимиты для типа подписки"""
     return SUBSCRIPTION_PLANS.get(plan_type, SUBSCRIPTION_PLANS["free"])
+
+
+def get_study_work_max_words(plan_type: str) -> int:
+    return STUDY_WORK_MAX_WORDS_PER_REQUEST.get(plan_type, STUDY_WORK_MAX_WORDS_PER_REQUEST["free"])
 
 
 def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: str = None, duration_days: int = 30):
@@ -196,7 +303,41 @@ def get_words_used(db: Session, user_id: int) -> int:
     return stats.words_used or 0
 
 
-def check_usage_limit(db: Session, user_id: int, text: str = "") -> bool:
+def check_request_word_limit(db: Session, user_id: int, text: str = "", max_words_override: int | None = None) -> None:
+    """Enforce only the plan's per-request size limit, without charging words."""
+    subscription = get_user_subscription(db, user_id)
+    check_subscription_expired(db, user_id)
+    limits = get_plan_limits(subscription.plan_type)
+    word_count = count_words(text)
+    max_words_per_request = max_words_override or limits["max_words_per_request"]
+
+    if word_count <= max_words_per_request:
+        return
+
+    excess_words = word_count - max_words_per_request
+    recommendation = (
+        "Разделите текст на несколько запросов."
+        if subscription.plan_type == "unlimited"
+        else "Сократите текст или выберите тариф с большим лимитом за запрос."
+    )
+    raise HTTPException(
+        status_code=400,
+        detail=(
+            f"Превышен лимит слов за один запрос. Максимум: {max_words_per_request}. "
+            f"Сейчас: {word_count}. Превышение: {excess_words} слов. {recommendation}"
+        ),
+    )
+
+
+def check_study_work_request_limit(db: Session, user_id: int, text: str = "") -> int:
+    subscription = get_user_subscription(db, user_id)
+    check_subscription_expired(db, user_id)
+    max_words = get_study_work_max_words(subscription.plan_type)
+    check_request_word_limit(db, user_id, text, max_words_override=max_words)
+    return max_words
+
+
+def check_usage_limit(db: Session, user_id: int, text: str = "", max_words_override: int | None = None) -> bool:
     """
     Проверяет два ограничения:
     1. Лимит слов на один запрос (max_words_per_request) — фиксированный потолок для тарифа
@@ -213,11 +354,11 @@ def check_usage_limit(db: Session, user_id: int, text: str = "") -> bool:
     word_count = count_words(text)
 
     # 1. Проверка лимита на один запрос
-    if word_count > max_words_per_request:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Превышен лимит слов на один запрос. Максимум {max_words_per_request} слов для вашего тарифа. Сейчас {word_count} слов."
-        )
+    check_request_word_limit(db, user_id, text, max_words_override=max_words_override)
+
+    # Unlimited means no monthly quota, not unlimited server load.
+    if plan_type == "unlimited":
+        check_unlimited_large_request_rate(user_id, word_count)
 
     # 2. Проверка месячной квоты (пропускаем для безлимитного тарифа)
     if word_limit is not None:
@@ -225,16 +366,20 @@ def check_usage_limit(db: Session, user_id: int, text: str = "") -> bool:
 
         if words_used + word_count > word_limit:
             remaining = max(0, word_limit - words_used)
-            extra_words = get_word_balance(db, user_id)["bonus_words"] + get_word_balance(db, user_id)["purchased_words"]
+            word_balance = get_word_balance(db, user_id)
+            extra_words = word_balance["bonus_words"] + word_balance["purchased_words"]
             if remaining + extra_words >= word_count:
                 return True
+            available_words = remaining + extra_words
+            missing_words = word_count - available_words
             raise HTTPException(
                 status_code=429,
                 detail=(
-                    f"Недостаточно слов в рамках месячного лимита. "
-                    f"Осталось {remaining} из {word_limit} слов. "
-                    f"В этом запросе {word_count} слов. "
-                    f"{'Перейдите на более высокий тариф, чтобы продолжить.' if plan_type != 'free' else 'Оформите подписку, чтобы продолжить.'}"
+                    f"Недостаточно слов для этого запроса. "
+                    f"Доступно: {available_words} слов "
+                    f"(по подписке: {remaining}, доп. слова: {extra_words}). "
+                    f"Не хватает: {missing_words} слов. "
+                    f"Повысьте тариф или докупите пакет слов."
                 )
             )
 
@@ -246,7 +391,13 @@ def increment_usage(db: Session, user_id: int, word_count: int):
     stats = get_or_create_usage_stats(db, user_id)
     subscription = get_user_subscription(db, user_id)
     limit = get_plan_limits(subscription.plan_type)["word_limit"]
-    credits_left = word_count
+    # Use the subscription quota first.
+    subscription_remaining = None if limit is None else max(0, limit - (stats.words_used or 0))
+    subscription_used = word_count if subscription_remaining is None else min(word_count, subscription_remaining)
+    if limit is not None:
+        stats.words_used = (stats.words_used or 0) + subscription_used
+
+    credits_left = word_count - subscription_used
     if credits_left:
         credits = db.query(WordTransaction).filter(
             WordTransaction.user_id == user_id,
@@ -264,9 +415,6 @@ def increment_usage(db: Session, user_id: int, word_count: int):
         if credits_left:
             raise HTTPException(status_code=409, detail="Insufficient word balance")
 
-    # The remaining part is charged to the subscription quota.
-    if limit is not None:
-        stats.words_used = (stats.words_used or 0) + credits_left
     db.commit()
 
 
@@ -301,4 +449,4 @@ def reset_usage_stats(db: Session, user_id: int):
         db.add(stats)
 
     db.commit()
-    print(f"🔄 Reset word usage stats for user {user_id}")
+    print(f"Reset word usage stats for user {user_id}")

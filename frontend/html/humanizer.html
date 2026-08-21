@@ -4,64 +4,49 @@
 
 {% block content %}
 
+<header class="tool-page-intro">
+    <h1><i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="humanizer_page_title">Очеловечивание текста</span></h1>
+    <p data-i18n="humanizer_page_description">Сделаем текст более естественным, сохранив его смысл, факты и структуру.</p>
+</header>
+
 <div class="editor" id="editorContainer">
     <div class="col">
         <div class="textarea-wrapper">
-            <div class="editor-name">Ваш текст</div>
-            <textarea id="input" placeholder="Вставьте текст для очеловечивания..."></textarea>
-            <button class="paste-btn" id="pasteBtn">
-                <i class="fas fa-paste"></i>
-                Вставить текст
-            </button>
-            <button class="pdf-btn" id="pdfBtn">
-                <i class="fas fa-file-pdf"></i>
-                Загрузить PDF
-            </button>
-            <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;">
+            <div class="editor-name" data-i18n="your_text">Ваш текст</div>
+            <textarea id="input" placeholder="Вставьте текст для очеловечивания..." data-i18n-placeholder="humanizer_placeholder"></textarea>
+            <div class="document-actions">
+                <button class="paste-btn" id="pasteBtn"><i class="fas fa-paste"></i><span data-i18n="paste_text">Вставить текст</span></button>
+                <button class="pdf-btn" id="pdfBtn"><i class="fas fa-file-pdf"></i><span data-i18n="upload_pdf">Загрузить PDF</span></button>
+                <button class="word-btn" id="wordBtn"><i class="fas fa-file-word"></i><span data-i18n="upload_word">Загрузить Word</span></button>
+                <input type="file" id="pdfFileInput" accept=".pdf" hidden>
+                <input type="file" id="wordFileInput" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+            </div>
         </div>
         <div class="word-counter-wrapper">
             <span class="word-count" id="wordCount"></span>
             <span class="word-warning" id="wordWarning"></span>
-            <button class="copy-text-btn" id="copyInputBtn" title="Копировать результат">
+            <button class="copy-text-btn" id="copyInputBtn" title="Копировать текст" data-i18n-title="copy_text">
                 <i class="fa-regular fa-clone"></i>
             </button>
         </div>
     </div>
     <div class="col result-col" id="resultCol" style="display: none;">
-        <div class="editor-name">Результат</div>
-        <textarea id="result" class="output" placeholder="Результат появится здесь..." rows="10" readonly></textarea>
+        <div class="editor-name" data-i18n="result">Результат</div>
+        <textarea id="result" class="output" placeholder="Результат появится здесь..." data-i18n-placeholder="result_placeholder" rows="10" readonly></textarea>
         <div class="word-counter-wrapper">
-            <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат">
+            <span class="word-count" id="resultWordCount">0/1000</span>
+            <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат" data-i18n-title="copy_result">
                 <i class="fa-regular fa-clone"></i>
             </button>
         </div>
     </div>
 </div>
 
-<div class="controls">
-    <div class="control-group">
-        <div class="label-wrapper">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <label>Сила изменения</label>
-        </div>
-        <div class="custom-select" data-value="medium">
-            <button type="button" class="custom-select-trigger">
-                <span class="custom-select-label">Нормальная</span>
-                <i class="fas fa-chevron-down custom-select-arrow"></i>
-            </button>
-            <div class="custom-select-options">
-                <div class="custom-select-option" data-value="low">Слабая</div>
-                <div class="custom-select-option selected" data-value="medium">Нормальная</div>
-                <div class="custom-select-option" data-value="high">Сильная</div>
-            </div>
-        </div>
-        <input type="hidden" id="intensity" value="medium">
-    </div>
-
+<div class="controls humanizer-controls">
     <div class="control-group">
         <div class="label-wrapper">
             <i class="fa-solid fa-face-smile"></i>
-            <label>Тон</label>
+            <label data-i18n="tone_label">Тон</label>
         </div>
         <div class="custom-select" data-value="neutral">
             <button type="button" class="custom-select-trigger">
@@ -82,7 +67,7 @@
     <div class="control-group">
         <div class="label-wrapper">
             <i class="fa-solid fa-pen-fancy"></i>
-            <label>Стиль</label>
+            <label data-i18n="style_label">Стиль</label>
         </div>
         <div class="custom-select" data-value="simple">
             <button type="button" class="custom-select-trigger">
@@ -99,31 +84,14 @@
     </div>
 
     <div class="control-group">
-        <div class="label-wrapper">
-            <i class="fa-solid fa-ruler"></i>
-            <label>Длина</label>
-        </div>
-        <div class="custom-select" data-value="same">
-            <button type="button" class="custom-select-trigger">
-                <span class="custom-select-label">Оставить</span>
-                <i class="fas fa-chevron-down custom-select-arrow"></i>
-            </button>
-            <div class="custom-select-options">
-                <div class="custom-select-option selected" data-value="same">Оставить</div>
-                <div class="custom-select-option" data-value="shorter">Короче</div>
-                <div class="custom-select-option" data-value="longer">Длиннее</div>
-            </div>
-        </div>
-        <input type="hidden" id="length" value="same">
-    </div>
-    <div class="control-group">
-        <button class="main-btn" id="humanizeBtn"><img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Очеловечить</button>
+        <button class="main-btn" id="humanizeBtn"><i class="fas fa-pen-fancy"></i><span data-i18n="humanize_btn">Очеловечить</span></button>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
 {% endblock %}
 
 
