@@ -1,0 +1,16 @@
+{% extends "template.html" %}
+
+{% block title %}Контакты{% endblock %}
+
+{% block content %}
+<section class="terms-page contacts-page" aria-labelledby="contactsTitle">
+    <header class="terms-intro">
+        <span class="terms-eyebrow"><i class="fa-solid fa-address-card" aria-hidden="true"></i> <span data-i18n="legal_document">Документ</span></span>
+        <h1 id="contactsTitle" data-i18n="contacts_title" data-i18n-document-title="contacts_title">Контакты</h1>
+        <p data-i18n="contacts_intro">Реквизиты исполнителя сервиса Humary.</p>
+    </header>
+    <article class="terms-document contacts-document">
+        <section><h2 data-i18n="contacts_requisites">Реквизиты</h2><dl class="contacts-requisites"><div><dt data-i18n="contacts_status">Статус</dt><dd data-i18n="contacts_self_employed">Самозанятый</dd></div><div><dt data-i18n="contacts_provider">Исполнитель</dt><dd>Кузнецов И. О.</dd></div><div><dt data-i18n="contacts_inn">ИНН</dt><dd>661219300636</dd></div></dl></section>
+    </article>
+</section>
+{% endblock %}

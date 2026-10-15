@@ -5,7 +5,7 @@
 {% block content %}
 
 <header class="tool-page-intro">
-    <h1><i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="detector_page_title">Проверка шаблонных AI-паттернов</span></h1>
+    <h1 class="detector-page-title"><i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="detector_page_title">Проверка шаблонных AI-паттернов</span></h1>
     <p data-i18n="detector_page_description">Находим фрагменты, которые могут звучать шаблонно. Результат — ориентир для редактуры.</p>
 </header>
 
@@ -23,8 +23,8 @@
             </div>
         </div>
         <div class="word-counter-wrapper">
-            <span class="word-count" id="wordCount"></span>
-            <span class="word-warning" id="wordWarning"></span>
+            <span class="word-count" id="wordCount" hidden></span>
+            <span class="word-warning" id="wordWarning" hidden></span>
             <button class="copy-text-btn" id="copyInputBtn" title="Копировать текст" data-i18n-title="copy_text">
                 <i class="fa-regular fa-clone"></i>
             </button>
@@ -35,7 +35,10 @@
         <div class="editor-name" data-i18n="result">Результат</div>
         <div id="result" class="output detector-output" placeholder="Результат появится здесь..." data-i18n-placeholder="result_placeholder"></div>
         <div class="word-counter-wrapper">
-            <span class="word-count" id="resultWordCount">0/1000</span>
+            <span class="word-count" id="resultWordCount" data-i18n-words-counter>0/1000 слов</span>
+            <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат" data-i18n-title="copy_result">
+                <i class="fa-regular fa-clone"></i>
+            </button>
         </div>
     </div>
 
@@ -70,9 +73,6 @@
             </div>
             <div class="detector-verdict" id="detectorVerdict"></div>
         </div>
-        <button class="detector-new-check-btn" id="newCheckBtn">
-            <i class="fas fa-redo"></i><span data-i18n="new_check">Новая проверка</span>
-        </button>
     </div>
 
 
@@ -83,12 +83,13 @@
         <i class="fas fa-search"></i>
         <span data-i18n="detect_btn">Проверить текст</span>
     </button>
+    <button class="detector-new-check-btn" id="newCheckBtn" style="display: none;">
+        <i class="fas fa-redo"></i><span data-i18n="new_check">Новая проверка</span>
+    </button>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
-<script src="/js/detector.js?v=20260818-auth-gate" defer></script>
+<script src="/js/detector.js?v=20261011-mobile-clipboard-read" defer></script>
 {% endblock %}

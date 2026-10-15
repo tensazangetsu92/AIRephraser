@@ -2,65 +2,86 @@
 
 import re
 
-SYSTEM_PROMPT = """Ты студент, тебе нужно переписать формулировки и предложения, по которым видно что они написаны искуственным интеллектом.
-Сохраняй смысл, факты, цифры, даты, имена, цитаты, ссылки, термины и авторскую позицию.
-Не придумывай новую информацию.
-Не используй метафоры.
-Сложные термины и формулировки замени на более простые.
-Не перегружай предложения вложенными конструкциями без необходимости.
-Избегай стерильной симметрии: чередуй короткие и более развёрнутые предложения. 
 
-Используй меньше шаблонных вводных фраз.
-Если формулировка уже точна и необходима для сохранения смысла, не меняй её без необходимости.
-Избегай общих и расплывчатых формулировок, если их можно сделать конкретнее без добавления новой информации.
-Ответ возвращай только готовым текстом без пояснений, оценок и предисловий.
-"""
+COMMON_SYSTEM_PROMPTS = {
+    "ru": """Ты редактируешь исходный текст.
+Сохраняй смысл, порядок мыслей, факты, цифры, даты, имена, цитаты, ссылки, термины и авторскую позицию.
+Не придумывай новую информацию, не сокращай текст и не меняй его структуру.
+Если формулировка нужна для точности или сохранения смысла, не меняй её без необходимости.
+Ответ возвращай только готовым текстом без пояснений, оценок и предисловий.""",
+    "en": """You edit source text.
+Preserve its meaning, order of ideas, facts, figures, dates, names, quotations, links, terms, and the author's position.
+Do not invent information, shorten the text, or alter its structure.
+Do not change wording that is necessary for precision or preserving the meaning.
+Return only the finished text, without explanations, assessments, or introductions.""",
+}
 
-INTENSITY_MAP = {
-    "low": {
-        "ru": "Лёгкая редактура: исправь неуклюжие, повторяющиеся и слишком шаблонные формулировки. Не меняй удачные предложения без необходимости.",
-        "en": "Light editing: improve awkward, repetitive, and templated wording without changing effective sentences unnecessarily.",
+
+STYLE_SYSTEM_PROMPTS = {
+    "human": {
+        "ru": """Ты студент и перерабатываешь формулировки, которые звучат как шаблонный текст ИИ.
+Пиши естественно и нейтрально: допускается небольшая простота отдельных фраз, если мысль остаётся точной.
+Убирай канцелярит, шаблонные вводные конструкции и искусственную идеальность. Чередуй короткие и более развёрнутые предложения.
+Сложные, но не специальные формулировки можно сделать понятнее. Не добавляй сленг, намеренные ошибки, разговорность или метафоры.""",
+        "en": """You are a student revising wording that sounds like AI boilerplate.
+Write naturally and neutrally: slightly simple phrasing is acceptable when the meaning stays precise.
+Remove bureaucratic wording, stock introductions, and artificial perfection. Vary short and longer sentences.
+You may simplify difficult non-specialist wording. Do not add slang, deliberate mistakes, colloquial language, or metaphors.""",
     },
-    "medium": {
-        "ru": "Заметная, но естественная переработка: меняй формулировки и синтаксис там, где это улучшает текст, убирай канцелярит, шаблоны и повторы. Не переписывай удачные фрагменты механически и не усложняй язык.",
-        "en": "Noticeable rewrite: rewrite most sentences, change syntax and word order, remove boilerplate and repetition. Every paragraph must visibly differ from the source.",
+    "literary": {
+        "ru": """Ты литературный редактор.
+Сделай изложение плавным, связным и выразительным за счёт точного выбора слов и естественного ритма фраз.
+Убирай повторы и резкие переходы, но не добавляй метафоры, образность, оценки или эмоции, которых нет в исходнике. Не упрощай текст специально и не делай его разговорным.""",
+        "en": """You are a literary editor.
+Make the exposition fluent, coherent, and expressive through precise word choice and a natural sentence rhythm.
+Remove repetition and abrupt transitions, but do not add metaphors, imagery, judgments, or emotions absent from the source. Do not deliberately simplify the text or make it colloquial.""",
     },
-    "high": {
-        "ru": "Глубокая, но естественная переработка: перепиши каждое обычное предложение заново, сохраняя смысл и авторскую интонацию. Не оставляй исходные предложения дословно, кроме цитат, названий, терминов и фрагментов с точными данными. Меняй синтаксис, длину фраз и лексику, но не заменяй понятные слова сложными без причины и не добавляй искусственную образность.",
-        "en": "Deep rewrite: rewrite every ordinary sentence from scratch. Do not keep source sentences verbatim except quotes, names, terms, and exact data. Change syntax, sentence length, transitions, and vocabulary; avoid repetitive constructions. Every paragraph must read as newly written while preserving the original meaning.",
+    "academic": {
+        "ru": """Ты академический редактор.
+Используй нейтральную учебно-научную подачу, точную терминологию из исходника и ясные логические связи.
+Не упрощай значимые термины и не заменяй их бытовыми словами. Не добавляй канцелярит, громоздкие конструкции, шаблонные вводные фразы или метафоры ради формальности.""",
+        "en": """You are an academic editor.
+Use a neutral scholarly tone, the precise terminology already present in the source, and clear logical connections.
+Do not simplify important terms or replace them with everyday wording. Do not add bureaucratic phrasing, cumbersome constructions, stock introductions, or metaphors merely to sound formal.""",
     },
 }
 
-TONE_MAP = {
-    "neutral": {"ru": "нейтральный, естественный и спокойный; без избыточной официальности и без разговорности", "en": "neutral, natural, and calm; neither overly formal nor colloquial"},
-    "formal": {"ru": "формальный, официально-деловой, строгий", "en": "formal, official-business, strict"},
-    "casual": {"ru": "живой разговорный, но грамотный; без сленга и панибратства", "en": "lively and conversational but grammatically correct; no slang or overfamiliarity"},
-    "friendly": {"ru": "доброжелательный, понятный и вовлекающий, без фамильярности", "en": "friendly, clear, and engaging without overfamiliarity"},
-    "academic": {"ru": "академичный, грамотный и ясный, но естественный; с сохранением нужной терминологии без канцелярита и искусственного усложнения", "en": "strictly academic, scientific, preserving terminology"},
+STYLE_NAMES = {
+    "human": {"ru": "человеческий", "en": "human"},
+    "literary": {"ru": "литературный", "en": "literary"},
+    "academic": {"ru": "академический", "en": "academic"},
 }
 
-STYLE_MAP = {
-    "simple": {"ru": "простой и ясный: короткие понятные формулировки, активный залог там, где это уместно", "en": "simple and clear: concise phrasing and active voice where appropriate"},
-    "creative": {"ru": "живой и выразительный: разнообразный ритм, точные детали и уместные образные формулировки без выдумывания фактов", "en": "lively and expressive: varied rhythm, precise details, and appropriate imagery without inventing facts"},
-    "professional": {"ru": "деловой и профессиональный: точный, уверенный, без канцелярских штампов", "en": "professional and businesslike: precise, confident, and free of bureaucratic clichés"},
-}
 
-HUMANIZE_PROMPT_TEMPLATE = """Перепиши исходный текст по указанному брифу. Это не пересказ и не сокращённое изложение.
+def get_humanize_system_prompt(style: str, target_language: str) -> str:
+    """Build the system prompt for the selected Humanize editing mode."""
+    language = target_language if target_language in {"ru", "en"} else "ru"
+    selected_style = style if style in STYLE_SYSTEM_PROMPTS else "human"
+    return "\n\n".join((
+        COMMON_SYSTEM_PROMPTS[language],
+        STYLE_SYSTEM_PROMPTS[selected_style][language],
+    ))
+
+
+# Backward-compatible export. Live Humanize requests use get_humanize_system_prompt().
+SYSTEM_PROMPT = COMMON_SYSTEM_PROMPTS["ru"]
+
+
+HUMANIZE_PROMPT_TEMPLATE = """Перепиши исходный текст согласно выбранному режиму. Это не пересказ и не сокращённое изложение.
 
 【БРИФ ОБРАБОТКИ】
 Язык результата: {language}.
-Тон: {tone}.
-Стиль: {style}.
+Режим редактуры: {style_name}.
 Количество абзацев: ровно {paragraph_count}.
-Границы абзацев: {paragraph_boundary_rule}
+Границы абзацев: {paragraph_boundary_rule}.
 
 【ТРЕБОВАНИЯ К ЭТОЙ ОБРАБОТКЕ】
 1. Сохрани порядок мыслей, заголовки, списки и ровно {paragraph_count} абзацев.
 2. Не удаляй, не объединяй и не дроби абзацы.
 3. В списках сохрани каждый пункт, его порядок, характеристики и уточнения.
-4. Не превращай осторожные предположения в категоричные утверждения.
-5. Переписывай именно формулировки, а не содержание.
-6. Объём результата не должен отличаться от исходного более чем на 5%.
+4. Переписывай только формулировки, а не содержание.
+5. Не меняй объём текста более чем на 5%.
+6. Не используй Markdown-разметку.
 
 【ИСХОДНЫЙ ТЕКСТ】
 {text}
@@ -75,20 +96,55 @@ HUMANIZE_PROMPT_TEMPLATE = """Перепиши исходный текст по 
 Выведи только готовый текст без комментариев."""
 
 
+HUMANIZE_EN_PROMPT_TEMPLATE = """Rewrite the source text according to the selected mode. This is not a retelling or a shortened version.
+
+[PROCESSING BRIEF]
+Result language: {language}.
+Editing mode: {style_name}.
+Paragraph count: exactly {paragraph_count}.
+Paragraph boundaries: {paragraph_boundary_rule}.
+
+[REQUIREMENTS FOR THIS PROCESSING]
+1. Preserve the order of ideas, headings, lists, and exactly {paragraph_count} paragraphs.
+2. Do not delete, merge, or split paragraphs.
+3. In lists, preserve every item, its order, characteristics, and qualifications.
+4. Rewrite only the wording, not the content.
+5. Do not change the text length by more than 5%.
+6. Do not use Markdown markup.
+
+[SOURCE TEXT]
+{text}
+[END OF SOURCE TEXT]
+
+Before answering, check:
+- that exactly {paragraph_count} paragraphs remain;
+- that headings and lists are preserved;
+- that facts, figures, dates, names, quotations, links, and terms are unchanged;
+- that the length has not changed by more than 5%.
+
+Return only the finished text without comments."""
+
+
 def split_humanize_paragraphs(text: str) -> list[str]:
     """Split user text into paragraph blocks without losing single-line paragraphs."""
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
-    blank_line_paragraphs = [part.strip() for part in re.split(r"\n\s*\n", normalized) if part.strip()]
+    # Do not use ``strip()`` here: indentation in pasted lists must reach the model.
+    blank_line_paragraphs = [
+        part.strip("\n")
+        for part in re.split(r"\n\s*\n", normalized)
+        if part.strip()
+    ]
     if len(blank_line_paragraphs) > 1:
         return blank_line_paragraphs
 
-    non_empty_lines = [line.strip() for line in normalized.split("\n") if line.strip()]
-    return non_empty_lines or [text.strip()]
+    non_empty_lines = [line.rstrip() for line in normalized.split("\n") if line.strip()]
+    return non_empty_lines or [text.strip("\r\n")]
 
 
-def format_humanize_prompt(text: str, tone: str, style: str, target_language: str,
-                           academic_work_type: str | None = None, preserve_options: list[str] | None = None) -> str:
-    """Build the Humanize prompt with the selected tone and style."""
+def format_humanize_prompt(text: str, style: str, target_language: str) -> str:
+    """Build the user prompt for the selected Humanize editing mode."""
+    language_code = target_language if target_language in {"ru", "en"} else "ru"
+    selected_style = style if style in STYLE_NAMES else "human"
     paragraphs = split_humanize_paragraphs(text)
     paragraph_count = len(paragraphs)
     has_single_line_paragraphs = len(paragraphs) > 1 and not re.search(r"\n\s*\n", text)
@@ -98,28 +154,25 @@ def format_humanize_prompt(text: str, tone: str, style: str, target_language: st
         else "сохрани границы каждого исходного абзаца"
     )
 
-    language = "русский" if target_language == "ru" else "английский"
-    preserve_labels = {
-        "numbers": "числа и даты", "terms": "термины", "sources": "ссылки и цитаты",
-        "formulas": "формулы и обозначения",
-    }
-    prompt = HUMANIZE_PROMPT_TEMPLATE.format(
+    if language_code == "en":
+        language = "English"
+        paragraph_boundary_rule = (
+            "each non-empty source line is a separate paragraph; do not merge lines"
+            if has_single_line_paragraphs
+            else "preserve each source paragraph boundary"
+        )
+    else:
+        language = "русский"
+
+    template = (
+        HUMANIZE_PROMPT_TEMPLATE
+        if language_code == "ru"
+        else HUMANIZE_EN_PROMPT_TEMPLATE
+    )
+    return template.format(
         text=text,
         language=language,
-        tone=TONE_MAP[tone][target_language],
-        style=STYLE_MAP[style][target_language],
+        style_name=STYLE_NAMES[selected_style][language_code],
         paragraph_count=paragraph_count,
         paragraph_boundary_rule=paragraph_boundary_rule,
-    )
-    if not academic_work_type:
-        return prompt
-
-    work_types = {
-        "report": "реферат", "essay": "эссе", "presentation": "доклад",
-        "coursework": "курсовая работа", "other": "учебная работа",
-    }
-    protected = ", ".join(preserve_labels[item] for item in (preserve_options or []) if item in preserve_labels)
-    return prompt + (
-        f"\n\n【УЧЕБНАЯ РАБОТА】\nТип: {work_types.get(academic_work_type, 'учебная работа')}. "
-        f"Сделай текст грамотным, ясным и естественным для студенческой работы, но не усложняй его и не придавай ему обезличенный канцелярский вид. Не меняй дословно: {protected or 'точные данные и терминологию'}."
     )

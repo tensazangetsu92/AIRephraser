@@ -3,79 +3,84 @@
 {% block title %}Учебная работа{% endblock %}
 
 {% block content %}
-<h1 class="study-work-page-title"><i class="fa-solid fa-graduation-cap"></i> Учебная работа</h1>
-<section class="study-work-page">
-    <header class="study-work-header">
-        <p>Сохраним смысл, термины, числа, цитаты и ссылки. После обработки при желании можно отдельно проверить грамматику.</p>
-    </header>
+<header class="tool-page-intro">
+    <h1><i class="fa-solid fa-graduation-cap"></i> <span data-i18n="study_work_title">Учебная работа</span></h1>
+    <p data-i18n="study_work_description">Сохраним смысл, термины, числа, цитаты и ссылки.</p>
+</header>
 
-        <section class="study-work-card" id="studyWorkForm">
+<section class="study-work-page">
+    <div class="editor single-col study-work-editor">
+    <section class="col study-work-card" id="studyWorkForm">
         <fieldset class="study-work-types">
-            <span class="study-work-types-title">Тип работы:</span>
-            <label><input type="radio" name="workType" value="report" checked><span>Реферат</span></label>
-            <label><input type="radio" name="workType" value="essay"><span>Эссе</span></label>
-            <label><input type="radio" name="workType" value="presentation"><span>Доклад</span></label>
-            <label><input type="radio" name="workType" value="coursework"><span>Курсовая</span></label>
-            <label><input type="radio" name="workType" value="other"><span>Другое</span></label>
+            <span class="study-work-types-title" data-i18n="study_work_type_label">Тип работы:</span>
+            <label><input type="radio" name="workType" value="report" checked><span data-i18n="study_work_type_report">Реферат</span></label>
+            <label><input type="radio" name="workType" value="essay"><span data-i18n="study_work_type_essay">Эссе</span></label>
+            <label><input type="radio" name="workType" value="presentation"><span data-i18n="study_work_type_presentation">Доклад</span></label>
+            <label><input type="radio" name="workType" value="coursework"><span data-i18n="study_work_type_coursework">Курсовая</span></label>
+            <label><input type="radio" name="workType" value="other"><span data-i18n="study_work_type_other">Другое</span></label>
+            <span class="info-tooltip study-work-type-info">
+                <button class="info-tooltip-trigger" type="button" aria-label="Подробнее о типах учебных работ" data-i18n-aria-label="study_work_types_aria" aria-describedby="studyWorkTypesTooltip">
+                    <i class="fa-solid fa-info"></i>
+                </button>
+                <span class="info-tooltip-content" id="studyWorkTypesTooltip" role="tooltip">
+                    <ul class="info-tooltip-list">
+                        <li data-i18n="study_work_type_report_info">1. Реферат — нейтральный обзорный тон, без личной позиции и оценок.</li>
+                        <li data-i18n="study_work_type_essay_info">2. Эссе — сохраняет авторскую позицию, оценки и ход рассуждения, если они есть.</li>
+                        <li data-i18n="study_work_type_presentation_info">3. Доклад — делает изложение последовательным и удобным для восприятия на слух, но не добавляет обращений к аудитории и не сокращает содержание.</li>
+                        <li data-i18n="study_work_type_coursework_info">4. Курсовая — строгий учебно-научный тон, сохраняет аргументацию, термины, ссылки, таблицы и рисунки.</li>
+                        <li data-i18n="study_work_type_other_info">5. Другое — нейтральный грамотный учебный стиль без специальных требований.</li>
+                    </ul>
+                </span>
+            </span>
         </fieldset>
 
         <div class="study-work-input-heading">
             <span class="study-work-word-note" id="studyWorkWordNote" hidden></span>
         </div>
-        <div class="study-work-textarea-wrapper">
-            <textarea id="studyWorkInput" class="study-work-input" placeholder="Вставьте текст учебной работы"></textarea>
-            <div class="study-work-input-actions">
-                <button type="button" class="study-work-input-action" id="studyWorkWordUpload"><i class="fa-solid fa-file-word"></i><span>Загрузить Word</span></button>
-                <input type="file" id="studyWorkWordFile" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
-                <button type="button" class="study-work-input-action" id="studyWorkPasteBtn"><i class="fas fa-paste"></i><span>Вставить текст</span></button>
-                <button type="button" class="study-work-input-action" id="studyWorkPdfBtn"><i class="fas fa-file-pdf"></i><span>Загрузить PDF</span></button>
+        <div class="textarea-wrapper study-work-textarea-wrapper">
+            <textarea id="studyWorkInput" class="study-work-input" placeholder="Вставьте текст учебной работы..." data-i18n-placeholder="study_work_placeholder"></textarea>
+            <div class="document-actions study-work-input-actions">
+                <button type="button" class="paste-btn study-work-input-action" id="studyWorkPasteBtn"><i class="fas fa-paste"></i><span data-i18n="paste_text">Вставить текст</span></button>
+                <button type="button" class="pdf-btn study-work-input-action" id="studyWorkPdfBtn"><i class="fas fa-file-pdf"></i><span data-i18n="upload_pdf">Загрузить PDF</span></button>
                 <input type="file" id="studyWorkPdfFile" accept=".pdf,application/pdf" hidden>
+                <button type="button" class="word-btn study-work-input-action" id="studyWorkWordUpload"><i class="fa-solid fa-file-word"></i><span data-i18n="upload_word">Загрузить Word</span></button>
+                <input type="file" id="studyWorkWordFile" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
             </div>
         </div>
-        <div class="study-work-counter" id="studyWorkCounter">0/500</div>
-
-        <div class="study-work-preserve-row">
-            <fieldset class="study-work-preserve">
-                <div class="study-work-preserve-heading">
-                    <span class="study-work-preserve-title">Сохранить</span>
-                </div>
-                <label><input type="checkbox" value="numbers" checked> <span>Числа и даты</span></label>
-                <label><input type="checkbox" value="terms" checked> <span>Термины</span></label>
-                <label><input type="checkbox" value="sources" checked> <span>Ссылки и цитаты</span></label>
-                <label><input type="checkbox" value="formulas" checked> <span>Формулы и обозначения</span></label>
-            </fieldset>
-            <button class="main-btn study-work-submit" id="studyWorkSubmit"><i class="fas fa-graduation-cap"></i><span>Попробовать<br>бесплатно</span></button>
+        <div class="word-counter-wrapper">
+            <span class="word-count study-work-counter" id="studyWorkCounter" hidden></span>
+            <button class="copy-text-btn" id="studyWorkCopyInput" title="Копировать текст" data-i18n-title="copy_text">
+                <i class="fa-regular fa-clone"></i>
+            </button>
         </div>
     </section>
-
-    <section class="study-work-result" id="studyWorkResult" hidden>
-        <div class="study-work-result-head">
-            <div><span class="study-eyebrow">Результат</span><h2>Проверьте готовый вариант</h2></div>
-            <button class="study-work-link" id="studyWorkRedo"><i class="fa-solid fa-rotate-right"></i> Обработать заново</button>
+    <section class="col result-col study-work-result" id="studyWorkResult" hidden>
+        <div class="editor-name study-work-result-heading">
+            <span data-i18n="result">Результат</span>
+            <button class="copy-text-btn study-work-download-btn" id="studyWorkDownload" title="Скачать Word"><i class="fa-solid fa-file-word"></i><span data-i18n="download_word">Скачать Word</span></button>
         </div>
-        <div class="study-work-columns">
-            <article class="study-work-text-card"><h3>Готовый текст</h3><div class="study-work-text" id="studyWorkEdited"></div></article>
-        </div>
-        <p class="study-work-hint"><i class="fa-solid fa-highlighter"></i> Цветом выделены предложения, которые были изменены при редактуре.</p>
-        <div class="study-work-actions">
-            <button id="studyWorkCopy"><i class="fa-regular fa-copy"></i> Скопировать</button>
-            <button id="studyWorkDownload"><i class="fa-solid fa-download"></i> Скачать .txt</button>
-            <button id="studyWorkRestore"><i class="fa-solid fa-arrow-left"></i> Вернуть исходный текст</button>
-        </div>
-        <section class="study-work-checklist">
-            <h2>Проверка перед сдачей</h2>
-            <ul id="studyWorkChecklist"></ul>
-            <div class="study-work-next-actions">
-                <a href="/grammar"><i class="fa-solid fa-spell-check"></i> Проверить грамматику</a>
-                <a href="/paraphraser"><i class="fa-solid fa-pen-to-square"></i> Перефразировать фрагмент</a>
+        <div class="study-work-text output" id="studyWorkEdited"></div>
+        <div class="word-counter-wrapper study-work-result-footer">
+            <span class="word-count" id="studyWorkResultCounter" data-i18n-words-counter>0/5000 слов</span>
+            <div class="study-work-result-actions">
+                <button class="copy-text-btn" id="studyWorkCopy" title="Копировать текст" data-i18n-title="copy_result"><i class="fa-regular fa-clone"></i></button>
             </div>
-        </section>
+        </div>
     </section>
+    </div>
+
+    <div class="controls humanizer-controls">
+        <span class="study-work-trial" id="studyWorkTrialBadge" hidden><i class="fa-solid fa-gift"></i><span class="study-work-trial-number">1</span><span class="study-work-trial-copy"><span data-i18n="study_work_trial_free">бесплатное</span><span data-i18n="study_work_trial_use">использование</span></span></span>
+        <span class="study-work-processing-error" id="studyWorkProcessingError" hidden><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span data-i18n="study_work_processing_error">Ошибка обработки</span></span>
+        <button class="main-btn" id="studyWorkSubmit"><i class="fas fa-graduation-cap"></i><span data-i18n="study_work_process">Обработать</span></button>
+        <button class="detector-new-check-btn tool-new-check-btn" id="studyWorkNewCheckBtn" style="display: none;">
+            <i class="fas fa-redo"></i><span data-i18n="new_check">Новая проверка</span>
+        </button>
+    </div>
+
 </section>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="/js/study-work.js?v=20260818-auth-gate" defer></script>
+<script src="/js/study-work.js?v=20261011-mobile-clipboard-read" defer></script>
 {% endblock %}

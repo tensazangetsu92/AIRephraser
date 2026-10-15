@@ -1,14 +1,50 @@
 # app/routers/user_routes.py
-from fastapi import APIRouter, Depends, HTTPException
-from datetime import timedelta
+import logging
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field
 
-from app.database import get_db, User, UserHistory
-from auth import get_current_user, verify_password, get_hash_password
+from app.database import (
+    get_db,
+    PasswordResetCode,
+    StudyWorkTrial,
+    Subscription,
+    UsageStats,
+    User,
+    UserHistory,
+    UserProcessingLock,
+    UserRefreshSession,
+    WordTransaction,
+)
+from auth import (
+    clear_refresh_token_cookie,
+    create_access_token,
+    create_refresh_session,
+    get_current_user,
+    get_hash_password,
+    revoke_all_refresh_sessions,
+    set_refresh_token_cookie,
+    verify_password,
+)
 from app.subscription import check_subscription_expired
 
 router = APIRouter(tags=["user"])
+logger = logging.getLogger("uvicorn.error")
+AVAILABLE_HISTORY_TOOL_TYPES = ("study_work", "humanizer", "detector", "paraphraser")
+HISTORY_PREVIEW_CHARS = 300
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=512)
+    new_password: str = Field(min_length=8, max_length=256)
+
+
+class DeleteHistoryRequest(BaseModel):
+    confirmation: str = Field(min_length=1, max_length=32)
 
 
 @router.get("/me")
@@ -20,7 +56,9 @@ async def get_me(current_user: User = Depends(get_current_user), db: Session = D
         "success": True,
         "user": {
             "email": current_user.email,
-            "id": current_user.id
+            "id": current_user.id,
+            "display_name": current_user.display_name,
+            "avatar_url": current_user.avatar_url,
         }
     }
 
@@ -29,12 +67,15 @@ async def get_me(current_user: User = Depends(get_current_user), db: Session = D
 async def get_user_history(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),
-        page: int = 1,
-        limit: int = 20,
-        type: str = "all",
-        date: str = "all"
+        page: int = Query(default=1, ge=1),
+        limit: int = Query(default=20, ge=1, le=50),
+        type: Literal["all", "humanizer", "detector", "paraphraser", "study_work"] = "all",
+        date: Literal["all", "today", "week", "month"] = "all",
 ):
-    query = db.query(UserHistory).filter(UserHistory.user_id == current_user.id)
+    query = db.query(UserHistory).filter(
+        UserHistory.user_id == current_user.id,
+        UserHistory.tool_type.in_(AVAILABLE_HISTORY_TOOL_TYPES),
+    )
 
     # Фильтр по типу
     if type != "all":
@@ -42,7 +83,11 @@ async def get_user_history(
 
     # Фильтр по дате
     if date == "today":
-        query = query.filter(func.date(UserHistory.created_at) == func.current_date())
+        today = func.current_date()
+        query = query.filter(
+            UserHistory.created_at >= today,
+            UserHistory.created_at < today + timedelta(days=1),
+        )
     elif date == "week":
         query = query.filter(UserHistory.created_at >= func.now() - timedelta(days=7))
     elif date == "month":
@@ -52,7 +97,21 @@ async def get_user_history(
     total_pages = (total + limit - 1) // limit
     offset = (page - 1) * limit
 
-    history = query.order_by(UserHistory.created_at.desc()).offset(offset).limit(limit).all()
+    history = (
+        query.with_entities(
+            UserHistory.id,
+            UserHistory.tool_type,
+            UserHistory.created_at,
+            func.substr(UserHistory.original_text, 1, HISTORY_PREVIEW_CHARS).label("original_preview"),
+            func.substr(UserHistory.result_text, 1, HISTORY_PREVIEW_CHARS).label("result_preview"),
+            (func.length(UserHistory.original_text) > HISTORY_PREVIEW_CHARS).label("original_is_truncated"),
+            (func.length(UserHistory.result_text) > HISTORY_PREVIEW_CHARS).label("result_is_truncated"),
+        )
+        .order_by(UserHistory.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
 
     return {
         "success": True,
@@ -60,14 +119,119 @@ async def get_user_history(
             {
                 "id": h.id,
                 "tool_type": h.tool_type,
-                "original_text": h.original_text,
-                "result_text": h.result_text,
+                "original_preview": h.original_preview,
+                "result_preview": h.result_preview,
+                "original_is_truncated": bool(h.original_is_truncated),
+                "result_is_truncated": bool(h.result_is_truncated),
                 "created_at": h.created_at.isoformat()
             } for h in history
         ],
         "total": total,
         "page": page,
         "total_pages": total_pages
+    }
+
+
+async def change_password(
+        data: ChangePasswordRequest,
+        response: Response,
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+):
+    if data.current_password == data.new_password:
+        raise HTTPException(status_code=400, detail="Новый пароль должен отличаться от текущего")
+    if not verify_password(data.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Текущий пароль указан неверно")
+
+    current_user.password_hash = get_hash_password(data.new_password)
+    revoke_all_refresh_sessions(db, current_user.id)
+    set_refresh_token_cookie(response, create_refresh_session(db, current_user))
+    return {
+        "success": True,
+        "access_token": create_access_token(data={"sub": current_user.email}),
+        "token_type": "bearer",
+    }
+
+
+@router.delete("/user/delete")
+async def delete_user_account(
+        data: dict,
+        response: Response,
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+):
+    """Permanently remove the current user's account and all stored personal data."""
+    if data.get("confirmation") != "DELETE":
+        raise HTTPException(status_code=400, detail="Введите DELETE для подтверждения удаления.")
+
+    active_processing = db.query(UserProcessingLock.user_id).filter(
+        UserProcessingLock.user_id == current_user.id,
+        UserProcessingLock.expires_at > datetime.now(timezone.utc),
+    ).first()
+    if active_processing:
+        raise HTTPException(
+            status_code=409,
+            detail="Дождитесь завершения обработки текста, затем удалите аккаунт.",
+        )
+
+    user_id = current_user.id
+    try:
+        # Remove dependent records explicitly: existing database tables do not
+        # use ON DELETE CASCADE, and account deletion must not leave text,
+        # documents, sessions, reset codes, or word-accounting records behind.
+        db.query(PasswordResetCode).filter(PasswordResetCode.user_id == user_id).delete(synchronize_session=False)
+        db.query(UserRefreshSession).filter(UserRefreshSession.user_id == user_id).delete(synchronize_session=False)
+        db.query(UserProcessingLock).filter(UserProcessingLock.user_id == user_id).delete(synchronize_session=False)
+        db.query(StudyWorkTrial).filter(StudyWorkTrial.user_id == user_id).delete(synchronize_session=False)
+        db.query(WordTransaction).filter(WordTransaction.user_id == user_id).delete(synchronize_session=False)
+        db.query(UsageStats).filter(UsageStats.user_id == user_id).delete(synchronize_session=False)
+        db.query(Subscription).filter(Subscription.user_id == user_id).delete(synchronize_session=False)
+        db.query(UserHistory).filter(UserHistory.user_id == user_id).delete(synchronize_session=False)
+        db.query(User).filter(User.id == user_id).delete(synchronize_session=False)
+        db.commit()
+    except Exception as error:
+        db.rollback()
+        logger.exception("Unable to delete account id=%s", user_id)
+        raise HTTPException(status_code=500, detail="Не удалось удалить аккаунт. Попробуйте позже.") from error
+
+    clear_refresh_token_cookie(response)
+    return {"success": True}
+
+
+@router.get("/user/history/{history_id}")
+async def get_user_history_item(
+        history_id: int,
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+):
+    """Return one history item only when it belongs to the current user."""
+    history = db.query(
+        UserHistory.id,
+        UserHistory.tool_type,
+        UserHistory.original_text,
+        UserHistory.result_text,
+        UserHistory.processed_docx_filename,
+        UserHistory.created_at,
+        UserHistory.processed_docx.isnot(None).label("has_processed_docx"),
+    ).filter(
+        UserHistory.id == history_id,
+        UserHistory.user_id == current_user.id,
+        UserHistory.tool_type.in_(AVAILABLE_HISTORY_TOOL_TYPES),
+    ).first()
+    if not history:
+        raise HTTPException(status_code=404, detail="Работа не найдена")
+
+    return {
+        "success": True,
+        "history": {
+            "id": history.id,
+            "tool_type": history.tool_type,
+            "original_text": history.original_text,
+            "result_text": history.result_text,
+            "has_processed_docx": history.has_processed_docx,
+            "processed_docx_filename": history.processed_docx_filename,
+            "created_at": history.created_at.isoformat(),
+        },
     }
 
 
@@ -79,25 +243,32 @@ async def save_to_history(
 ):
     """Сохраняет результат обработки в историю пользователя"""
     try:
+        tool_type = data.get("tool_type", "humanizer")
+        if tool_type not in AVAILABLE_HISTORY_TOOL_TYPES:
+            raise HTTPException(status_code=400, detail="Неизвестный инструмент истории")
         history = UserHistory(
             user_id=current_user.id,
-            tool_type=data.get("tool_type", "humanizer"),
+            tool_type=tool_type,
             original_text=data.get("original_text", ""),
             result_text=data.get("result_text", "")
         )
         db.add(history)
         db.commit()
-        return {"success": True, "message": "Сохранено в историю"}
-    except Exception as e:
-        print(f"Error saving to history: {e}")
+        db.refresh(history)
+        return {"success": True, "message": "Сохранено в историю", "history_id": history.id}
+    except Exception:
+        logger.exception("Unable to save history entry")
         raise HTTPException(status_code=500, detail="Ошибка сохранения в историю")
 
 
 @router.delete("/user/history/clear")
 async def clear_user_history(
+        data: DeleteHistoryRequest,
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
+    if data.confirmation != "DELETE":
+        raise HTTPException(status_code=400, detail="Введите DELETE для подтверждения очистки истории.")
     db.query(UserHistory).filter(UserHistory.user_id == current_user.id).delete()
     db.commit()
     return {"success": True, "message": "История очищена"}

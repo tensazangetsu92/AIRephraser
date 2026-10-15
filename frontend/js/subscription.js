@@ -1,15 +1,42 @@
 let cachedSubscriptionData = null;
-let isFetching = false;
+let subscriptionRequest = null;
 
-function getSubscriptionErrorMessage(detail, fallback) {
-    if (typeof detail === 'string' && detail.trim()) return detail;
-    if (Array.isArray(detail)) {
-        const messages = detail
-            .map(item => typeof item?.msg === 'string' ? item.msg : '')
-            .filter(Boolean);
-        if (messages.length) return messages.join('. ');
+const SUBSCRIPTION_CACHE_PREFIX = 'humary.subscription.v1.';
+const SUBSCRIPTION_CACHE_TTL_MS = 60_000;
+
+function subscriptionCacheKey() {
+    const userId = Auth.getUser()?.id;
+    return userId ? `${SUBSCRIPTION_CACHE_PREFIX}${userId}` : null;
+}
+
+function readStoredSubscriptionData() {
+    const key = subscriptionCacheKey();
+    if (!key) return null;
+
+    try {
+        const saved = JSON.parse(sessionStorage.getItem(key) || 'null');
+        if (!saved?.data || Number(saved.expiresAt) <= Date.now()) {
+            sessionStorage.removeItem(key);
+            return null;
+        }
+        return saved.data;
+    } catch {
+        return null;
     }
-    return fallback;
+}
+
+function storeSubscriptionData(data) {
+    const key = subscriptionCacheKey();
+    if (!key || !data?.success) return;
+
+    try {
+        sessionStorage.setItem(key, JSON.stringify({
+            data,
+            expiresAt: Date.now() + SUBSCRIPTION_CACHE_TTL_MS,
+        }));
+    } catch {
+        // The interface still works if the browser blocks sessionStorage.
+    }
 }
 
 function subscriptionLabel(planType) {
@@ -17,55 +44,95 @@ function subscriptionLabel(planType) {
     return typeof window.t === 'function' ? window.t(key) : planType;
 }
 
+function showPaymentsUnavailable() {
+    const message = typeof window.t === 'function'
+        ? window.t('payments_unavailable')
+        : 'Онлайн-оплата пока не подключена.';
+    showNotification(message, 'info');
+}
+
 function clearSubscriptionData() {
     cachedSubscriptionData = null;
     window.currentSubscription = null;
+    if (typeof window.clearCachedUserData === 'function') window.clearCachedUserData();
+    try {
+        Object.keys(sessionStorage)
+            .filter(key => key.startsWith(SUBSCRIPTION_CACHE_PREFIX))
+            .forEach(key => sessionStorage.removeItem(key));
+    } catch {
+        // The in-memory cache has already been cleared.
+    }
     ['balanceBlock', 'extraBalanceBlock'].forEach(id => {
         const element = document.getElementById(id);
         if (element) element.style.display = 'none';
     });
+    setSidebarBalanceLoading(false);
+    const trialBadge = document.getElementById('studyWorkTrialBadge');
+    if (trialBadge) trialBadge.hidden = true;
 }
 
 window.clearSubscriptionData = clearSubscriptionData;
 
+function resetTariffCards() {
+    document.querySelectorAll('.tariff-card').forEach(card => {
+        const plan = card.getAttribute('data-plan');
+        const btn = card.querySelector('.tariff-btn');
+        if (!btn) return;
+
+        btn.textContent = typeof window.t === 'function' ? window.t('select_plan') : 'Оформить';
+        btn.disabled = false;
+        btn.classList.remove('tariff-btn-current', 'tariff-btn-included');
+        btn.onclick = plan === 'free'
+            ? () => Auth.showAuthModal('register')
+            : showPaymentsUnavailable;
+    });
+}
+
+window.resetTariffCards = resetTariffCards;
+
 async function fetchSubscriptionData(force = false) {
     if (!Auth.isAuthenticated()) return null;
 
-    if (isFetching) {
-        let attempts = 0;
-        while (isFetching && attempts < 50) {
-            await new Promise(r => setTimeout(r, 50));
-            attempts++;
-        }
-        return cachedSubscriptionData;
-    }
-
     if (!force && cachedSubscriptionData) return cachedSubscriptionData;
 
-    isFetching = true;
-
-    try {
-        const response = await fetch('/subscription', {
-            headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
-        });
-        const data = await response.json();
-
-        if (response.status === 401) {
-            Auth.clearExpiredSession();
-            return null;
+    if (!force) {
+        const storedData = readStoredSubscriptionData();
+        if (storedData) {
+            cachedSubscriptionData = storedData;
+            window.currentSubscription = storedData.subscription;
+            return storedData;
         }
-
-        if (data.success) {
-            cachedSubscriptionData = data;
-            window.currentSubscription = data.subscription;
-            return data;
-        }
-    } catch {
-    } finally {
-        isFetching = false;
     }
 
-    return null;
+    if (subscriptionRequest) return subscriptionRequest;
+
+    subscriptionRequest = (async () => {
+        try {
+            const response = await Auth.authorizedFetch('/subscription', {
+                headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
+            });
+            const data = await response.json();
+
+            if (response.status === 401) {
+                Auth.clearExpiredSession();
+                return null;
+            }
+
+            if (data.success) {
+                cachedSubscriptionData = data;
+                window.currentSubscription = data.subscription;
+                storeSubscriptionData(data);
+                return data;
+            }
+        } catch {
+        } finally {
+            subscriptionRequest = null;
+        }
+
+        return null;
+    })();
+
+    return subscriptionRequest;
 }
 
 function updateSubscriptionUIFromData(data, activePlan = null) {
@@ -83,18 +150,16 @@ function updateSubscriptionUIFromData(data, activePlan = null) {
 
         if (planLevelValue <= currentLevel) {
             btn.textContent = plan === activePlan
-                ? (typeof window.t === 'function' ? window.t('current_plan') : 'Текущий план')
+                ? (typeof window.t === 'function' ? window.t('current_plan') : 'Текущий тариф')
                 : (typeof window.t === 'function' ? window.t('already_available') : 'Уже доступен');
             btn.disabled = true;
             btn.classList.add('tariff-btn-current');
             if (plan !== activePlan) btn.classList.add('tariff-btn-included');
         } else {
-            btn.textContent = typeof window.t === 'function' ? window.t('select_plan') : 'Выбрать тариф';
+            btn.textContent = typeof window.t === 'function' ? window.t('select_plan') : 'Оформить';
             btn.disabled = false;
             btn.classList.remove('tariff-btn-current', 'tariff-btn-included');
-            if (plan === 'premium') btn.onclick = () => upgradePlan('premium');
-            if (plan === 'pro') btn.onclick = () => upgradePlan('pro');
-            if (plan === 'unlimited') btn.onclick = () => upgradePlan('unlimited');
+            btn.onclick = showPaymentsUnavailable;
         }
     });
 }
@@ -110,6 +175,7 @@ function updateBalanceDisplayFromData(data) {
     const extraBalanceText = document.getElementById('extraBalanceText');
     if (!balanceBlock || !balanceBarFill || !balanceText) return;
 
+    setSidebarBalanceLoading(false);
     const usage = data.usage;
     balanceBlock.style.display = 'block';
 
@@ -151,6 +217,12 @@ function updateMaxWordsLimit(data) {
     }
 }
 
+function setSidebarBalanceLoading(isLoading) {
+    const skeleton = document.getElementById('balanceLoadingSkeleton');
+    if (!skeleton) return;
+    skeleton.hidden = !isLoading;
+}
+
 function updateStudyWorkMaxWordsLimit(data) {
     const maxWords = Number(data?.subscription?.study_work_max_words_per_request);
     window.currentStudyWorkMaxWords = Number.isFinite(maxWords) && maxWords > 0 ? maxWords : 5000;
@@ -159,51 +231,51 @@ function updateStudyWorkMaxWordsLimit(data) {
     }));
 }
 
-async function refreshAllSubscriptionData() {
-    const data = await fetchSubscriptionData(true);
+function updateStudyWorkTrialBadge(data) {
+    const badge = document.getElementById('studyWorkTrialBadge');
+    if (!badge) return;
+    const isAvailable = Auth.isAuthenticated() && data?.study_work_trial?.status === 'available';
+    badge.hidden = !isAvailable;
+}
+
+function markStudyWorkTrialUsed() {
+    const badge = document.getElementById('studyWorkTrialBadge');
+    if (badge) badge.hidden = true;
+    if (cachedSubscriptionData?.study_work_trial) {
+        cachedSubscriptionData.study_work_trial.status = 'used';
+        storeSubscriptionData(cachedSubscriptionData);
+    }
+}
+
+async function refreshAllSubscriptionData(force = false) {
+    const data = await fetchSubscriptionData(force);
     if (data) {
         updateBalanceDisplayFromData(data);
         updateSubscriptionUIFromData(data);
         updateSubscriptionText(data);
         updateMaxWordsLimit(data);
         updateStudyWorkMaxWordsLimit(data);
+        updateStudyWorkTrialBadge(data);
     }
 }
 
-async function upgradePlan(planType) {
+function upgradePlan() {
     if (!Auth.isAuthenticated()) {
         showNotification('Пожалуйста, войдите в аккаунт', 'warning');
         Auth.showAuthModal();
         return;
     }
-
-    try {
-        const response = await fetch('/subscription/upgrade', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${Auth.getToken()}`
-            },
-            body: JSON.stringify({ plan_type: planType })
-        });
-        const data = await response.json();
-
-        if (response.ok) {
-            const labels = { premium: 'Premium', pro: 'Pro', unlimited: 'Безлимит' };
-            showNotification(`Подписка ${labels[planType]} активирована!`, 'success');
-            cachedSubscriptionData = null;
-            await refreshAllSubscriptionData();
-            if (typeof window.updateUI === 'function') window.updateUI();
-        } else {
-            showNotification(getSubscriptionErrorMessage(data.detail, 'Не удалось активировать подписку'), 'error');
-        }
-    } catch {
-        showNotification('Ошибка соединения с сервером', 'error');
-    }
+    showPaymentsUnavailable();
 }
 
 async function loadCurrentSubscription() {
-    await refreshAllSubscriptionData();
+    const shouldShowLoading = !cachedSubscriptionData;
+    if (shouldShowLoading) setSidebarBalanceLoading(true);
+    try {
+        await refreshAllSubscriptionData();
+    } finally {
+        if (shouldShowLoading) setSidebarBalanceLoading(false);
+    }
 }
 
 async function updateBalanceDisplay() {
@@ -215,7 +287,11 @@ async function updateBalanceDisplay() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (Auth.isAuthenticated()) refreshAllSubscriptionData();
+    if (Auth.isAuthenticated()) {
+        refreshAllSubscriptionData();
+    } else {
+        resetTariffCards();
+    }
 
     document.querySelectorAll('.word-pack-btn').forEach(button => {
         button.addEventListener('click', () => {
@@ -224,53 +300,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 Auth.showAuthModal();
                 return;
             }
-            showNotification('Оплата пакетов слов будет подключена после настройки эквайринга', 'info');
+            showPaymentsUnavailable();
         });
     });
 });
 
-// Handle package purchases before the legacy placeholder click handler below.
-document.addEventListener('click', (event) => {
-    const button = event.target.closest('.word-pack-btn');
-    if (!button) return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    if (!Auth.isAuthenticated()) {
-        showNotification('Войдите в аккаунт, чтобы купить пакет слов', 'warning');
-        Auth.showAuthModal();
-        return;
-    }
-
-    purchaseWordPackage(button.dataset.package);
-}, true);
-
-async function purchaseWordPackage(packageId) {
-    try {
-        const response = await fetch('/subscription/word-packages/purchase', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${Auth.getToken()}`
-            },
-            body: JSON.stringify({ package_id: packageId })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(getSubscriptionErrorMessage(data.detail, 'Не удалось купить пакет'));
-
-        showNotification(`Пакет активирован: ${data.package.words} слов`, 'success');
-        cachedSubscriptionData = null;
-        await refreshAllSubscriptionData();
-    } catch (error) {
-        showNotification(error.message || 'Ошибка покупки пакета', 'error');
-    }
-}
-
-window.forceUpdateBalance = refreshAllSubscriptionData;
+window.forceUpdateBalance = () => refreshAllSubscriptionData(true);
 window.updateBalanceDisplay = updateBalanceDisplay;
 window.loadCurrentSubscription = loadCurrentSubscription;
 window.refreshAllSubscriptionData = refreshAllSubscriptionData;
+window.getSubscriptionData = fetchSubscriptionData;
+window.markStudyWorkTrialUsed = markStudyWorkTrialUsed;
 window.upgradeToPremium = () => upgradePlan('premium');
 window.upgradeToPro = () => upgradePlan('pro');
 window.upgradeToUnlimited = () => upgradePlan('unlimited');

@@ -1,0 +1,67 @@
+{% extends "template.html" %}
+
+{% block title %}Результат из истории{% endblock %}
+
+{% block content %}
+<section class="history-detail-container" id="historyDetail" data-history-id="{{ history_id }}">
+    <header class="history-detail-header">
+        <a class="history-detail-back" href="/history" data-i18n-title="history_detail_back" title="Вернуться к истории">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div class="history-detail-heading">
+            <span class="history-item-type" id="historyDetailTool"></span>
+            <h1 id="historyDetailTitle">Результат обработки</h1>
+            <time id="historyDetailDate"></time>
+        </div>
+        <button type="button" class="main-btn history-detail-open" id="historyDetailOpen" disabled>
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <span data-i18n="history_detail_open_tool">Открыть в инструменте</span>
+        </button>
+    </header>
+
+    <div class="history-detail-grid" id="historyDetailContent" hidden>
+        <section class="history-detail-card">
+            <div class="history-detail-card-header">
+                <h2 data-i18n="history_detail_original">Исходный текст</h2>
+                <button type="button" class="copy-text-btn" id="historyDetailCopyOriginal" data-i18n-title="copy_text" title="Копировать текст"><i class="fa-regular fa-clone"></i></button>
+            </div>
+            <div class="history-detail-text" id="historyDetailOriginal"></div>
+        </section>
+
+        <section class="history-detail-card history-detail-result-card">
+            <div class="history-detail-card-header">
+                <h2 data-i18n="history_detail_result">Результат</h2>
+                <button type="button" class="copy-text-btn" id="historyDetailCopyResult" data-i18n-title="copy_result" title="Копировать результат"><i class="fa-regular fa-clone"></i></button>
+            </div>
+            <div class="history-detail-text" id="historyDetailResult"></div>
+        </section>
+    </div>
+
+    <div class="history-detail-skeleton" id="historyDetailState" aria-busy="true" aria-label="Загрузка">
+        <section class="history-detail-card" aria-hidden="true">
+            <div class="history-detail-card-header"><span class="skeleton skeleton-text skeleton-text--medium"></span></div>
+            <div class="history-detail-skeleton-lines skeleton-line-stack">
+                <span class="skeleton skeleton-text"></span>
+                <span class="skeleton skeleton-text"></span>
+                <span class="skeleton skeleton-text"></span>
+                <span class="skeleton skeleton-text"></span>
+                <span class="skeleton skeleton-text"></span>
+            </div>
+        </section>
+        <section class="history-detail-card" aria-hidden="true">
+            <div class="history-detail-card-header"><span class="skeleton skeleton-text skeleton-text--short"></span></div>
+            <div class="history-detail-skeleton-lines skeleton-line-stack">
+                <span class="skeleton skeleton-text"></span>
+                <span class="skeleton skeleton-text"></span>
+                <span class="skeleton skeleton-text"></span>
+                <span class="skeleton skeleton-text"></span>
+                <span class="skeleton skeleton-text"></span>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/js/history-detail.js?v=20261011-history-detail-skeleton" defer></script>
+{% endblock %}

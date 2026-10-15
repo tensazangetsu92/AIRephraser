@@ -143,7 +143,8 @@
     transform: scale(0.98);
 }
 
-.google-btn {
+.oauth-btn,
+.secondary-btn {
     background: #272727;
     color: #f0f0f0 !important;
     margin-top: 0.5rem;
@@ -153,11 +154,18 @@
     gap: 0.5rem;
 }
 
-.google-btn i {
+.oauth-btn i,
+.yandex-mark {
     font-size: 1.1rem;
 }
 
-.google-btn:hover {
+.vk-btn i {
+    color: #2787f5;
+    font-size: 1.2rem;
+}
+
+.oauth-btn:hover,
+.secondary-btn:hover {
     opacity: 0.9;
     transform: translateY(-1px) !important;
 }
@@ -204,6 +212,18 @@
 
 #authConfirmPassword {
     transition: display 0.2s;
+}
+
+.yandex-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-weight: 800;
+    line-height: 1;
 }
 
 .upgrade-modal-content {

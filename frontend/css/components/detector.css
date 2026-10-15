@@ -1,10 +1,25 @@
 /* Detector Styles */
 
+@media (max-width: 768px) {
+    /* Do not let the title span become a wide flex item on phones. */
+    .container .tool-page-intro h1.detector-page-title {
+        display: block;
+        text-align: center;
+    }
+
+    .detector-page-title > i {
+        margin-right: .6rem;
+    }
+}
+
 .detector-output {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     line-height: 1.6;
     font-size: 1rem;
     font-family: inherit;
@@ -21,6 +36,8 @@
 .detector-sentence {
     border-radius: 4px;
     padding: 1px 2px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     transition: background 0.2s;
 }
 
@@ -140,14 +157,15 @@
 }
 
 .detector-new-check-btn {
-    flex-shrink: 0;
-    margin-top: 1rem;
-    display: flex;
+    flex: 0 1 230px;
+    width: 230px;
+    max-width: 100%;
+    height: 48px;
+    margin: 0;
+    padding: 7px 14px;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    width: 100%;
-    padding: 14px;
     background: rgba(18, 18, 18, 0.3);
     border: var(--border-button-color);
     border-radius: 12px;
@@ -157,6 +175,10 @@
     font-weight: 600;
     font-family: inherit;
     transition: all 0.2s;
+}
+
+.tool-new-check-btn {
+    margin-top: 23px;
 }
 
 .detector-new-check-btn:hover {

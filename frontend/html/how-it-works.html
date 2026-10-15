@@ -1,0 +1,159 @@
+{% extends "template.html" %}
+
+{% block title %}Как работают инструменты{% endblock %}
+
+{% block content %}
+<section class="how-it-works" aria-labelledby="howItWorksTitle" data-i18n-document-title="how_title">
+    <header class="how-it-works-intro">
+        <h1 id="howItWorksTitle" data-i18n="how_title">Как работают инструменты?</h1>
+    </header>
+
+    <nav class="how-it-works-quick-links" aria-label="Разделы страницы" data-i18n-aria-label="how_sections_aria">
+        <a href="#study-work" data-i18n="how_study_work">Учебная работа</a>
+        <a href="#humanizer" data-i18n="nav_humanizer">Гуманайзер</a>
+        <a href="#paraphraser" data-i18n="nav_paraphraser">Перефразер</a>
+        <a href="#detector" data-i18n="nav_detector">Детектор ИИ</a>
+    </nav>
+
+    <section class="how-it-works-overview" aria-labelledby="howToolsWorkTitle">
+        <h2 id="howToolsWorkTitle"><i class="fa-solid fa-gears" aria-hidden="true"></i><span data-i18n="how_overview_title">Как работают инструменты</span></h2>
+        <div class="how-it-works-card-text">
+            <p data-i18n="how_overview_text_1">Обработка текста в Humary основана на модели GigaChat. Вы выбираете инструмент и его параметры, сервис передаёт текст модели с соответствующей задачей, а затем показывает результат в поле обработки или возвращает его в Word-файле.</p>
+            <p data-i18n="how_overview_text_2">Модель помогает изменить формулировки и проанализировать стиль текста, но не заменяет проверку фактов, ссылок и требований к работе.</p>
+        </div>
+    </section>
+
+    <article class="how-it-works-card" id="study-work">
+        <div class="how-it-works-card-heading">
+            <span class="how-it-works-icon"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span>
+            <div><h2 data-i18n="how_study_work">Учебная работа</h2></div>
+        </div>
+        <div class="how-it-works-card-text">
+            <h3 data-i18n="how_how_it_works">Как работает?</h3>
+            <ol class="how-it-works-steps">
+                <li><span data-i18n="how_study_step_1_before">Вставьте текст в поле или загрузите документ </span><code>.docx</code>.</li>
+                <li data-i18n="how_study_step_2">Выберите тип работы — он задаёт правила редактуры.</li>
+                <li data-i18n="how_study_step_3">Сервис обрабатывает основной текст и возвращает результат в поле либо в Word-файле.</li>
+            </ol>
+            <h4 data-i18n="how_work_type_param">Параметр «Тип работы»</h4>
+            <dl class="how-it-works-parameters">
+                <dt data-i18n="how_report">Реферат</dt><dd data-i18n="how_report_desc">Нейтральный обзорный тон. Личная позиция и оценки не добавляются.</dd>
+                <dt data-i18n="how_essay">Эссе</dt><dd data-i18n="how_essay_desc">Сохраняются авторская позиция, оценки и ход рассуждения, если они есть в исходнике. Новую личную позицию сервис не придумывает.</dd>
+                <dt data-i18n="how_presentation">Доклад</dt><dd data-i18n="how_presentation_desc">Изложение остаётся последовательным и удобным для восприятия на слух. Обращения к аудитории не добавляются, содержание не сокращается.</dd>
+                <dt data-i18n="how_coursework">Курсовая</dt><dd data-i18n="how_coursework_desc">Строгий учебно-научный тон. Сохраняются аргументация, термины, ссылки, таблицы и рисунки.</dd>
+                <dt data-i18n="how_other">Другое</dt><dd data-i18n="how_other_desc">Нейтральный грамотный учебный стиль без специальных требований.</dd>
+            </dl>
+            <h4 data-i18n="how_preserved">Что сохраняется</h4>
+            <p data-i18n="how_study_preserved">Титульный лист, содержание, список литературы и заголовки не отправляются на переработку. В основном тексте сохраняются смысл, факты, числа, даты, имена, ссылки, цитаты, термины, формулы и обозначения.</p>
+            <h3 data-i18n="how_when_to_use">Когда использовать</h3>
+            <p data-i18n="how_study_when">Когда нужно обработать документ целиком и получить его обратно в формате Word, не перенося текст вручную.</p>
+            <h3 data-i18n="how_what_it_does">Что делает</h3>
+            <p data-i18n="how_study_does">Обрабатывает основной текст работы. Титульный лист, содержание и список литературы остаются без изменений. Тип работы задаёт подходящий учебный тон.</p>
+            <h3 data-i18n="how_choose_another">Когда выбрать другой инструмент</h3>
+            <p data-i18n="how_study_other_tool">Если нужно изменить только один абзац или отдельные слова, быстрее подойдут гуманайзер или перефразер.</p>
+        </div>
+    </article>
+
+    <article class="how-it-works-card" id="humanizer">
+        <div class="how-it-works-card-heading">
+            <span class="how-it-works-icon"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></span>
+            <div><h2 data-i18n="nav_humanizer">Гуманайзер</h2></div>
+        </div>
+        <div class="how-it-works-card-text">
+            <h3 data-i18n="how_how_it_works">Как работает?</h3>
+            <ol class="how-it-works-steps">
+                <li data-i18n="how_humanizer_step_1">Вставьте отдельный фрагмент текста.</li>
+                <li data-i18n="how_humanizer_step_2">Выберите стиль обработки и язык исходного текста.</li>
+                <li data-i18n="how_humanizer_step_3">Получите переработанный текст с сохранёнными смыслом, порядком мыслей и границами абзацев.</li>
+            </ol>
+            <h4 data-i18n="how_style_param">Параметр «Стиль»</h4>
+            <dl class="how-it-works-parameters">
+                <dt data-i18n="style_human">Человеческий</dt><dd data-i18n="how_human_desc">Убирает канцелярит, шаблонные вводные конструкции и излишне «идеальные» формулировки. Допускает небольшую естественную простоту фраз, но не добавляет сленг, разговорную речь или намеренные ошибки.</dd>
+                <dt data-i18n="style_literary">Литературный</dt><dd data-i18n="how_literary_desc">Делает изложение более плавным и связным, убирает повторы и резкие переходы. Не добавляет метафоры, эмоции или оценки, которых не было в исходнике.</dd>
+                <dt data-i18n="style_academic">Академический</dt><dd data-i18n="how_academic_desc">Сохраняет нейтральный учебно-научный тон, точную терминологию и логические связи. Значимые термины не упрощаются до бытовых слов.</dd>
+            </dl>
+            <h4 data-i18n="how_text_language_param">Параметр «Язык текста»</h4>
+            <p data-i18n="how_text_language_desc">Выберите русский или английский в соответствии с языком исходника. Этот выбор не переводит текст: он задаёт язык инструкции для обработки и язык результата.</p>
+            <h3 data-i18n="how_when_to_use">Когда использовать</h3>
+            <p data-i18n="how_humanizer_when">Когда есть несколько абзацев, введение, вывод или другой кусок текста, которому нужно придать более естественное звучание.</p>
+            <h3 data-i18n="how_what_it_does">Что делает</h3>
+            <p data-i18n="how_humanizer_does">Меняет шаблонные обороты и формулировки, сохраняя смысл и границы абзацев. Можно выбрать человеческий, литературный или академический режим.</p>
+            <h3 data-i18n="how_choose_another">Когда выбрать другой инструмент</h3>
+            <p data-i18n="how_humanizer_other_tool">Если важно сохранить каждую конструкцию предложения и заменить только сложные слова, используйте перефразер.</p>
+        </div>
+    </article>
+
+    <article class="how-it-works-card" id="paraphraser">
+        <div class="how-it-works-card-heading">
+            <span class="how-it-works-icon"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></span>
+            <div><h2 data-i18n="nav_paraphraser">Перефразер</h2></div>
+        </div>
+        <div class="how-it-works-card-text">
+            <h3 data-i18n="how_how_it_works">Как работает?</h3>
+            <ol class="how-it-works-steps">
+                <li data-i18n="how_paraphraser_step_1">Вставьте текст и выберите стиль.</li>
+                <li data-i18n="how_paraphraser_step_2">Инструмент находит только сложные, тяжёлые или канцелярские слова и устойчивые выражения.</li>
+                <li data-i18n="how_paraphraser_step_3">Он заменяет их точными синонимами, не переписывая предложения целиком.</li>
+            </ol>
+            <h4 data-i18n="how_style_param">Параметр «Стиль»</h4>
+            <dl class="how-it-works-parameters">
+                <dt data-i18n="style_synonyms">Синонимы</dt><dd data-i18n="how_synonyms_desc">Сохраняет исходную манеру текста. Замены делаются только там, где слово или выражение действительно звучит тяжело, сложно или канцелярски.</dd>
+                <dt data-i18n="style_simple">Простой</dt><dd data-i18n="how_simple_desc">Из нескольких точных вариантов выбирает наиболее понятный и распространённый. Специальные термины, без которых теряется смысл, не упрощаются.</dd>
+                <dt data-i18n="style_academic">Академический</dt><dd data-i18n="how_paraphrase_academic_desc">Сохраняет учебно-научную манеру и терминологическую точность. Неясные или излишне сложные формулировки заменяются ясными академическими синонимами.</dd>
+            </dl>
+            <h4 data-i18n="how_unchanged">Что не меняется</h4>
+            <p data-i18n="how_paraphraser_preserved">Структура предложений, порядок слов, пунктуация, границы абзацев, заголовки и списки. Не должны изменяться числа, даты, имена, ссылки, цитаты, термины, формулы и обозначения.</p>
+            <h3 data-i18n="how_when_to_use">Когда использовать</h3>
+            <p data-i18n="how_paraphraser_when">Когда структура и порядок мыслей уже устраивают, но отдельные слова, канцеляризмы или фразы хочется сделать проще.</p>
+            <h3 data-i18n="how_what_it_does">Что делает</h3>
+            <p data-i18n="how_paraphraser_does">Заменяет сложные слова и выражения синонимами, не перестраивая предложения. Доступны стили: синонимы, простой и академический.</p>
+            <h3 data-i18n="how_choose_another">Когда выбрать другой инструмент</h3>
+            <p data-i18n="how_paraphraser_other_tool">Если нужен более глубокий пересмотр текста, а не точечные замены, используйте гуманайзер.</p>
+        </div>
+    </article>
+
+    <article class="how-it-works-card" id="detector">
+        <div class="how-it-works-card-heading">
+            <span class="how-it-works-icon"><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i></span>
+            <div><h2 data-i18n="nav_detector">Детектор ИИ</h2></div>
+        </div>
+        <div class="how-it-works-card-text">
+            <h3 data-i18n="how_how_it_works">Как работает?</h3>
+            <ol class="how-it-works-steps">
+                <li data-i18n="how_detector_step_1">Вставьте текст для проверки.</li>
+                <li data-i18n="how_detector_step_2">Детектор разбирает текст на фрагменты и оценивает их по отдельности.</li>
+                <li data-i18n="how_detector_step_3">В результате отображаются общий вероятностный анализ и подсветка конкретных фрагментов.</li>
+            </ol>
+            <h4 data-i18n="how_parameters">Параметры</h4>
+            <p data-i18n="how_detector_parameters">У детектора нет переключателей режима или стиля: для проверки отправляется текст в том виде, в котором он вставлен пользователем.</p>
+            <h4 data-i18n="how_result_shows">Что показывает результат</h4>
+            <dl class="how-it-works-parameters">
+                <dt data-i18n="detector_human">Человек</dt><dd data-i18n="how_detector_human_desc">Доля фрагментов, которые по стилю больше похожи на естественный человеческий текст.</dd>
+                <dt data-i18n="detector_mixed">Смешанный</dt><dd data-i18n="how_detector_mixed_desc">Доля фрагментов с неоднозначными признаками: данных недостаточно для уверенной оценки.</dd>
+                <dt data-i18n="detector_ai">ИИ</dt><dd data-i18n="how_detector_ai_desc">Доля фрагментов с несколькими сильными признаками шаблонной генерации.</dd>
+            </dl>
+            <h3 data-i18n="how_when_to_use">Когда использовать</h3>
+            <p data-i18n="how_detector_when">Когда нужно увидеть распределение оценок по тексту и понять, какие фрагменты стоит перечитать или переработать вручную.</p>
+            <h3 data-i18n="how_what_it_does">Что делает</h3>
+            <p data-i18n="how_detector_does">Показывает доли «человек», «смешанный» и «ИИ», а также отмечает конкретные фрагменты текста.</p>
+            <h3 data-i18n="how_important">Важно</h3>
+            <p data-i18n="how_detector_important">Результат — стилистическая оценка, а не доказательство авторства, проверки на плагиат или академическое заключение.</p>
+        </div>
+    </article>
+
+    <article class="how-it-works-card">
+        <div class="how-it-works-card-heading">
+            <span class="how-it-works-icon"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></span>
+            <div><h2 data-i18n="how_history">История запросов</h2></div>
+        </div>
+        <div class="how-it-works-card-text">
+            <p><span data-i18n="how_history_before_link">После обработки текст сохраняется в разделе </span><a class="how-it-works-history-link" href="/history" data-i18n="history">«История запросов»</a><span data-i18n="how_history_after_link">. Там можно открыть исходный текст и результат, а затем продолжить работу в соответствующем инструменте.</span></p>
+        </div>
+    </article>
+
+    <aside class="how-it-works-note">
+        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+        <p data-i18n="how_note">Перед сдачей или публикацией перечитайте результат: могут возникнуть единичные неточности в выборе формулировок от ИИ.</p>
+    </aside>
+</section>
+{% endblock %}

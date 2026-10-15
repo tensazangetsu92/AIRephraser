@@ -1,13 +1,54 @@
 (function () {
-    const escapeHtml = text => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     let originalText = '';
     let sourceWordFile = null;
     let sourceWordText = '';
     let processedWordBlob = null;
+    let processedWordFilename = 'humary-учебная-работа.docx';
+    let hasStoredProcessedWord = false;
+    const MAX_STUDY_WORK_FILE_SIZE_BYTES = window.MAX_UPLOAD_FILE_SIZE_BYTES || 10 * 1024 * 1024;
+    const MAX_STUDY_WORK_FILE_SIZE_LABEL = window.MAX_UPLOAD_FILE_SIZE_LABEL || '10 МБ';
+    const WORD_DOCUMENT_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     const showStudyWorkError = message => showNotification(message, 'error');
+
+    async function hasZipSignature(file) {
+        const header = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+        return header.length >= 2 && header[0] === 0x50 && header[1] === 0x4b;
+    }
+
+    async function hasPdfSignature(file) {
+        const header = new Uint8Array(await file.slice(0, 1024).arrayBuffer());
+        const signature = [0x25, 0x50, 0x44, 0x46, 0x2d]; // %PDF-
+        for (let offset = 0; offset <= header.length - signature.length; offset += 1) {
+            if (signature.every((byte, index) => header[offset + index] === byte)) return true;
+        }
+        return false;
+    }
+
+    function setStudyWorkProcessingError(isVisible) {
+        const badge = document.getElementById('studyWorkProcessingError');
+        if (badge) badge.hidden = !isVisible;
+    }
+
+    function setStudyWorkResultVisible(isVisible) {
+        const result = document.getElementById('studyWorkResult');
+        if (!result) return;
+        result.hidden = !isVisible;
+        document.querySelector('.study-work-editor')?.classList.toggle('single-col', !isVisible);
+    }
+
+    function setStudyWorkNewCheckButtonVisible(isVisible) {
+        const button = document.getElementById('studyWorkNewCheckBtn');
+        if (button) button.style.display = isVisible ? 'inline-flex' : 'none';
+    }
 
     function getStudyWorkMaxWords() {
         return window.currentStudyWorkMaxWords || 5000;
+    }
+
+    function updateStudyWorkResultCounter(text) {
+        const counter = document.getElementById('studyWorkResultCounter');
+        if (!counter) return;
+        counter.textContent = `${countWords(text)}/${getStudyWorkMaxWords()} ${typeof t === 'function' ? t('words') : 'слов'}`;
     }
 
     function isWithinStudyWorkLimit(text) {
@@ -20,26 +61,35 @@
         return `Превышен лимит слов за один запрос. Максимум: ${maxWords}. Сейчас: ${current}. Сократите текст на ${current - maxWords} слов.`;
     }
 
-    function selectedValues(selector) {
-        return [...document.querySelectorAll(selector)].filter(input => input.checked).map(input => input.value);
-    }
-
-    function splitSentences(text) {
-        return String(text).match(/[^.!?…]+(?:[.!?…]+|$)/g) || [String(text)];
-    }
-
-    function renderChangedSentences(original, editedText) {
-        const originalSentences = new Set(splitSentences(original)
-            .map(sentence => sentence.trim().replace(/\s+/g, ' ').toLowerCase())
-            .filter(Boolean));
+    function renderStudyWorkResult(editedText) {
         const output = document.getElementById('studyWorkEdited');
         if (!output) return;
-        output.innerHTML = splitSentences(editedText).map(sentence => {
-            const normalized = sentence.trim().replace(/\s+/g, ' ').toLowerCase();
-            const changed = normalized && !originalSentences.has(normalized);
-            const content = escapeHtml(sentence);
-            return changed ? `<span class="study-changed-sentence">${content}</span>` : content;
-        }).join('');
+        // The result is text, not HTML. textContent prevents a document name,
+        // pasted text or a provider response from creating DOM elements.
+        // .study-work-text uses white-space: pre-wrap, so paragraph breaks are
+        // still rendered exactly as they arrived from the processed document.
+        output.textContent = String(editedText);
+        updateStudyWorkResultCounter(editedText);
+    }
+
+    async function restoreHistoryWork() {
+        const historyRestore = typeof getHistoryRestore === 'function'
+            ? await getHistoryRestore('study_work')
+            : null;
+        if (!historyRestore) return;
+
+        const input = document.getElementById('studyWorkInput');
+        const result = document.getElementById('studyWorkResult');
+        if (!input || !result) return;
+
+        originalText = historyRestore.original || '';
+        hasStoredProcessedWord = Boolean(historyRestore.hasProcessedDocx);
+        processedWordFilename = historyRestore.processedDocxFilename || processedWordFilename;
+        input.value = originalText;
+        renderStudyWorkResult(historyRestore.result || '');
+        setStudyWorkResultVisible(true);
+        setStudyWorkNewCheckButtonVisible(Boolean(historyRestore.result?.trim()));
+        updateCounter();
     }
 
     async function importWordFile(file) {
@@ -50,17 +100,18 @@
             showStudyWorkError('Выберите файл Word в формате .docx.');
             return;
         }
-        if (file.size > 10 * 1024 * 1024) {
-            showStudyWorkError('Файл больше 10 МБ. Выберите документ меньшего размера.');
+        if (file.size > MAX_STUDY_WORK_FILE_SIZE_BYTES) {
+            showStudyWorkError(`Файл больше ${MAX_STUDY_WORK_FILE_SIZE_LABEL}. Выберите документ меньшего размера.`);
             return;
         }
-        if (typeof mammoth === 'undefined') {
-            showStudyWorkError('Не удалось загрузить модуль чтения Word. Обновите страницу и попробуйте снова.');
+        if (!await hasZipSignature(file)) {
+            showStudyWorkError('Файл не является корректным документом Word .docx.');
             return;
         }
         button.disabled = true;
         button.innerHTML = '<span class="loading"></span> Читаем документ...';
         try {
+            const mammoth = await window.loadMammoth();
             const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
             const text = result.value.trim();
             if (!text) {
@@ -72,9 +123,12 @@
             sourceWordFile = file;
             sourceWordText = text;
             processedWordBlob = null;
+            processedWordFilename = `humary-${file.name}`;
             const wordNote = document.getElementById('studyWorkWordNote');
             if (wordNote) {
-                wordNote.innerHTML = `<i class="fa-solid fa-file-word"></i> ${escapeHtml(file.name)}`;
+                const icon = document.createElement('i');
+                icon.className = 'fa-solid fa-file-word';
+                wordNote.replaceChildren(icon, document.createTextNode(file.name));
                 wordNote.hidden = false;
             }
             input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -92,6 +146,11 @@
         const input = document.getElementById('studyWorkInput');
         if (!input || input.readOnly) {
             showStudyWorkError('Чтобы изменить текст, сначала загрузите новый документ Word или обновите страницу.');
+            return;
+        }
+        if (!navigator.clipboard?.readText) {
+            input.focus();
+            showNotification('Нажмите на поле и выберите «Вставить» в меню телефона.', 'warning');
             return;
         }
         try {
@@ -114,20 +173,24 @@
             showStudyWorkError('Чтобы загрузить PDF, сначала загрузите новый документ Word или обновите страницу.');
             return;
         }
-        if (typeof pdfjsLib === 'undefined') {
-            showStudyWorkError('Не удалось загрузить модуль чтения PDF. Обновите страницу и попробуйте снова.');
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            showStudyWorkError('Выберите файл в формате PDF.');
             return;
         }
-        if (file.size > 10 * 1024 * 1024) {
-            showStudyWorkError('Файл больше 10 МБ. Выберите PDF меньшего размера.');
+        if (file.size > MAX_STUDY_WORK_FILE_SIZE_BYTES) {
+            showStudyWorkError(`Файл больше ${MAX_STUDY_WORK_FILE_SIZE_LABEL}. Выберите PDF меньшего размера.`);
+            return;
+        }
+        if (!await hasPdfSignature(file)) {
+            showStudyWorkError('Файл не является корректным PDF-документом.');
             return;
         }
 
         button.disabled = true;
         button.innerHTML = '<span class="loading"></span> Читаем PDF...';
         try {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-            const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+            const pdfjs = await window.loadPdfJs();
+            const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
             const pages = [];
             for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
                 const page = await pdf.getPage(pageNumber);
@@ -153,25 +216,21 @@
         const input = document.getElementById('studyWorkInput');
         const counter = document.getElementById('studyWorkCounter');
         if (!input || !counter) return;
+        const isAuthenticated = typeof Auth !== 'undefined' && Auth.isAuthenticated();
+        counter.hidden = !isAuthenticated;
+        if (!isAuthenticated) return;
         const current = countWords(input.value);
         const maxWords = getStudyWorkMaxWords();
-        counter.textContent = `${current}/${maxWords}`;
+        counter.textContent = `${current}/${maxWords} ${typeof t === 'function' ? t('words') : 'слов'}`;
         counter.classList.toggle('is-over-limit', current > maxWords);
+        updateStudyWorkResultCounter(document.getElementById('studyWorkEdited')?.innerText || '');
     }
 
-    function downloadTextFile() {
-        const blob = new Blob([document.getElementById('studyWorkEdited').innerText], { type: 'text/plain;charset=utf-8' });
-        const link = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'study-work.txt' });
-        link.click();
-        URL.revokeObjectURL(link.href);
-    }
-
-    async function processWordDocument(workType, preserveOptions) {
+    async function processWordDocument(workType) {
         const formData = new FormData();
         formData.append('file', sourceWordFile);
         formData.append('work_type', workType);
-        formData.append('preserve_options', JSON.stringify(preserveOptions));
-        const response = await fetch('/study-work/docx/process', {
+        const response = await Auth.authorizedFetch('/study-work/docx/process', {
             method: 'POST',
             headers: { Authorization: `Bearer ${Auth.getToken()}` },
             body: formData,
@@ -183,81 +242,124 @@
             error.status = response.status;
             throw error;
         }
+        const historyId = Number(response.headers.get('X-History-Id')) || null;
         processedWordBlob = await response.blob();
-        if (typeof mammoth === 'undefined') throw new Error('Не удалось прочитать обработанный документ Word.');
+        const mammoth = await window.loadMammoth();
         const result = await mammoth.extractRawText({ arrayBuffer: await processedWordBlob.arrayBuffer() });
         if (!result.value.trim()) throw new Error('В обработанном документе не найден текст.');
-        return result.value.trim();
+        return { text: result.value.trim(), historyId };
+    }
+
+    function getStudyWorkHistoryId() {
+        const match = window.location.pathname.match(/^\/study-work\/(\d+)\/?$/);
+        return match ? Number(match[1]) : null;
+    }
+
+    function isIOSDevice() {
+        const platform = navigator.platform || '';
+        return /iPad|iPhone|iPod/i.test(navigator.userAgent)
+            || (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    function openIOSDownloadWindow() {
+        if (!isIOSDevice()) return null;
+        const downloadWindow = window.open('', '_blank');
+        if (downloadWindow) {
+            try { downloadWindow.opener = null; } catch { /* opener may be protected by the browser */ }
+        }
+        return downloadWindow;
+    }
+
+    async function downloadWordBlob(blob, filename, iosDownloadWindow = null) {
+        if (isIOSDevice()) {
+            const file = typeof File === 'function'
+                ? new File([blob], filename, { type: blob.type || WORD_DOCUMENT_MIME })
+                : null;
+            let canUseShareSheet = !iosDownloadWindow && Boolean(file) && typeof navigator.share === 'function';
+            if (canUseShareSheet && navigator.canShare) {
+                try { canUseShareSheet = navigator.canShare({ files: [file] }); } catch { canUseShareSheet = false; }
+            }
+
+            if (canUseShareSheet) {
+                try {
+                    await navigator.share({ files: [file], title: filename });
+                    return;
+                } catch (error) {
+                    if (error?.name === 'AbortError') return;
+                    // A share sheet may be unavailable in an embedded browser.
+                }
+            }
+
+            const objectUrl = URL.createObjectURL(blob);
+            const target = iosDownloadWindow || window.open('', '_blank');
+            if (target) {
+                target.location.href = objectUrl;
+            } else {
+                window.location.href = objectUrl;
+            }
+            window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+            return;
+        }
+
+        const link = Object.assign(document.createElement('a'), {
+            href: URL.createObjectURL(blob),
+            download: filename,
+        });
+        document.body.append(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(link.href), 1_000);
     }
 
     async function downloadEditedWordFile() {
         if (processedWordBlob) {
-            const link = Object.assign(document.createElement('a'), {
-                href: URL.createObjectURL(processedWordBlob),
-                download: sourceWordFile.name.replace(/\.docx$/i, '-готово.docx'),
-            });
-            link.click();
-            URL.revokeObjectURL(link.href);
-            return;
-        }
-        if (sourceWordFile) {
-            showNotification('Сначала обработайте загруженный документ Word.', 'error');
-            return;
-        }
-        if (!sourceWordFile) {
-            downloadTextFile();
+            await downloadWordBlob(processedWordBlob, processedWordFilename);
             return;
         }
 
-        const button = document.getElementById('studyWorkDownload');
-        const editedText = document.getElementById('studyWorkEdited').innerText.trim();
-        const formData = new FormData();
-        formData.append('file', sourceWordFile);
-        formData.append('edited_text', editedText);
-        button.disabled = true;
-        button.innerHTML = '<span class="loading"></span> Готовим .docx...';
+        const iosDownloadWindow = openIOSDownloadWindow();
+        const historyId = getStudyWorkHistoryId();
         try {
-            const response = await fetch('/study-work/docx/export', {
+            if (hasStoredProcessedWord && historyId) {
+                const response = await Auth.authorizedFetch(`/study-work/history/${historyId}/docx/download`);
+                if (!response.ok) {
+                    let detail = 'Не удалось скачать исходный Word-файл.';
+                    try { detail = (await response.json()).detail || detail; } catch (_) { /* non-JSON response */ }
+                    throw new Error(detail);
+                }
+                await downloadWordBlob(await response.blob(), processedWordFilename, iosDownloadWindow);
+                return;
+            }
+
+            const text = document.getElementById('studyWorkEdited')?.innerText || '';
+            if (!text.trim()) {
+                if (iosDownloadWindow && !iosDownloadWindow.closed) iosDownloadWindow.close();
+                return;
+            }
+            const response = await Auth.authorizedFetch('/study-work/docx/download', {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${Auth.getToken()}` },
-                body: formData,
+                headers: {
+                    Authorization: `Bearer ${Auth.getToken()}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text }),
             });
             if (!response.ok) {
-                let detail = 'Не удалось подготовить документ Word.';
-                try {
-                    detail = (await response.json()).detail || detail;
-                } catch (_) {
-                    detail = `Не удалось подготовить документ Word (код ${response.status}). Перезапустите сервер и попробуйте снова.`;
-                }
+                let detail = 'Не удалось подготовить Word-файл.';
+                try { detail = (await response.json()).detail || detail; } catch (_) { /* non-JSON response */ }
                 throw new Error(detail);
             }
-            const blob = await response.blob();
-            const downloadName = sourceWordFile.name.replace(/\.docx$/i, '-готово.docx');
-            const link = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: downloadName });
-            link.click();
-            URL.revokeObjectURL(link.href);
-            showNotification('Документ Word с сохранёнными отступами готов.', 'success');
+            await downloadWordBlob(await response.blob(), processedWordFilename, iosDownloadWindow);
         } catch (error) {
-            showNotification(error.message, 'error');
-        } finally {
-            button.disabled = false;
-            button.innerHTML = sourceWordFile
-                ? '<i class="fa-solid fa-download"></i> Скачать .docx'
-                : '<i class="fa-solid fa-download"></i> Скачать .txt';
+            if (iosDownloadWindow && !iosDownloadWindow.closed) iosDownloadWindow.close();
+            throw error;
         }
-    }
-
-    function renderChecklist(options) {
-        const names = { numbers: 'Числа и даты', terms: 'Термины', sources: 'Ссылки и цитаты', formulas: 'Формулы и обозначения' };
-        const list = document.getElementById('studyWorkChecklist');
-        if (!list) return;
-        list.innerHTML = options.map(option => `<li class="is-done"><i class="fa-solid fa-check"></i> ${names[option]} отмечены для сохранения</li>`).join('') +
-            '<li><i class="fa-solid fa-circle-info"></i> При необходимости отдельно запустите проверку грамматики.</li>';
     }
 
     async function submit() {
         const input = document.getElementById('studyWorkInput');
         const button = document.getElementById('studyWorkSubmit');
+        const submitButtonMarkup = button?.innerHTML;
         const text = input?.value.trim() || '';
         if (!text) { showStudyWorkError('Вставьте текст для подготовки.'); input?.focus(); return; }
         if (!Auth.isAuthenticated()) { Auth.showAuthModal(); return; }
@@ -267,33 +369,43 @@
             return;
         }
         if (!startTextProcessing('humanize')) return;
+        setStudyWorkProcessingError(false);
 
         const workType = document.querySelector('input[name="workType"]:checked')?.value || 'other';
-        const preserveOptions = selectedValues('.study-work-preserve input');
+        const trialWasAvailable = document.getElementById('studyWorkTrialBadge')?.hidden === false;
         button.disabled = true;
-        button.innerHTML = '<span class="loading"></span> Подготавливаем текст...';
+        button.innerHTML = '<span class="loading"></span> Обработка';
+        setStudyWorkNewCheckButtonVisible(false);
         try {
             let editedText;
+            let wordHistoryId = null;
             if (sourceWordFile) {
-                editedText = await processWordDocument(workType, preserveOptions);
+                const processedWord = await processWordDocument(workType);
+                editedText = processedWord.text;
+                wordHistoryId = processedWord.historyId;
             } else {
-                const { ok, status, data } = await API.prepareStudyWork(text, workType, preserveOptions);
+                const { ok, status, data } = await API.prepareStudyWork(text, workType);
                 if (!ok) throw { status, data };
                 editedText = data.result || '';
             }
             originalText = text;
-            renderChangedSentences(text, editedText);
-            const downloadButton = document.getElementById('studyWorkDownload');
-            if (downloadButton) downloadButton.innerHTML = sourceWordFile
-                ? '<i class="fa-solid fa-download"></i> Скачать .docx'
-                : '<i class="fa-solid fa-download"></i> Скачать .txt';
-            document.getElementById('studyWorkResult').hidden = false;
-            document.getElementById('studyWorkResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            renderChecklist(preserveOptions);
-            API.saveHistory('study_work', text, editedText);
-            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
+            if (trialWasAvailable && typeof window.markStudyWorkTrialUsed === 'function') {
+                window.markStudyWorkTrialUsed();
+            }
+            if (typeof refreshAllSubscriptionData === 'function') await refreshAllSubscriptionData(true);
+            if (wordHistoryId) {
+                if (typeof window.clearCachedUserData === 'function') window.clearCachedUserData('history:');
+                window.location.assign(`/study-work/${encodeURIComponent(wordHistoryId)}`);
+                return;
+            }
+            if (await redirectToSavedHistory('study_work', text, editedText)) return;
+
+            renderStudyWorkResult(editedText);
+            setStudyWorkResultVisible(true);
+            setStudyWorkNewCheckButtonVisible(true);
             showToolSuccess('humanize');
         } catch (error) {
+            setStudyWorkProcessingError(true);
             if (error instanceof Error) {
                 if (error.status) showToolError(error.status, { detail: error.message }, 'Не удалось подготовить документ Word.');
                 else showNotification(error.message, 'error');
@@ -303,7 +415,7 @@
             }
         } finally {
             button.disabled = false;
-            button.innerHTML = '<i class="fas fa-graduation-cap"></i><span>Попробовать<br>бесплатно</span>';
+            button.innerHTML = submitButtonMarkup;
             finishTextProcessing();
         }
     }
@@ -311,25 +423,55 @@
     document.addEventListener('DOMContentLoaded', () => {
         const input = document.getElementById('studyWorkInput');
         input?.addEventListener('input', updateCounter);
+        restoreHistoryWork();
         updateCounter();
         window.addEventListener('studyWorkLimitUpdated', updateCounter);
+        window.addEventListener('authStateChanged', updateCounter);
+        document.getElementById('studyWorkWordUpload')?.addEventListener('pointerdown', () => {
+            void window.loadMammoth().catch(() => {});
+        }, { passive: true });
         document.getElementById('studyWorkWordUpload')?.addEventListener('click', () => document.getElementById('studyWorkWordFile')?.click());
         document.getElementById('studyWorkWordFile')?.addEventListener('change', event => importWordFile(event.target.files?.[0]));
         document.getElementById('studyWorkPasteBtn')?.addEventListener('click', pasteStudyWorkText);
+        document.getElementById('studyWorkPdfBtn')?.addEventListener('pointerdown', () => {
+            void window.loadPdfJs().catch(() => {});
+        }, { passive: true });
         document.getElementById('studyWorkPdfBtn')?.addEventListener('click', () => document.getElementById('studyWorkPdfFile')?.click());
         document.getElementById('studyWorkPdfFile')?.addEventListener('change', event => importPdfFile(event.target.files?.[0]));
+        document.getElementById('studyWorkCopyInput')?.addEventListener('click', () => {
+            copyButtonText(document.getElementById('studyWorkCopyInput'), () => document.getElementById('studyWorkInput')?.value || '');
+        });
         document.getElementById('studyWorkSubmit')?.addEventListener('click', submit);
-        document.getElementById('studyWorkRedo')?.addEventListener('click', () => document.getElementById('studyWorkForm')?.scrollIntoView({ behavior: 'smooth' }));
-        document.getElementById('studyWorkRestore')?.addEventListener('click', () => {
-            document.getElementById('studyWorkInput').value = originalText;
-            updateCounter(); document.getElementById('studyWorkResult').hidden = true;
+        document.getElementById('studyWorkNewCheckBtn')?.addEventListener('click', () => {
+            originalText = '';
+            sourceWordFile = null;
+            sourceWordText = '';
+            processedWordBlob = null;
+            processedWordFilename = 'humary-учебная-работа.docx';
+            hasStoredProcessedWord = false;
+            setStudyWorkProcessingError(false);
+            const input = document.getElementById('studyWorkInput');
+            if (input) {
+                input.value = '';
+                input.readOnly = false;
+            }
+            const wordNote = document.getElementById('studyWorkWordNote');
+            if (wordNote) {
+                wordNote.textContent = '';
+                wordNote.hidden = true;
+            }
+            const wordFileInput = document.getElementById('studyWorkWordFile');
+            if (wordFileInput) wordFileInput.value = '';
+            const result = document.getElementById('studyWorkEdited');
+            if (result) result.textContent = '';
+            setStudyWorkResultVisible(false);
+            setStudyWorkNewCheckButtonVisible(false);
+            updateCounter();
+            input?.focus();
         });
         document.getElementById('studyWorkCopy')?.addEventListener('click', () => copyButtonText(document.getElementById('studyWorkCopy'), () => document.getElementById('studyWorkEdited').innerText));
         document.getElementById('studyWorkDownload')?.addEventListener('click', () => {
-            return downloadEditedWordFile();
-            const blob = new Blob([document.getElementById('studyWorkEdited').innerText], { type: 'text/plain;charset=utf-8' });
-            const link = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'учебная-работа.txt' });
-            link.click(); URL.revokeObjectURL(link.href);
+            downloadEditedWordFile().catch(error => showStudyWorkError(error.message || 'Не удалось подготовить Word-файл.'));
         });
         updateCounter();
     });

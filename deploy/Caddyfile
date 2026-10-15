@@ -1,0 +1,18 @@
+{
+    email {$ACME_EMAIL}
+}
+
+# {$SITE_DOMAIN} must be a real public domain or subdomain whose A/AAAA DNS
+# record already points to this server. Caddy then issues and renews the
+# Let's Encrypt certificate automatically.
+{$SITE_DOMAIN} {
+    encode zstd gzip
+
+    # The application is private to the Docker network; this is its only
+    # public entry point.
+    reverse_proxy app:8000
+
+    header {
+        -Server
+    }
+}

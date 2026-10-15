@@ -3,15 +3,15 @@
 {% block title %}Профиль{% endblock %}
 
 {% block content %}
-<div class="profile-container">
+<div class="profile-container" id="profileContainer" aria-busy="true">
     <div class="profile-header">
         <div class="profile-avatar">
-            <img id="profileAvatar" src="" alt="Avatar">
+            <img id="profileAvatar" class="skeleton" src="" alt="Avatar" width="84" height="84" decoding="async" referrerpolicy="no-referrer">
 
         </div>
         <div class="profile-info">
-            <h1 id="profileEmail"></h1>
-            <span class="profile-plan" id="profilePlan"></span>
+            <h1 id="profileEmail" class="skeleton skeleton-text skeleton-text--title"></h1>
+            <span class="profile-plan skeleton skeleton-text skeleton-text--short" id="profilePlan"></span>
         </div>
     </div>
 
@@ -23,18 +23,18 @@
                 <div class="balance-bar-container-large">
                     <div class="balance-bar-fill-large" id="requestsProgress"></div>
                 </div>
-                <div class="balance-card-text" id="balanceMainText"></div>
+                <div class="balance-card-text skeleton skeleton-text skeleton-text--medium" id="balanceMainText"></div>
             </div>
             <a href="/pricing" class="upgrade-btn" id="addTokensBtn" data-i18n="increase_limit">Увеличить лимит</a>
         </div>
 
         <div class="profile-section">
-            <h3><i class="fas fa-crown"></i><span data-i18n="subscription">Подписка</span> <span class="balance-card-plan" id="subscriptionPlan">Free</span></h3>
+            <h3><i class="fas fa-crown"></i><span data-i18n="subscription">Подписка</span> <span class="balance-card-plan skeleton skeleton-text skeleton-text--short" id="subscriptionPlan"></span></h3>
             <div class="balance-card-large">
                 <div class="balance-card-details">
-                    <div class="balance-detail-item">
+                    <div class="balance-detail-item balance-detail-limit">
                         <i class="fas fa-file-word"></i>
-                        <span data-i18n="words_per_request">Лимит слов за один запрос:</span> <strong id="maxWords">300</strong>
+                        <span data-i18n="words_per_request">Лимит слов за один запрос:</span> <strong class="skeleton skeleton-text skeleton-text--short" id="maxWords"></strong>
                     </div>
                     <div class="balance-detail-item" id="expiryRow" style="display: none;">
                         <i class="fas fa-calendar-alt"></i>
@@ -45,10 +45,32 @@
             <a href="/pricing" class="upgrade-btn" id="upgradeBtn" data-i18n="change_plan">Изменить тариф</a>
         </div>
     </div>
+    <section class="profile-section profile-language-section">
+        <h3><i class="fas fa-globe"></i><span data-i18n="interface_language">Язык интерфейса</span></h3>
+        <button type="button" class="profile-language-toggle" id="langToggle">
+            <i class="fas fa-language" aria-hidden="true"></i>
+            <span class="lang-text">Русский</span>
+        </button>
+    </section>
     <div style="display: flex;">
         <button class="danger-btn red" id="deleteAccountBtn">
             <i class="fas fa-trash"></i><span data-i18n="delete_account">Удалить аккаунт</span>
         </button>
+    </div>
+
+    <div id="deleteAccountModal" class="modal" aria-hidden="true">
+        <div class="modal-content delete-account-modal" role="dialog" aria-modal="true" aria-labelledby="deleteAccountModalTitle">
+            <button type="button" class="modal-close delete-account-close" id="deleteAccountClose" aria-label="Закрыть" data-i18n-aria-label="close">&times;</button>
+            <h2 id="deleteAccountModalTitle"><i class="fas fa-triangle-exclamation"></i><span data-i18n="profile_delete_title">Удалить аккаунт?</span></h2>
+            <p data-i18n="profile_delete_description">История запросов, обработанные документы, подписка и баланс слов будут удалены безвозвратно.</p>
+            <label for="deleteAccountConfirmation" data-i18n="profile_delete_confirmation">Введите DELETE для подтверждения</label>
+            <input id="deleteAccountConfirmation" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="6">
+            <div id="deleteAccountError" class="error-message" role="alert" hidden></div>
+            <div class="delete-account-actions">
+                <button type="button" class="delete-account-cancel" id="deleteAccountCancel" data-i18n="cancel">Отмена</button>
+                <button type="button" class="delete-account-confirm" id="deleteAccountConfirm" disabled data-i18n="profile_delete_confirm">Удалить аккаунт</button>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -57,5 +79,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/js/profile.js" defer></script>
+<script src="/js/profile.js?v=20261011-profile-skeleton" defer></script>
 {% endblock %}

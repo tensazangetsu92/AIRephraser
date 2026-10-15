@@ -1,5 +1,6 @@
 # app/email_utils.py
 import smtplib
+import logging
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -9,14 +10,98 @@ from app.config import (
 )
 import random
 import string
+import secrets
 
 # Хранилище кодов подтверждения (в production используйте Redis или БД)
 verification_codes = {}
+logger = logging.getLogger("uvicorn.error")
+
+
+class VerificationEmailDeliveryError(RuntimeError):
+    """Raised when the verification email could not be handed to SMTP."""
 
 
 def generate_verification_code(length: int = 6) -> str:
     """Генерирует 6-значный код подтверждения"""
     return ''.join(random.choices(string.digits, k=length))
+
+
+def generate_password_reset_code(length: int = 6) -> str:
+    """Generate a cryptographically secure numeric password-reset code."""
+    return ''.join(secrets.choice(string.digits) for _ in range(length))
+
+
+def send_email_login_code(email: str, code: str) -> bool:
+    """Send a passwordless sign-in code without exposing it in logs."""
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
+        msg['To'] = email
+        msg['Subject'] = "Код входа в Humary"
+        msg['Auto-Submitted'] = 'auto-generated'
+        msg['X-Auto-Response-Suppress'] = 'OOF, DR, RN, NRN'
+
+        html_body = f"""
+        <!DOCTYPE html>
+        <html lang="ru">
+        <body style="margin:0;padding:24px;background:#1f1f1e;color:#dfded8;font-family:Arial,sans-serif;">
+            <div style="max-width:480px;margin:0 auto;padding:28px;background:#292a31;border:1px solid #444552;border-radius:16px;">
+                <h2 style="margin:0 0 14px;color:#f3f3f8;">Вход в Humary</h2>
+                <p style="margin:0 0 18px;line-height:1.5;">Введите этот код на странице Humary. Если аккаунта ещё нет, он будет создан после подтверждения.</p>
+                <div style="padding:15px;text-align:center;color:#f3f3f8;font-size:30px;font-weight:700;letter-spacing:6px;background:#25262d;border-radius:10px;">{code}</div>
+                <p style="margin:18px 0 0;color:#c0c1ca;line-height:1.5;">Код действует 10 минут. Если вы не запрашивали вход, просто проигнорируйте это письмо.</p>
+            </div>
+        </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_body, 'html'))
+
+        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        logger.info("Passwordless sign-in code email delivered")
+        return True
+    except Exception as error:
+        logger.warning("Passwordless sign-in code email delivery failed: %s", error)
+        return False
+
+
+def send_password_reset_email(email: str, code: str) -> bool:
+    """Send a one-time password reset code without exposing it in logs."""
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
+        msg['To'] = email
+        msg['Subject'] = "Восстановление пароля в Humary"
+        msg['Auto-Submitted'] = 'auto-generated'
+        msg['X-Auto-Response-Suppress'] = 'OOF, DR, RN, NRN'
+
+        html_body = f"""
+        <!DOCTYPE html>
+        <html lang="ru">
+        <body style="margin:0;padding:24px;background:#1f1f1e;color:#dfded8;font-family:Arial,sans-serif;">
+            <div style="max-width:480px;margin:0 auto;padding:28px;background:#292a31;border:1px solid #444552;border-radius:16px;">
+                <h2 style="margin:0 0 14px;color:#f3f3f8;">Восстановление пароля</h2>
+                <p style="margin:0 0 18px;line-height:1.5;">Введите этот код на странице Humary, чтобы задать новый пароль:</p>
+                <div style="padding:15px;text-align:center;color:#f3f3f8;font-size:30px;font-weight:700;letter-spacing:6px;background:#25262d;border-radius:10px;">{code}</div>
+                <p style="margin:18px 0 0;color:#c0c1ca;line-height:1.5;">Код действует 10 минут. Если вы не запрашивали смену пароля, просто проигнорируйте это письмо.</p>
+            </div>
+        </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_body, 'html'))
+
+        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as error:
+        logger.warning("Password-reset email delivery failed: %s", error)
+        return False
 
 
 def send_verification_email(email: str, code: str) -> bool:
@@ -96,10 +181,10 @@ def send_verification_email(email: str, code: str) -> bool:
         server.send_message(msg)
         server.quit()
 
-        print(f"✅ Email sent to {email}")
+        logger.info("Verification email delivered")
         return True
     except Exception as e:
-        print(f"❌ Failed to send email: {e}")
+        logger.warning("Verification email delivery failed: %s", e)
         return False
 
 

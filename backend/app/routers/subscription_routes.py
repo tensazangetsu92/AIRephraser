@@ -1,35 +1,50 @@
 # app/routers/subscription_routes.py
-from fastapi import APIRouter, Depends
-from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
-from app.models import SubscriptionCreate, WordPackagePurchase
 from app.database import get_db, User
 from auth import get_current_user
 from app.subscription import (
     get_user_subscription,
-    upgrade_subscription,
-    get_usage_stats,
     get_plan_limits,
     get_study_work_max_words,
+    get_subscription_usage_snapshot,
     check_subscription_expired,
     SUBSCRIPTION_PLANS,
     PURCHASE_PACKAGES,
-    purchase_word_package,
     get_word_balance,
 )
 
 router = APIRouter(tags=["subscription"])
 
+PAYMENTS_NOT_AVAILABLE_DETAIL = "Онлайн-оплата пока не подключена."
+
+
+def _payments_not_available() -> None:
+    """Block browser requests until a verified payment webhook is implemented."""
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail=PAYMENTS_NOT_AVAILABLE_DETAIL,
+    )
+
 
 @router.get("/subscription")
 async def get_subscription(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Получить информацию о подписке пользователя"""
-    check_subscription_expired(db, current_user.id)
-
     subscription = get_user_subscription(db, current_user.id)
-    usage_stats = get_usage_stats(db, current_user.id)
+    check_subscription_expired(db, current_user.id, subscription)
+    usage_stats, study_work_trial_status = get_subscription_usage_snapshot(
+        db,
+        current_user.id,
+        subscription,
+    )
     limits = get_plan_limits(subscription.plan_type)
+    word_balance = get_word_balance(
+        db,
+        current_user.id,
+        subscription=subscription,
+        words_used=usage_stats["words_used"],
+    )
 
     return {
         "success": True,
@@ -43,57 +58,43 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: S
             "max_words_per_request": limits["max_words_per_request"],
             "study_work_max_words_per_request": get_study_work_max_words(subscription.plan_type),
         },
+        "study_work_trial": {
+            "status": study_work_trial_status,
+        },
         "usage": usage_stats,
-        "available_plans": SUBSCRIPTION_PLANS
-        ,"word_balance": get_word_balance(db, current_user.id)
-        ,"available_word_packages": PURCHASE_PACKAGES
+        "available_plans": SUBSCRIPTION_PLANS,
+        "word_balance": word_balance,
+        "available_word_packages": PURCHASE_PACKAGES,
     }
 
 
 @router.post("/subscription/word-packages/purchase")
 async def purchase_word_package_endpoint(
-    purchase: WordPackagePurchase,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
-    package, transaction = purchase_word_package(db, current_user.id, purchase.package_id, purchase.payment_id)
-    return {
-        "success": True,
-        "message": "Word package activated",
-        "package": {"id": purchase.package_id, **package},
-        "transaction_id": transaction.id,
-        "word_balance": get_word_balance(db, current_user.id),
-    }
+    """Reserved for a future payment-provider webhook flow.
+
+    A browser request is never proof of payment, so it must not change a
+    balance before the provider integration is implemented.
+    """
+    _ = current_user
+    _payments_not_available()
 
 
 @router.post("/subscription/upgrade")
 async def upgrade_subscription_endpoint(
-        plan_data: SubscriptionCreate,
-        current_user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
 ):
-    subscription = upgrade_subscription(
-        db,
-        current_user.id,
-        plan_data.plan_type,
-        payment_id=f"test_payment_{datetime.now().timestamp()}"
-    )
-    limits = get_plan_limits(subscription.plan_type)
-
-    return {
-        "success": True,
-        "message": f"Subscription upgraded to {plan_data.plan_type}",
-        "subscription": {
-            "plan_type": subscription.plan_type,
-            "end_date": subscription.end_date,
-            "word_limit": limits["word_limit"]
-        }
-    }
+    """Reserved for a future payment-provider webhook flow."""
+    _ = current_user
+    _payments_not_available()
 
 
 @router.get("/subscription/plans")
-async def get_subscription_plans():
+async def get_subscription_plans(response: Response):
     """Получить список доступных планов подписки"""
+    # Plans are public configuration, unlike a user's balance or active plan.
+    response.headers["Cache-Control"] = "public, max-age=3600, must-revalidate"
     return {
         "success": True,
         "plans": SUBSCRIPTION_PLANS

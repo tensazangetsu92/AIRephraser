@@ -10,6 +10,7 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background: var(--body-background-color);
 }
 
 .editor {
@@ -27,6 +28,32 @@
     margin-right: auto;
 }
 
+/* Humanizer keeps its header, editor, and controls inside the viewport.
+   The text areas remain scrollable when the available height is limited. */
+@media (min-width: 721px) {
+    .container:has(#editorContainer) {
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .container:has(#editorContainer) .tool-page-intro,
+    .container:has(#editorContainer) .humanizer-controls {
+        flex: 0 0 auto;
+    }
+
+    .container:has(#editorContainer) #editorContainer {
+        flex: 1 1 auto;
+        min-height: 0;
+        margin-top: 0;
+        margin-bottom: .75rem;
+    }
+
+    .container:has(#editorContainer) #editorContainer > .col {
+        height: auto;
+        min-height: 0;
+    }
+}
 .col {
     flex: 1;
     min-width: 0;
@@ -108,7 +135,8 @@ textarea::-webkit-scrollbar-track {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 0.5rem;
+    margin: 0;
+    margin-top: 15px;
     font-size: 0.85rem;
 }
 
@@ -132,17 +160,12 @@ textarea::-webkit-scrollbar-track {
     min-height: 0;
     display: flex;
     flex-direction: column;
+    container-type: inline-size;
 }
 
 /* Когда textarea не пустой - скрываем действия загрузки */
 .textarea-wrapper textarea:not(:placeholder-shown) ~ .document-actions {
     display: none;
-}
-
-/* Или скрываем когда есть фокус */
-.textarea-wrapper textarea:focus ~ .document-actions {
-    opacity: 0;
-    visibility: hidden;
 }
 
 .copy-text-btn {
@@ -201,7 +224,7 @@ textarea::-webkit-scrollbar-track {
     background: rgba(18, 18, 18, 0.2);
     border: transparent;
     border-radius: 10px;
-    padding: 10px 16px;
+    padding: 11px 19px;
     color: white;
     font-size: 0.9rem;
     font-weight: 500;
@@ -250,11 +273,28 @@ textarea::-webkit-scrollbar-track {
     transform: none;
 }
 
-.paste-btn:hover {
+.document-actions .paste-btn:hover,
+.document-actions .pdf-btn:hover,
+.document-actions .word-btn:hover {
     opacity: 0.9;
+    transform: translateY(-1px);
 }
 
-.pdf-btn:hover {
-    opacity: 0.9;
-}
+@container (max-width: 460px) {
+    .document-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: min(300px, calc(100% - 1.5rem));
+        gap: 8px;
+    }
 
+    .document-actions .paste-btn,
+    .document-actions .pdf-btn,
+    .document-actions .word-btn {
+        justify-content: center;
+        width: auto;
+        padding: 9px 12px;
+        font-size: 0.82rem;
+    }
+}

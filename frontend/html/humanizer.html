@@ -23,8 +23,8 @@
             </div>
         </div>
         <div class="word-counter-wrapper">
-            <span class="word-count" id="wordCount"></span>
-            <span class="word-warning" id="wordWarning"></span>
+            <span class="word-count" id="wordCount" hidden></span>
+            <span class="word-warning" id="wordWarning" hidden></span>
             <button class="copy-text-btn" id="copyInputBtn" title="Копировать текст" data-i18n-title="copy_text">
                 <i class="fa-regular fa-clone"></i>
             </button>
@@ -34,7 +34,7 @@
         <div class="editor-name" data-i18n="result">Результат</div>
         <textarea id="result" class="output" placeholder="Результат появится здесь..." data-i18n-placeholder="result_placeholder" rows="10" readonly></textarea>
         <div class="word-counter-wrapper">
-            <span class="word-count" id="resultWordCount">0/1000</span>
+            <span class="word-count" id="resultWordCount" data-i18n-words-counter>0/1000 слов</span>
             <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат" data-i18n-title="copy_result">
                 <i class="fa-regular fa-clone"></i>
             </button>
@@ -45,53 +45,50 @@
 <div class="controls humanizer-controls">
     <div class="control-group">
         <div class="label-wrapper">
-            <i class="fa-solid fa-face-smile"></i>
-            <label data-i18n="tone_label">Тон</label>
+            <i class="fa-solid fa-pen-fancy"></i>
+            <label data-i18n="style_label">Стиль</label>
         </div>
-        <div class="custom-select" data-value="neutral">
+        <div class="custom-select" data-value="human">
             <button type="button" class="custom-select-trigger">
-                <span class="custom-select-label">Нейтральный</span>
+                <span class="custom-select-label" data-i18n="style_human">Человеческий</span>
                 <i class="fas fa-chevron-down custom-select-arrow"></i>
             </button>
             <div class="custom-select-options">
-                <div class="custom-select-option selected" data-value="neutral">Нейтральный</div>
-                <div class="custom-select-option" data-value="formal">Формальный</div>
-                <div class="custom-select-option" data-value="casual">Повседневный</div>
-                <div class="custom-select-option" data-value="friendly">Дружелюбный</div>
-                <div class="custom-select-option" data-value="academic">Академический</div>
+                <div class="custom-select-option selected" data-value="human" data-i18n="style_human">Человеческий</div>
+                <div class="custom-select-option" data-value="literary" data-i18n="style_literary">Литературный</div>
+                <div class="custom-select-option" data-value="academic" data-i18n="style_academic">Академический</div>
             </div>
         </div>
-        <input type="hidden" id="tone" value="neutral">
+        <input type="hidden" id="style" value="human">
     </div>
 
     <div class="control-group">
         <div class="label-wrapper">
-            <i class="fa-solid fa-pen-fancy"></i>
-            <label data-i18n="style_label">Стиль</label>
+            <i class="fa-solid fa-globe"></i>
+            <label data-i18n="humanizer_language_label">Язык текста</label>
         </div>
-        <div class="custom-select" data-value="simple">
+        <div class="custom-select" data-value="ru">
             <button type="button" class="custom-select-trigger">
-                <span class="custom-select-label">Простой</span>
+                <span class="custom-select-label" data-i18n="language_russian">Русский</span>
                 <i class="fas fa-chevron-down custom-select-arrow"></i>
             </button>
             <div class="custom-select-options">
-                <div class="custom-select-option selected" data-value="simple">Простой</div>
-                <div class="custom-select-option" data-value="creative">Креативный</div>
-                <div class="custom-select-option" data-value="professional">Профессиональный</div>
+                <div class="custom-select-option selected" data-value="ru" data-i18n="language_russian">Русский</div>
+                <div class="custom-select-option" data-value="en" data-i18n="language_english">Английский</div>
             </div>
         </div>
-        <input type="hidden" id="style" value="simple">
+        <input type="hidden" id="targetLanguage" value="ru">
     </div>
 
-    <div class="control-group">
-        <button class="main-btn" id="humanizeBtn"><i class="fas fa-pen-fancy"></i><span data-i18n="humanize_btn">Очеловечить</span></button>
-    </div>
+    <button class="main-btn" id="humanizeBtn"><i class="fas fa-pen-fancy"></i><span data-i18n="humanize_btn">Очеловечить</span></button>
+    <button class="detector-new-check-btn tool-new-check-btn" id="humanizeNewCheckBtn" style="display: none;">
+        <i class="fas fa-redo"></i><span data-i18n="new_check">Новая проверка</span>
+    </button>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
+<script src="/js/humanize.js?v=20261011-page-only" defer></script>
 {% endblock %}
 
 

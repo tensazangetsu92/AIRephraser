@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Humary — Вход</title>
+    <link rel="icon" type="image/svg+xml" href="/images/logo1.svg?v=20261009-email-code-auth">
+    <link rel="stylesheet" href="{{ css_bundle_url() }}">
+    <link rel="preload" href="/fonts/Manrope-Variable.ttf?v=20261009-email-code-auth" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/vendor/fontawesome/css/humary-icons.css?v=20261011-icon-subset">
+</head>
+<body class="auth-page-body">
+<main class="auth-page" id="authPage">
+    <a class="auth-page-brand" href="/"><i class="fa-solid fa-feather-pointed"></i><span>Humary</span></a>
+
+    <section class="auth-card" id="authFormCard" aria-labelledby="authTitle">
+        <h1 id="authTitle" data-i18n="auth_email_code_title" data-i18n-document-title="auth_email_code_title">Вход или регистрация</h1>
+        <p class="auth-card-description" data-i18n="auth_email_code_description">Укажите email — отправим одноразовый код. Если аккаунта ещё нет, создадим его после подтверждения.</p>
+        <div id="authError" class="error-message" style="display: none;" role="alert"></div>
+        <form class="auth-form" id="authForm" novalidate>
+            <input type="email" id="authEmail" name="email" placeholder="Email" autocomplete="email" inputmode="email" required>
+            <label class="auth-cookie-consent" for="authCookieConsent">
+                <input type="checkbox" id="authCookieConsent" required>
+                <span data-i18n="auth_cookie_consent">Я соглашаюсь на использование cookie для авторизации и сохранения сессии.</span>
+                <a href="/cookies" target="_blank" rel="noopener" data-i18n="auth_cookie_policy">Подробнее</a>
+            </label>
+            <label class="auth-cookie-consent auth-legal-consent" for="authTermsAccepted">
+                <input type="checkbox" id="authTermsAccepted" required>
+                <span><span data-i18n="auth_terms_accept_prefix">Принимаю </span><a href="/terms" target="_blank" rel="noopener" data-i18n="auth_terms_link">Условия использования</a><span data-i18n="auth_terms_accept_connector"> и подтверждаю, что ознакомлен с </span><a href="/privacy" target="_blank" rel="noopener" data-i18n="auth_privacy_link">Политикой конфиденциальности</a><span data-i18n="auth_terms_accept_suffix">.</span></span>
+            </label>
+            <button type="submit" class="auth-page-submit" id="authSubmitBtn" data-i18n="auth_email_code_request">Получить код</button>
+        </form>
+        <div class="auth-divider"><span data-i18n="auth_or">или</span></div>
+        <div class="auth-oauth-actions">
+            <button type="button" id="yandexLoginBtn" class="auth-page-oauth"><span class="yandex-mark" aria-hidden="true">Я</span><span data-i18n="login_yandex">Войти через Яндекс</span></button>
+            <button type="button" id="vkLoginBtn" class="auth-page-oauth"><i class="fab fa-vk" aria-hidden="true"></i><span data-i18n="login_vk">Войти через VK ID</span></button>
+        </div>
+    </section>
+
+    <section class="auth-card auth-verification-card" id="verificationModal" aria-labelledby="verificationTitle">
+        <h2 id="verificationTitle" data-i18n="auth_email_code_verify_title">Введите код из письма</h2>
+        <p id="verificationEmail"></p>
+        <div id="verificationError" class="error-message" style="display: none;" role="alert"></div>
+        <input type="text" id="verificationCode" placeholder="Код из письма" data-i18n-placeholder="auth_email_code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+        <div class="auth-verification-actions">
+            <button type="button" class="auth-page-submit" id="verificationSubmitBtn" data-i18n="auth_email_code_confirm">Продолжить</button>
+            <button type="button" class="auth-page-secondary" id="resendCodeBtn" data-i18n="resend_code">Отправить код повторно</button>
+        </div>
+    </section>
+</main>
+<div id="notificationToast" class="notification-toast" role="status" aria-live="polite" aria-atomic="true">
+    <div class="notification-content">
+        <i class="notification-icon" id="notificationIcon"></i>
+        <span id="notificationMessage"></span>
+    </div>
+    <button type="button" class="notification-close" id="notificationClose" aria-label="Закрыть уведомление" data-i18n-aria-label="close" hidden>
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+</div>
+<script src="/js/utils.js?v=20261011-lazy-upload-libraries" defer></script>
+<script src="/js/api.js?v=20261010-email-code-resend-timer" defer></script>
+<script src="/js/notifications.js?v=20261011-toast-accessibility" defer></script>
+<script src="/js/auth.js?v=20261011-terms-acceptance" defer></script>
+<script src="/js/lang.js?v=20261011-history-empty-states" defer></script>
+<script src="/js/cookie-consent.js?v=20261010-auth-cookie-consent" defer></script>
+</body>
+</html>

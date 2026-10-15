@@ -2,9 +2,9 @@ let pendingDetectText = null;
 const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 50;
 const RESULT_MAX_AGE_MS = 16 * 60 * 60 * 1000;
 
-function loadTextFromLocalStorage() {
+async function loadTextFromLocalStorage() {
     const elements = window.elements || {};
-    const historyRestore = typeof takeHistoryRestore === 'function' ? takeHistoryRestore('detector') : null;
+    const historyRestore = typeof getHistoryRestore === 'function' ? await getHistoryRestore('detector') : null;
     if (historyRestore) {
         localStorage.setItem('detector_input_text', historyRestore.original || '');
         localStorage.setItem('detector_result_data', historyRestore.result || '');
@@ -38,30 +38,47 @@ function loadTextFromLocalStorage() {
     } else {
         localStorage.removeItem('detector_result_data');
         localStorage.removeItem('detector_result_time');
-        localStorage.removeItem('detector_input_text'); // ← добавь
-        if (elements.input) elements.input.value = ''; // ← добавь
         hideResultColumns();
     }
 }
 
 function showResultColumns() {
-    document.getElementById('inputCol')?.style.setProperty('display', 'none');
+    const inputCol = document.getElementById('inputCol');
+    // Preserve the usable editor height when the source column is replaced by
+    // the result column. A fixed 600px value made long viewports shrink here.
+    const inputHeight = inputCol?.getBoundingClientRect().height;
+    if (inputCol) inputCol.style.setProperty('display', 'none');
     const resultCol = document.getElementById('resultCol');
-    if (resultCol) resultCol.style.display = '';
+    if (resultCol) {
+        resultCol.style.display = '';
+        if (inputHeight) resultCol.style.height = `${inputHeight}px`;
+    }
     const reportCol = document.getElementById('detectorReportCol');
-    if (reportCol) reportCol.style.display = 'flex';
+    if (reportCol) {
+        reportCol.style.display = 'flex';
+        if (inputHeight) reportCol.style.height = `${inputHeight}px`;
+    }
     document.getElementById('editorContainer')?.classList.remove('single-col');
+    document.getElementById('newCheckBtn')?.style.setProperty('display', 'inline-flex');
     const detectorBtnWrapper = document.querySelector('.detector-btn-wrapper');
     if (detectorBtnWrapper) detectorBtnWrapper.style.display = 'none';
-    document.querySelectorAll('.col').forEach(col => col.style.height = '600px');
 }
 
 function hideResultColumns() {
     const inputCol = document.getElementById('inputCol');
     if (inputCol) inputCol.style.display = '';
-    document.getElementById('resultCol')?.style.setProperty('display', 'none');
-    document.getElementById('detectorReportCol')?.style.setProperty('display', 'none');
+    const resultCol = document.getElementById('resultCol');
+    if (resultCol) {
+        resultCol.style.setProperty('display', 'none');
+        resultCol.style.removeProperty('height');
+    }
+    const reportCol = document.getElementById('detectorReportCol');
+    if (reportCol) {
+        reportCol.style.setProperty('display', 'none');
+        reportCol.style.removeProperty('height');
+    }
     document.getElementById('editorContainer')?.classList.add('single-col');
+    document.getElementById('newCheckBtn')?.style.setProperty('display', 'none');
     const detectorBtnWrapper = document.querySelector('.detector-btn-wrapper');
     if (detectorBtnWrapper) detectorBtnWrapper.style.display = '';
 }
@@ -73,12 +90,43 @@ function renderDetectorResult(data) {
     const aiProbability = Number.isFinite(Number(data.ai_probability)) ? Number(data.ai_probability) : 0;
     const sentences = Array.isArray(data.sentences) ? data.sentences.filter(Boolean) : [];
     const resultDiv = document.getElementById('result');
+    const sourceText = document.getElementById('input')?.value || '';
     if (resultDiv) {
-        resultDiv.innerHTML = sentences.map(s =>
-            `<span class="detector-sentence sentence-${['human', 'mixed', 'ai'].includes(s.label) ? s.label : 'mixed'}">${escapeHtml(String(s.text || ''))}</span>`
-        ).join(' ');
+        const fragment = document.createDocumentFragment();
+        let cursor = 0;
+        let canApplyLabels = Boolean(sourceText && sentences.length);
+
+        for (const sentence of sentences) {
+            const sentenceText = String(sentence.text || '').trim();
+            const start = sourceText.indexOf(sentenceText, cursor);
+            if (!sentenceText || start < cursor) {
+                canApplyLabels = false;
+                break;
+            }
+
+            fragment.append(document.createTextNode(sourceText.slice(cursor, start)));
+            const sourceFragment = sourceText.slice(start, start + sentenceText.length);
+            if (['human', 'mixed', 'ai'].includes(sentence.label)) {
+                const span = document.createElement('span');
+                span.className = `detector-sentence sentence-${sentence.label}`;
+                span.textContent = sourceFragment;
+                fragment.append(span);
+            } else {
+                fragment.append(document.createTextNode(sourceFragment));
+            }
+            cursor = start + sentenceText.length;
+        }
+
+        if (canApplyLabels) {
+            fragment.append(document.createTextNode(sourceText.slice(cursor)));
+            resultDiv.replaceChildren(fragment);
+        } else {
+            // The detector must never change the user's text just because the
+            // provider returned sentence boundaries imprecisely.
+            resultDiv.textContent = sourceText || sentences.map(s => String(s.text || '')).join(' ');
+        }
     }
-    updateResultWordCounter(sentences.map(s => String(s.text || '')).join(' '));
+    updateResultWordCounter(sourceText || sentences.map(s => String(s.text || '')).join(' '));
 
     renderDonutChart(humanProbability, mixedProbability, aiProbability);
 
@@ -91,7 +139,9 @@ function renderDetectorResult(data) {
 
     const verdictEl = document.getElementById('detectorVerdict');
     if (verdictEl) {
-        verdictEl.innerHTML = `<strong>${escapeHtml(data.verdict || '')}</strong><br>${escapeHtml(data.explanation || '')}`;
+        const verdict = document.createElement('strong');
+        verdict.textContent = String(data.verdict || '');
+        verdictEl.replaceChildren(verdict, document.createElement('br'), document.createTextNode(String(data.explanation || '')));
     }
 
     const center = document.getElementById('detectorChartCenter');
@@ -124,8 +174,8 @@ function renderDonutChart(humanPct, mixedPct, aiPct) {
 
 async function processDetectText(text) {
     const detectBtn = document.getElementById('detectBtn');
-    const resultDiv = document.getElementById('result');
     const newCheckBtn = document.getElementById('newCheckBtn');
+    const detectButtonMarkup = detectBtn?.innerHTML;
     if (!startTextProcessing('detector')) return;
 
     if (detectBtn) {
@@ -134,64 +184,36 @@ async function processDetectText(text) {
     }
     if (newCheckBtn) newCheckBtn.disabled = true;
 
-    if (resultDiv) resultDiv.innerHTML = '';
-    updateResultWordCounter('');
-
-    const legendHuman = document.getElementById('legendHuman');
-    const legendMixed = document.getElementById('legendMixed');
-    const legendAi = document.getElementById('legendAi');
-    if (legendHuman) legendHuman.textContent = '0%';
-    if (legendMixed) legendMixed.textContent = '0%';
-    if (legendAi) legendAi.textContent = '0%';
-
-    const verdictEl = document.getElementById('detectorVerdict');
-    if (verdictEl) verdictEl.innerHTML = '';
-
-    const center = document.getElementById('detectorChartCenter');
-    if (center) { center.textContent = 'AI'; center.style.color = ''; }
-
-    ['chartHuman', 'chartMixed', 'chartAi'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.setAttribute('stroke-dasharray', `0 ${CIRCLE_CIRCUMFERENCE}`);
-    });
-
     try {
         const { ok, status, data } = await API.detect(text);
 
         if (ok) {
+            clearWarning();
+            if (typeof refreshAllSubscriptionData === 'function') await refreshAllSubscriptionData(true);
+            if (await redirectToSavedHistory('detector', text, JSON.stringify(data.result))) return;
+
             renderDetectorResult(data.result);
             showResultColumns();
             localStorage.setItem('detector_result_data', JSON.stringify(data.result));
             localStorage.setItem('detector_result_time', Date.now());
-            clearWarning();
-            API.saveHistory('detector', text, JSON.stringify(data.result));
-            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
             showToolSuccess('detector');
         } else if (status === 401) {
-            const errorMessage = showToolError(status, data);
-            if (resultDiv) resultDiv.textContent = errorMessage;
-            showResultColumns();
+            showToolError(status, data);
             Auth.logout();
             if (typeof window.updateUI === 'function') window.updateUI();
             setTimeout(() => Auth.showAuthModal(), 1500);
         } else if (status === 429) {
-            const errorMessage = showToolError(status, data);
-            if (resultDiv) resultDiv.textContent = errorMessage;
-            showResultColumns();
-            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
+            showToolError(status, data);
+            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData(true);
         } else {
-            const errorMessage = showToolError(status, data, 'Не удалось проанализировать текст');
-            if (resultDiv) resultDiv.textContent = errorMessage;
-            showResultColumns();
+            showToolError(status, data, 'Не удалось проанализировать текст');
         }
     } catch {
-        const errorMessage = showToolNetworkError();
-        if (resultDiv) resultDiv.textContent = errorMessage;
-        showResultColumns();
+        showToolNetworkError();
     } finally {
         if (detectBtn) {
             detectBtn.disabled = false;
-            detectBtn.innerHTML = '<img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Проверить текст';
+            detectBtn.innerHTML = detectButtonMarkup;
         }
         if (newCheckBtn) newCheckBtn.disabled = false;
         finishTextProcessing();
@@ -240,6 +262,11 @@ async function send() {
 async function pasteFromClipboard() {
     const textarea = document.getElementById('input');
     const pasteBtn = document.getElementById('pasteBtn');
+    if (!navigator.clipboard?.readText) {
+        textarea?.focus();
+        showNotification('Нажмите на поле и выберите «Вставить» в меню телефона.', 'warning');
+        return;
+    }
     try {
         const text = await navigator.clipboard.readText();
         if (text) {

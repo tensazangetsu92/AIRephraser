@@ -6,23 +6,42 @@
 <div class="history-container">
     <div class="history-header">
         <h1><i class="fas fa-history"></i><span data-i18n="history_title">История запросов</span></h1>
+        <button type="button" class="history-clear-btn" id="clearHistoryBtn">
+            <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+            <span data-i18n="clear_history">Очистить историю</span>
+        </button>
     </div>
 
     <div class="history-filters">
         <div class="history-tabs" id="historyTabs">
             <button class="history-tab active" data-type="all" data-i18n="history_all">Все</button>
+            <button class="history-tab" data-type="study_work" data-i18n="nav_study_work">Учебная работа</button>
             <button class="history-tab" data-type="humanizer" data-i18n="nav_humanizer">Гуманайзер</button>
             <button class="history-tab" data-type="detector" data-i18n="nav_detector">Детектор</button>
             <button class="history-tab" data-type="paraphraser" data-i18n="nav_paraphraser">Перефразер</button>
-            <button class="history-tab" data-type="grammar" data-i18n="nav_grammar">Грамматика</button>
         </div>
     </div>
 
     <div class="history-list" id="historyList"></div>
     <div id="historySentinel" style="height: 1px;"></div>
+
+    <div id="clearHistoryModal" class="modal" aria-hidden="true">
+        <div class="modal-content history-clear-modal" role="dialog" aria-modal="true" aria-labelledby="clearHistoryModalTitle">
+            <button type="button" class="modal-close history-clear-close" id="clearHistoryClose" aria-label="Закрыть" data-i18n-aria-label="close">&times;</button>
+            <h2 id="clearHistoryModalTitle"><i class="fa-solid fa-triangle-exclamation"></i><span data-i18n="history_clear_title">Очистить историю?</span></h2>
+            <p data-i18n="history_clear_description">Все сохранённые тексты и результаты будут удалены безвозвратно.</p>
+            <label for="clearHistoryConfirmation" data-i18n="history_clear_confirmation">Введите DELETE для подтверждения</label>
+            <input id="clearHistoryConfirmation" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="6">
+            <div id="clearHistoryError" class="error-message" role="alert" hidden></div>
+            <div class="history-clear-actions">
+                <button type="button" class="history-clear-cancel" id="clearHistoryCancel" data-i18n="cancel">Отмена</button>
+                <button type="button" class="history-clear-confirm" id="clearHistoryConfirm" disabled data-i18n="history_clear_confirm">Очистить историю</button>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="/js/history.js?v=20260815-history-restore" defer></script>
+<script src="/js/history.js?v=20261011-history-empty-states" defer></script>
 {% endblock %}

@@ -7,13 +7,34 @@ from typing import Literal, Optional
 class UserLogin(BaseModel):
     """Модель для входа пользователя"""
     email: EmailStr
-    password: str
+    password: str = Field(min_length=1, max_length=256)
 
 
 class UserRegister(BaseModel):
     """Модель для регистрации пользователя"""
     email: EmailStr
-    password: str
+    password: str = Field(min_length=8, max_length=256)
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str = Field(min_length=8, max_length=256)
+
+
+class EmailCodeRequest(BaseModel):
+    """Request a one-time code for passwordless sign-in or registration."""
+    email: EmailStr
+
+
+class EmailCodeConfirm(BaseModel):
+    """Complete passwordless sign-in with a short-lived code."""
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6)
 
 
 class Token(BaseModel):
@@ -26,6 +47,8 @@ class Token(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: str
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
     created_at: Optional[datetime] = None
     is_active: bool = True
 
@@ -56,7 +79,7 @@ class SubscriptionCreate(BaseModel):
 
 
 class WordPackagePurchase(BaseModel):
-    package_id: Literal["words_2000", "words_5000", "words_10000"]
+    package_id: Literal["words_2000", "words_5000", "words_10000", "words_30000"]
     payment_id: Optional[str] = None
 
 
@@ -73,17 +96,16 @@ class UsageStatsResponse(BaseModel):
 class HumanizeRequest(BaseModel):
     """Модель запроса на обработку текста"""
     text: str
-    tone: Literal["neutral", "formal", "casual", "friendly", "academic"] = "neutral"
-    style: Literal["simple", "creative", "professional"] = "simple"
+    style: Literal["human", "literary", "academic"] = "human"
     target_language: Literal["ru", "en"] = "ru"
     academic_work_type: Optional[Literal["report", "essay", "presentation", "coursework", "other"]] = None
-    preserve_options: list[Literal["numbers", "terms", "sources", "formulas"]] = Field(default_factory=list)
 
-class DetectRequest(BaseModel):
+
+class StudyWorkDownloadRequest(BaseModel):
     text: str
 
 
-class GrammarRequest(BaseModel):
+class DetectRequest(BaseModel):
     text: str
 
 
@@ -95,5 +117,4 @@ class ApiResponse(BaseModel):
 
 class ParaphraseRequest(BaseModel):
     text: str
-    style: str = "similar"
-    tone: str = "neutral"
+    style: str = "synonyms"

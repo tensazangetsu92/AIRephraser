@@ -1,0 +1,9 @@
+[Unit]
+Description=Humary PostgreSQL backup
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/humary/backup.env
+ExecStart=/opt/humary/deploy/backup/backup-postgres.sh

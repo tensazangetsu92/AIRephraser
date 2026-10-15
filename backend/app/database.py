@@ -1,15 +1,16 @@
 # app/database.py
 from datetime import datetime, timedelta
+import logging
 
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Date
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session, relationship
+from sqlalchemy import create_engine, Column, Integer, String, Text, LargeBinary, DateTime, Boolean, ForeignKey, Date, Index
+from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 from sqlalchemy.sql import func
 from app.config import DATABASE_URL
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+logger = logging.getLogger("uvicorn.error")
 
 
 # Модели
@@ -19,6 +20,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
+    display_name = Column(String(255), nullable=True)
+    avatar_url = Column(String(1024), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     is_active = Column(Boolean, default=True)
 
@@ -34,6 +37,8 @@ class UserHistory(Base):
     tool_type = Column(String(50), default="humanizer")
     original_text = Column(Text, nullable=False)
     result_text = Column(Text, nullable=False)
+    processed_docx = Column(LargeBinary, nullable=True)
+    processed_docx_filename = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User")
@@ -77,7 +82,7 @@ class UsageStats(Base):
 
 
 class WordTransaction(Base):
-    """Append-only word-credit ledger; positive rows retain their unused balance."""
+    """Append-only word ledger; credit rows retain their unused balance."""
     __tablename__ = "word_transactions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -111,6 +116,92 @@ class StudyWorkTrial(Base):
     user = relationship("User")
 
 
+class UserProcessingLock(Base):
+    """One active AI processing operation per user across all tools."""
+    __tablename__ = "user_processing_locks"
+
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    operation_id = Column(String(36), nullable=False, unique=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")
+
+
+class ApiRateLimit(Base):
+    """Shared API rate-limit counter without storing raw IPs or emails."""
+    __tablename__ = "api_rate_limits"
+
+    key_hash = Column(String(64), primary_key=True)
+    scope = Column(String(64), nullable=False)
+    window_started_at = Column(DateTime(timezone=True), nullable=False)
+    request_count = Column(Integer, nullable=False, default=0)
+    expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class UserRefreshSession(Base):
+    """Server-side, revocable persistent login session."""
+    __tablename__ = "user_refresh_sessions"
+
+    id = Column(String(36), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String(64), nullable=False, unique=True, index=True)
+    last_used_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    revoked_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")
+
+
+class PasswordResetCode(Base):
+    """One-time password reset code. The code itself is never stored in the database."""
+    __tablename__ = "password_reset_codes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    code_hash = Column(String(64), nullable=False)
+    attempts = Column(Integer, nullable=False, default=0)
+    expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    used_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")
+
+
+class EmailLoginCode(Base):
+    """One-time passwordless sign-in code; only its keyed hash is stored."""
+    __tablename__ = "email_login_codes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), nullable=False, index=True)
+    code_hash = Column(String(64), nullable=False)
+    attempts = Column(Integer, nullable=False, default=0)
+    expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    used_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+# Composite indexes for the filters used by the most frequent production requests.
+QUERY_INDEXES = (
+    Index("ix_user_history_created_at", UserHistory.created_at),
+    Index("ix_user_history_user_created_at", UserHistory.user_id, UserHistory.created_at),
+    Index("ix_user_history_user_tool_created_at", UserHistory.user_id, UserHistory.tool_type, UserHistory.created_at),
+    Index(
+        "ix_word_transactions_balance_lookup",
+        WordTransaction.user_id,
+        WordTransaction.kind,
+        WordTransaction.status,
+        WordTransaction.bucket,
+    ),
+    Index("ix_api_rate_limits_scope", ApiRateLimit.scope),
+    Index("ix_user_refresh_sessions_user_revoked", UserRefreshSession.user_id, UserRefreshSession.revoked_at),
+    Index("ix_password_reset_codes_user_used_expires", PasswordResetCode.user_id, PasswordResetCode.used_at, PasswordResetCode.expires_at),
+    Index("ix_email_login_codes_email_used_expires", EmailLoginCode.email, EmailLoginCode.used_at, EmailLoginCode.expires_at),
+)
+
+
 def delete_old_history(db: Session, days: int = 90):
     """Удаляет записи истории старше N дней"""
     cutoff_date = datetime.now() - timedelta(days=days)
@@ -119,7 +210,7 @@ def delete_old_history(db: Session, days: int = 90):
     ).delete()
     db.commit()
     if deleted:
-        print(f"🗑️ Удалено {deleted} старых записей из истории (старше {days} дней)")
+        logger.info("Removed %s history records older than %s days", deleted, days)
     return deleted
 
 
@@ -133,8 +224,3 @@ def get_db():
         raise
     finally:
         db.close()
-
-
-# Создание таблиц
-def create_tables():
-    Base.metadata.create_all(bind=engine)

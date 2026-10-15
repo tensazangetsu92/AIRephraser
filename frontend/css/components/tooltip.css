@@ -1,0 +1,82 @@
+/* Reusable information tooltip. Add .info-tooltip around any trigger and content. */
+.info-tooltip {
+    --info-tooltip-max-width: 14rem;
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    vertical-align: middle;
+}
+
+.info-tooltip-trigger {
+    display: inline-flex;
+    flex: 0 0 1.08rem;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 1.08rem;
+    height: 1.08rem;
+    padding: 0;
+    color: var(--accent-text);
+    background: var(--accent-soft);
+    border: 1px solid rgba(151, 169, 255, 0.42);
+    border-radius: 50%;
+    cursor: help;
+    font-size: 0.64rem;
+    line-height: 1;
+}
+
+.info-tooltip-trigger > i {
+    display: block;
+    line-height: 1;
+    transform: translateY(0.02em);
+}
+
+.info-tooltip-trigger:focus-visible {
+    outline: 2px solid var(--accent-border);
+    outline-offset: 2px;
+}
+
+.info-tooltip-content {
+    position: absolute;
+    z-index: 100;
+    left: 50%;
+    bottom: calc(100% + 0.6rem);
+    width: max-content;
+    min-width: 12.5rem;
+    max-width: min(var(--info-tooltip-max-width), calc(100vw - 2rem));
+    padding: 0.75rem 0.85rem;
+    color: var(--text-color);
+    background: var(--surface-card-muted);
+    border: 1px solid var(--border-card);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 0.25rem);
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+    visibility: hidden;
+}
+
+.info-tooltip:hover .info-tooltip-content,
+.info-tooltip:focus-within .info-tooltip-content {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    visibility: visible;
+}
+
+.info-tooltip-title {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--text-strong);
+    font-weight: 700;
+}
+
+.info-tooltip-list {
+    display: grid;
+    gap: 0.2rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}

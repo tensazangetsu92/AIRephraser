@@ -10,8 +10,8 @@ function initElements() {
         result: document.getElementById('result'),
         humanizeBtn: document.getElementById('humanizeBtn'),
         copyBtn: document.getElementById('copyBtn'),
-        tone: document.getElementById('tone'),
         style: document.getElementById('style'),
+        targetLanguage: document.getElementById('targetLanguage'),
         authBtn: document.getElementById('authBtn'),
         userName: document.getElementById('userName'),
         wordCounter: document.getElementById('wordCounter'),
@@ -99,16 +99,6 @@ function init() {
     }
 
     // 👇 ЗАМЕНИТЬ charCounter НА wordCounter
-    if (window.elements.input && window.elements.wordCounter) {
-        if (typeof window.updateWordCounter === 'function') {
-            console.log("asd");
-            window.updateWordCounter();
-        }
-    }
-
-    if (typeof window.updateUI === 'function') {
-        window.updateUI();
-    }
 }
 
 
@@ -157,5 +147,6 @@ function initCustomSelects() {
     });
 }
 
-// Запуск
-init();
+// All page-specific deferred scripts are loaded before this event. This keeps
+// generic initialization available while allowing tool code to stay per-page.
+document.addEventListener('DOMContentLoaded', init, { once: true });

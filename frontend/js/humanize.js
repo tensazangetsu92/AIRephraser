@@ -3,9 +3,9 @@ let pendingText = null;
 
 const RESULT_MAX_AGE_MS = 16 * 60 * 60 * 1000;
 
-function loadTextFromLocalStorage() {
+async function loadTextFromLocalStorage() {
     const elements = window.elements || {};
-    const historyRestore = typeof takeHistoryRestore === 'function' ? takeHistoryRestore('humanizer') : null;
+    const historyRestore = typeof getHistoryRestore === 'function' ? await getHistoryRestore('humanizer') : null;
     if (historyRestore) {
         localStorage.setItem('saved_input_text', historyRestore.original || '');
         localStorage.setItem('saved_result_text', historyRestore.result || '');
@@ -25,6 +25,7 @@ function loadTextFromLocalStorage() {
         localStorage.removeItem('saved_result_time');
         if (elements.result) elements.result.value = '';
         hideResultColumn();
+        setNewCheckButtonVisible(false);
         return;
     }
 
@@ -34,14 +35,14 @@ function loadTextFromLocalStorage() {
         elements.result.value = savedResult;
         updateResultWordCounter(savedResult);
         showResultColumn();
+        setNewCheckButtonVisible(true);
     } else {
         localStorage.removeItem('saved_result_text');
         localStorage.removeItem('saved_result_time');
-        localStorage.removeItem('saved_input_text'); // ← добавь
-        if (elements.input) elements.input.value = ''; // ← добавь
         if (elements.result) elements.result.value = '';
         updateResultWordCounter('');
         hideResultColumn();
+        setNewCheckButtonVisible(false);
     }
 }
 
@@ -59,6 +60,11 @@ function hideResultColumn() {
     if (editor) editor.classList.add('single-col');
 }
 
+function setNewCheckButtonVisible(isVisible) {
+    const button = document.getElementById('humanizeNewCheckBtn');
+    if (button) button.style.display = isVisible ? 'inline-flex' : 'none';
+}
+
 function initAutoSave() {
     const elements = window.elements || {};
     if (elements.input) {
@@ -70,59 +76,51 @@ function initAutoSave() {
 
 async function processText(text) {
     const elements = window.elements || {};
+    const humanizeButtonMarkup = elements.humanizeBtn?.innerHTML;
     if (!startTextProcessing('humanize')) return;
 
     if (elements.humanizeBtn) {
         elements.humanizeBtn.disabled = true;
         elements.humanizeBtn.innerHTML = '<span class="loading"></span> Обработка...';
     }
-    if (elements.result) {
-        elements.result.value = 'Обработка текста...';
-        updateResultWordCounter('');
-    }
+    setNewCheckButtonVisible(false);
 
     try {
         const { ok, status, data } = await API.humanize(
             text,
-            elements.tone?.value || 'neutral',
-            elements.style?.value || 'simple'
+            elements.style?.value || 'human',
+            elements.targetLanguage?.value || 'ru'
         );
 
         if (ok) {
+            clearWarning();
+            if (typeof refreshAllSubscriptionData === 'function') await refreshAllSubscriptionData(true);
+            if (await redirectToSavedHistory('humanizer', text, data.result)) return;
+
             if (elements.result) elements.result.value = data.result;
             updateResultWordCounter(data.result);
             localStorage.setItem('saved_result_text', data.result);
             localStorage.setItem('saved_result_time', Date.now());
-            clearWarning();
             showResultColumn();
-            API.saveHistory('humanizer', text, data.result);
-            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
+            setNewCheckButtonVisible(true);
             showToolSuccess('humanize');
         } else if (status === 401) {
-            const errorMessage = showToolError(status, data);
-            if (elements.result) elements.result.value = errorMessage;
-            showResultColumn();
+            showToolError(status, data);
             Auth.logout();
             if (typeof window.updateUI === 'function') window.updateUI();
             setTimeout(() => Auth.showAuthModal(), 1500);
         } else if (status === 429) {
-            const errorMessage = showToolError(status, data);
-            if (elements.result) elements.result.value = errorMessage;
-            showResultColumn();
-            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
+            showToolError(status, data);
+            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData(true);
         } else {
-            const errorMessage = showToolError(status, data, 'Не удалось обработать текст');
-            if (elements.result) elements.result.value = errorMessage;
-            showResultColumn();
+            showToolError(status, data, 'Не удалось обработать текст');
         }
     } catch {
-        const errorMessage = showToolNetworkError();
-        if (elements.result) elements.result.value = errorMessage;
-        showResultColumn();
+        showToolNetworkError();
     } finally {
         if (elements.humanizeBtn) {
             elements.humanizeBtn.disabled = false;
-            elements.humanizeBtn.innerHTML = '<img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Очеловечить';
+            elements.humanizeBtn.innerHTML = humanizeButtonMarkup;
         }
         finishTextProcessing();
     }
@@ -206,7 +204,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pasteBtn')?.addEventListener('click', pasteFromClipboard);
     document.getElementById('copyInputBtn')?.addEventListener('click', window.copyInputText);
     document.getElementById('copyResultBtn')?.addEventListener('click', window.copyResultText);
-
+    document.getElementById('humanizeNewCheckBtn')?.addEventListener('click', () => {
+        const elements = window.elements || {};
+        localStorage.removeItem('saved_input_text');
+        localStorage.removeItem('saved_result_text');
+        localStorage.removeItem('saved_result_time');
+        if (elements.input) elements.input.value = '';
+        if (elements.result) elements.result.value = '';
+        updateWordCounter();
+        updateResultWordCounter('');
+        hideResultColumn();
+        setNewCheckButtonVisible(false);
+        elements.input?.focus();
+    });
     loadTextFromLocalStorage();
     initAutoSave();
     initPdfUpload();

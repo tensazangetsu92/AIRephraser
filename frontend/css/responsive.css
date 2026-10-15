@@ -67,6 +67,12 @@
    ======================================== */
 @media (max-width: 768px) {
 
+    html.sidebar-scroll-locked,
+    body.sidebar-scroll-locked {
+        overflow: hidden !important;
+        overscroll-behavior: none;
+    }
+
     /* ---------- Мобильный header ---------- */
     .mobile-header {
         display: flex;
@@ -84,24 +90,44 @@
     }
 
     .mobile-header-toggle {
-        width: 38px;
-        height: 38px;
-        background: rgba(18, 18, 18, 0.3);
-        border: var(--border-button-color);
-        border-radius: 10px;
-        color: var(--text-color, #f0f0f0);
-        font-size: 1.1rem;
-        cursor: pointer;
-        display: flex;
+        display: inline-flex;
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
         align-items: center;
         justify-content: center;
+        background: color-mix(in srgb, var(--surface-card-muted) 72%, transparent);
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        color: var(--text-strong, #f0f0f0);
+        font-size: 1.1rem;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .16);
+        transition: background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease;
     }
 
-    .mobile-header-toggle:hover {
-        background: rgba(18, 18, 18, 0.5);
+    .mobile-header-toggle:hover,
+    .mobile-header-toggle:focus-visible {
+        background: color-mix(in srgb, var(--main-color) 18%, var(--surface-card-muted));
+        border-color: color-mix(in srgb, var(--main-color) 52%, var(--border-subtle));
+        color: var(--main-color-light);
+        outline: none;
+    }
+
+    .mobile-header-toggle:active {
+        transform: scale(.96);
+    }
+
+    .mobile-header-toggle i {
+        line-height: 1;
     }
 
     .mobile-header-auth {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
         padding: 8px 16px;
         background: rgba(18, 18, 18, 0.3);
         border: var(--border-button-color);
@@ -110,6 +136,13 @@
         font-size: 0.85rem;
         font-weight: 500;
         cursor: pointer;
+    }
+
+    .mobile-header-auth-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
     }
 
     .mobile-header-auth:hover {
@@ -126,11 +159,28 @@
         transform: translateX(-100%);
         transition: transform 0.3s ease, width 0.3s ease;
         width: 240px !important; /* всегда полный, collapsed игнорируем на мобиле */
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
         z-index: 260; /* выше header */
     }
 
     .sidebar.mobile-open {
         transform: translateX(0);
+    }
+
+    /* Меню прокручивается отдельно, а профиль всегда остаётся в зоне видимости. */
+    .sidebar-logo,
+    .sidebar-footer {
+        flex: 0 0 auto;
+    }
+
+    .sidebar-menu {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-bottom: 0.5rem;
     }
 
     /* Сброс collapsed-стилей на мобиле — показываем текст */
@@ -151,7 +201,7 @@
     }
     .sidebar.collapsed .sidebar-logo {
         justify-content: flex-start;
-        padding: 24px 15px;
+        padding: 0;
     }
     .sidebar.collapsed .sidebar-toggle-btn {
         margin-left: auto;
@@ -163,6 +213,16 @@
     .sidebar.collapsed .sidebar-footer-btn span {
         display: inline;
     }
+    .sidebar.collapsed .sidebar-auth-actions {
+        grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+    }
+    .sidebar.collapsed .sidebar-auth-actions .sidebar-footer-btn span {
+        display: inline;
+    }
+    .sidebar.collapsed .sidebar-footer {
+        width: 100%;
+        overflow: visible;
+    }
     .sidebar.collapsed .user-avatar {
         justify-content: flex-start;
         padding: 8px;
@@ -171,6 +231,16 @@
         display: block;
     }
     .sidebar.collapsed .balance-block {
+        display: block;
+        max-height: none;
+        margin: 14px 12px 0;
+        padding: 12px 16px;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .sidebar.collapsed .balance-title,
+    .sidebar.collapsed .balance-text {
         display: block;
     }
 
@@ -182,11 +252,12 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 36px;
+        align-self: stretch;
+        width: 50px;
+        height: auto;
         background: transparent;
         border: none;
-        border-radius: 8px;
+        border-radius: 0;
         color: var(--text-color, #f0f0f0);
         font-size: 0.95rem;
         cursor: pointer;
@@ -200,10 +271,17 @@
     /* ---------- Контентная область ---------- */
     .container {
         margin-left: 0 !important;
-        width: 100%;
-        flex: 0 0 100%;
+        width: 100% !important;
+        flex: 0 0 100% !important;
         padding: 4.5rem 1rem 1.5rem; /* отступ сверху под header */
         min-width: 0;
+    }
+
+    /* A remembered desktop collapsed sidebar must not reserve 70px on phones. */
+    .sidebar.collapsed + .container {
+        margin-left: 0 !important;
+        width: 100% !important;
+        flex-basis: 100% !important;
     }
 
     .container > *:first-child {
@@ -323,7 +401,8 @@
     }
 
     /* ---------- Перефразер ---------- */
-    .paraphrase-controls {
+    .paraphrase-controls,
+    .humanizer-controls {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.75rem;
@@ -332,14 +411,18 @@
         padding: 0;
     }
 
-    .paraphrase-controls > .control-group {
+    .paraphrase-controls > .control-group,
+    .humanizer-controls > .control-group {
         flex: none;
         width: 100%;
         min-width: 0;
         max-width: none;
     }
 
-    .paraphrase-controls .main-btn {
+    .paraphrase-controls .main-btn,
+    .humanizer-controls .main-btn,
+    .paraphrase-controls .tool-new-check-btn,
+    .humanizer-controls .tool-new-check-btn {
         grid-column: 1 / -1;
         width: 100%;
         max-width: none;
@@ -418,4 +501,335 @@
         min-height: 90px;
     }
 
+}
+
+/* Phone-first refinements. These rules keep every screen usable on narrow
+   viewports without changing the desktop layout. */
+@media (max-width: 768px) {
+    html,
+    body {
+        width: 100%;
+        overflow-x: hidden;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    .mobile-header {
+        height: calc(56px + env(safe-area-inset-top));
+        padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+    }
+
+    .mobile-header-toggle,
+    .mobile-header-auth,
+    .sidebar-mobile-close-btn {
+        min-height: 44px;
+    }
+
+    .sidebar {
+        width: min(88vw, 320px) !important;
+    }
+
+    .sidebar-item,
+    .sidebar-footer-btn,
+    .user-popup-item {
+        min-height: 44px;
+    }
+
+    .container {
+        padding: calc(56px + env(safe-area-inset-top) + 16px) max(12px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+
+    .tool-page-intro {
+        margin: 0 auto 1.1rem;
+    }
+
+    .tool-page-intro p {
+        max-width: 38rem;
+        font-size: .92rem;
+        line-height: 1.55;
+    }
+
+    .editor {
+        gap: .85rem;
+        margin: 0 0 1rem;
+    }
+
+    .col {
+        height: clamp(290px, 52dvh, 420px);
+        padding: 12px;
+        border-radius: 16px;
+    }
+
+    /* The study-work card contains work-type controls and upload actions above
+       the textarea. Reserve their height so the editable area matches the
+       other mobile tools instead of becoming much smaller. */
+    .study-work-editor > .study-work-card {
+        height: calc(clamp(290px, 52dvh, 420px) + 9.5rem);
+    }
+
+    .col.result-col {
+        height: clamp(260px, 46dvh, 380px);
+        max-height: none;
+    }
+
+    .editor-name {
+        margin-top: 2px;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+    }
+
+    .word-counter-wrapper {
+        margin-top: 10px;
+    }
+
+    .study-work-types {
+        gap: .45rem;
+        margin-bottom: 1rem !important;
+        padding-bottom: 10px !important;
+    }
+
+    .study-work-types-title {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .study-work-types label > span {
+        padding: .55rem .7rem;
+    }
+
+    .study-work-result-heading {
+        height: auto;
+        min-height: 43px;
+        margin-bottom: 1rem;
+        padding-bottom: 10px;
+    }
+
+    .study-work-download-btn > span {
+        font-size: .82rem;
+    }
+
+    .history-header,
+    .history-filters,
+    .history-item,
+    .history-detail-header,
+    .history-detail-card {
+        border-radius: 16px;
+    }
+
+    .history-item {
+        padding: 1rem;
+    }
+
+    .terms-document {
+        border-radius: 16px;
+    }
+
+    .site-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: .75rem;
+        padding: 1rem 0 calc(.75rem + env(safe-area-inset-bottom));
+        font-size: .93rem;
+    }
+
+    .site-footer-copyright {
+        display: block;
+    }
+
+    .site-footer-links {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: none;
+        grid-auto-flow: row;
+        justify-content: stretch;
+        width: 100%;
+        column-gap: 1rem;
+        row-gap: .4rem;
+    }
+
+    .site-footer a,
+    .site-footer button {
+        min-height: 36px;
+        text-align: left;
+    }
+
+    .study-hero {
+        padding: 1.25rem;
+        gap: 1.25rem;
+    }
+
+    .study-eyebrow {
+        margin-left: 0;
+        font-size: 1.3rem;
+    }
+
+    .study-lead {
+        font-size: .9rem;
+        line-height: 1.55;
+    }
+
+    .study-hero-actions {
+        flex-wrap: wrap;
+        align-items: stretch;
+    }
+
+    .study-hero-actions .study-primary-action,
+    .home-trial-badge {
+        width: 100%;
+        max-width: none;
+    }
+
+    .study-tools .study-tool-hero .study-primary-action {
+        display: flex;
+        width: 100%;
+        max-width: none;
+        justify-content: center;
+    }
+
+    .study-primary-action {
+        justify-content: center;
+        min-height: 48px;
+    }
+
+    .study-flow {
+        padding: .75rem;
+        border-radius: 14px;
+    }
+
+    .study-flow-step {
+        padding: .65rem;
+        font-size: .88rem;
+    }
+
+    .cookie-consent-banner.cookie-consent-settings-open {
+        max-height: calc(100dvh - 32px);
+        overflow-y: auto;
+    }
+
+    .modal-content {
+        max-height: calc(100dvh - 32px);
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding-top: calc(56px + env(safe-area-inset-top) + 12px);
+    }
+
+    .container .tool-page-intro h1,
+    .history-header h1,
+    .terms-intro h1 {
+        font-size: 1.45rem;
+    }
+
+    .controls,
+    .paraphrase-controls,
+    .humanizer-controls {
+        grid-template-columns: 1fr;
+        gap: .7rem;
+        margin-bottom: 1rem;
+    }
+
+    .controls > *,
+    .paraphrase-controls > *,
+    .humanizer-controls > * {
+        grid-column: 1 / -1;
+        width: 100%;
+        max-width: none;
+    }
+
+    .main-btn,
+    .detector-new-check-btn,
+    .single-action-wrapper .main-btn,
+    .single-action-wrapper .detector-new-check-btn {
+        width: 100%;
+        flex-basis: 100%;
+        min-height: 48px;
+        margin-top: 0;
+    }
+
+    .single-action-wrapper {
+        flex-wrap: wrap;
+        gap: .6rem;
+        margin: 10px auto 1rem;
+    }
+
+    .study-work-trial,
+    .study-work-processing-error {
+        width: 100%;
+        justify-content: center;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .study-work-type-info {
+        margin-left: auto;
+    }
+
+    .study-work-type-info .info-tooltip-content {
+        right: 0;
+        left: auto;
+        transform: translate(0, -0.25rem);
+    }
+
+    .study-work-type-info:hover .info-tooltip-content,
+    .study-work-type-info:focus-within .info-tooltip-content {
+        transform: translate(0, 0);
+    }
+
+    .history-tabs {
+        gap: .4rem;
+        margin: 0 -.7rem;
+        padding: 0 .7rem .3rem;
+        scrollbar-width: none;
+    }
+
+    .history-tabs::-webkit-scrollbar { display: none; }
+
+    .history-tab {
+        min-height: 40px;
+        padding: .55rem .7rem;
+    }
+
+    .history-detail-card {
+        min-height: 300px;
+        padding: 1rem;
+    }
+
+    .terms-page {
+        padding-top: .25rem;
+    }
+
+    .terms-document {
+        padding: 1rem;
+    }
+
+    .terms-document p,
+    .terms-document li {
+        font-size: .92rem;
+        line-height: 1.6;
+    }
+
+    .tariff-card,
+    .word-pack-card {
+        padding: 1.15rem;
+        border-radius: 16px;
+    }
+}
+
+@media (hover: none) {
+    .sidebar-item:hover,
+    .study-primary-action:hover,
+    .main-btn:hover,
+    .detector-new-check-btn:hover,
+    .copy-text-btn:hover,
+    .tariff-card:hover,
+    .word-pack:hover {
+        transform: none;
+    }
 }

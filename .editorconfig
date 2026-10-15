@@ -1,0 +1,4 @@
+root = true
+
+[*.{py,js,html,css,json,md,txt,yml,yaml,ini,svg}]
+charset = utf-8

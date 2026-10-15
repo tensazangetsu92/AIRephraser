@@ -2,9 +2,9 @@
 let pendingParaphraseText  = null;
 const RESULT_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 часа
 
-function loadTextFromLocalStorage() {
+async function loadTextFromLocalStorage() {
     const elements = window.elements || {};
-    const historyRestore = typeof takeHistoryRestore === 'function' ? takeHistoryRestore('paraphraser') : null;
+    const historyRestore = typeof getHistoryRestore === 'function' ? await getHistoryRestore('paraphraser') : null;
     if (historyRestore) {
         localStorage.setItem('paraphrase_input_text', historyRestore.original || '');
         localStorage.setItem('paraphrase_result_text', historyRestore.result || '');
@@ -24,6 +24,7 @@ function loadTextFromLocalStorage() {
         localStorage.removeItem('paraphrase_result_time');
         if (elements.result) elements.result.value = '';
         hideResultColumn();
+        setNewCheckButtonVisible(false);
         return;
     }
 
@@ -33,14 +34,14 @@ function loadTextFromLocalStorage() {
         elements.result.value = savedResult;
         updateResultWordCounter(savedResult);
         showResultColumn();
+        setNewCheckButtonVisible(true);
     } else {
         localStorage.removeItem('paraphrase_result_text');
         localStorage.removeItem('paraphrase_result_time');
-        if (elements.input) elements.input.value = '';
-        localStorage.removeItem('paraphrase_input_text');
         if (elements.result) elements.result.value = '';
         updateResultWordCounter('');
         hideResultColumn();
+        setNewCheckButtonVisible(false);
     }
 }
 
@@ -58,6 +59,11 @@ function hideResultColumn() {
     if (editor) editor.classList.add('single-col');
 }
 
+function setNewCheckButtonVisible(isVisible) {
+    const button = document.getElementById('paraphraseNewCheckBtn');
+    if (button) button.style.display = isVisible ? 'inline-flex' : 'none';
+}
+
 function initAutoSave() {
     const elements = window.elements || {};
     if (elements.input) {
@@ -70,59 +76,50 @@ function initAutoSave() {
 async function processText(text) {
     const elements = window.elements || {};
     const paraphraseBtn = document.getElementById('paraphraseBtn');
+    const paraphraseButtonMarkup = paraphraseBtn?.innerHTML;
     if (!startTextProcessing('paraphrase')) return;
 
     if (paraphraseBtn) {
         paraphraseBtn.disabled = true;
         paraphraseBtn.innerHTML = '<span class="loading"></span> Перефразирование...';
     }
-    if (elements.result) {
-        elements.result.value = 'Перефразирование текста...';
-        updateResultWordCounter('');
-    }
+    setNewCheckButtonVisible(false);
 
     try {
         const { ok, status, data } = await API.paraphrase(
             text,
-            elements.tone?.value || 'neutral',
-            elements.style?.value || 'similar'
+            elements.style?.value || 'synonyms'
         );
 
         if (ok) {
+            clearWarning();
+            if (typeof refreshAllSubscriptionData === 'function') await refreshAllSubscriptionData(true);
+            if (await redirectToSavedHistory('paraphraser', text, data.result)) return;
+
             if (elements.result) elements.result.value = data.result;
             updateResultWordCounter(data.result);
             localStorage.setItem('paraphrase_result_text', data.result);
             localStorage.setItem('paraphrase_result_time', Date.now());
-            clearWarning();
             showResultColumn();
-            API.saveHistory('paraphraser', text, data.result);
-            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
+            setNewCheckButtonVisible(true);
             showToolSuccess('paraphrase');
         } else if (status === 401) {
-            const errorMessage = showToolError(status, data);
-            if (elements.result) elements.result.value = errorMessage;
-            showResultColumn();
+            showToolError(status, data);
             Auth.logout();
             if (typeof window.updateUI === 'function') window.updateUI();
             setTimeout(() => Auth.showAuthModal(), 1500);
         } else if (status === 429) {
-            const errorMessage = showToolError(status, data);
-            if (elements.result) elements.result.value = errorMessage;
-            showResultColumn();
-            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData();
+            showToolError(status, data);
+            if (typeof refreshAllSubscriptionData === 'function') refreshAllSubscriptionData(true);
         } else {
-            const errorMessage = showToolError(status, data, 'Не удалось перефразировать текст');
-            if (elements.result) elements.result.value = errorMessage;
-            showResultColumn();
+            showToolError(status, data, 'Не удалось перефразировать текст');
         }
     } catch {
-        const errorMessage = showToolNetworkError();
-        if (elements.result) elements.result.value = errorMessage;
-        showResultColumn();
+        showToolNetworkError();
     } finally {
         if (paraphraseBtn) {
             paraphraseBtn.disabled = false;
-            paraphraseBtn.innerHTML = '<img class="logo-img" src="/images/logo-no-background.svg" alt="Humary Logo" width="32" height="32">Перефразировать';
+            paraphraseBtn.innerHTML = paraphraseButtonMarkup;
         }
         finishTextProcessing();
     }
@@ -149,7 +146,7 @@ async function send() {
     }
 
     if (!Auth.isAuthenticated()) {
-        pendingParaphraseText  = text;
+        pendingParaphraseText = text;
         showWarning('🔐 Для использования сервиса необходимо войти в аккаунт');
         if (elements.result) elements.result.value = '🔐 Для использования сервиса необходимо войти в аккаунт';
         Auth.showAuthModal();
@@ -206,7 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('copyInputBtn')?.addEventListener('click', window.copyInputText);
     document.getElementById('copyResultBtn')?.addEventListener('click', window.copyResultText);
     document.getElementById('paraphraseBtn')?.addEventListener('click', send);
-
+    document.getElementById('paraphraseNewCheckBtn')?.addEventListener('click', () => {
+        const elements = window.elements || {};
+        localStorage.removeItem('paraphrase_input_text');
+        localStorage.removeItem('paraphrase_result_text');
+        localStorage.removeItem('paraphrase_result_time');
+        if (elements.input) elements.input.value = '';
+        if (elements.result) elements.result.value = '';
+        updateWordCounter();
+        updateResultWordCounter('');
+        hideResultColumn();
+        setNewCheckButtonVisible(false);
+        elements.input?.focus();
+    });
     loadTextFromLocalStorage();
     initAutoSave();
     initPdfUpload();

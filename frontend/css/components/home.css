@@ -1,3 +1,75 @@
+.container:has(.home-page) {
+    background:
+        radial-gradient(ellipse 48% 34% at 88% 66%, color-mix(in srgb, #6888e3 18%, transparent), transparent 74%),
+        linear-gradient(225deg, color-mix(in srgb, var(--main-color) 8%, transparent), transparent 38%, color-mix(in srgb, var(--accent-blue) 8%, transparent));
+}
+
+.home-page {
+    position: relative;
+    isolation: isolate;
+}
+
+.home-page-background {
+    position: absolute;
+    z-index: -1;
+    inset: -2rem;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.home-background-circle {
+    position: absolute;
+    display: block;
+    border: 1px solid color-mix(in srgb, var(--main-color-light) 30%, transparent);
+    border-radius: 50%;
+}
+
+.home-background-circle-one {
+    top: 2rem;
+    left: 78%;
+    width: 24rem;
+    height: 24rem;
+    transform: translateX(-50%);
+}
+
+.home-background-circle-two {
+    top: 43%;
+    left: -10rem;
+    width: 23rem;
+    height: 23rem;
+    border-color: color-mix(in srgb, #6888e3 25%, transparent);
+}
+
+.home-background-circle-three {
+    right: 8%;
+    bottom: 3rem;
+    width: 10rem;
+    height: 10rem;
+    border-color: color-mix(in srgb, var(--accent-blue) 28%, transparent);
+}
+
+.home-page > :not(.home-page-background) {
+    position: relative;
+    z-index: 1;
+}
+
+.home-page-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    margin: 0.5rem auto 0;
+    color: var(--text-strong);
+    font-size: clamp(2.1rem, 5vw, 3.25rem);
+    font-weight: 700;
+    letter-spacing: normal;
+    text-decoration: none;
+}
+
+.home-page-logo + .study-hero {
+    margin-top: 1.4rem;
+}
+
 .study-hero {
     width: min(100%, 1120px);
     margin: 3rem auto 0;
@@ -8,43 +80,51 @@
     align-items: center;
     border: 1px solid var(--border-card);
     border-radius: 24px;
-    background: radial-gradient(circle at 88% 15%, var(--accent-glow), transparent 38%), var(--surface-card);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.035), transparent 44%), #2c2c2a;
 }
 
 .study-eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
+    margin-left: 10px;
     color: var(--accent-text);
-    font-size: 0.9rem;
+    font-size: 1.8rem;
     font-weight: 650;
 }
 
-.study-hero h1 {
-    max-width: 680px;
-    margin: 1rem 0;
-    color: var(--text-strong);
-    font-size: clamp(2rem, 4vw, 3.4rem);
-    line-height: 1.12;
-    letter-spacing: -0.04em;
+.study-eyebrow + .study-lead {
+    margin-top: 1rem;
 }
 
 .study-lead {
     max-width: 650px;
     color: #c8c9cf;
-    font-size: clamp(1rem, 1.7vw, 1.16rem);
+    font-size: clamp(.8125rem, calc(1.7vw - 3px), .9725rem);
     line-height: 1.65;
+}
+
+.study-how-it-works-link {
+    color: #c8c9cf;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    transition: color .2s ease;
+}
+
+.study-how-it-works-link:hover {
+    color: var(--main-color-light);
 }
 
 .study-primary-action {
     display: inline-flex;
     align-items: center;
     gap: 0.65rem;
-    margin-top: 2rem;
+    margin-top: 20px;
     padding: 0.9rem 1.25rem;
     color: #fff;
-    background: var(--accent-gradient);
-    border: 1px solid var(--accent-border);
+    background: linear-gradient(135deg, #42568D 0%, #3c4f84 100%);
+    border: none;
     border-radius: 12px;
     font-weight: 700;
     text-decoration: none;
@@ -53,8 +133,54 @@
 }
 
 .study-primary-action:hover {
+    background: linear-gradient(135deg, #4b609d 0%, #455a94 100%);
     transform: translateY(-2px);
     box-shadow: 0 14px 30px rgba(62, 78, 183, 0.35);
+}
+
+.study-hero-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: .75rem;
+    margin-top: 20px;
+}
+
+.study-hero-actions .study-primary-action {
+    flex: 0 0 auto;
+    height: 50px;
+    margin-top: 0;
+}
+
+.home-trial-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 190px;
+    height: 50px;
+    gap: .65rem;
+    padding: .3rem .75rem;
+    color: #b8f1d7;
+    border: 1px solid color-mix(in srgb, var(--success-color) 56%, transparent);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--success-color) 16%, transparent);
+    line-height: 1.15;
+    text-align: left;
+}
+
+.home-trial-badge[hidden] {
+    display: none;
+}
+
+.home-trial-badge > span {
+    font-size: calc(.68rem + 2px);
+}
+
+.home-trial-badge i {
+    color: var(--success-color);
+    font-size: 1.15rem;
 }
 
 .study-note {
@@ -105,50 +231,38 @@
 .study-tools {
     width: min(100%, 1120px);
     margin: 1.25rem auto 3rem;
-    padding: 1.5rem clamp(1.25rem, 3vw, 2rem);
-    border: 1px solid var(--border-subtle);
-    border-radius: 18px;
-    background: var(--surface-card-muted);
+    padding: 0;
 }
 
-.study-tools h2 {
-    color: #f0f1f5;
-    font-size: 1.15rem;
+.study-tools .study-tool-hero {
+    width: 100%;
+    margin: 0;
 }
 
-.study-tools > p {
-    margin-top: 0.55rem;
-    color: #b7b8be;
-    line-height: 1.55;
-}
-
-.study-tools-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+.study-tools .study-tool-hero + .study-tool-hero {
     margin-top: 1.25rem;
 }
 
-.study-tools-links a {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.55rem;
-    padding: 0.65rem 0.85rem;
-    color: #dce5ff;
-    border: 1px solid #464d69;
-    border-radius: 10px;
-    background: var(--accent-soft);
-    font-size: 0.9rem;
-    text-decoration: none;
-    transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.study-tools-links a:hover {
-    background: var(--accent-soft-hover);
-    border-color: var(--border-accent);
-}
-
 @media (max-width: 768px) {
+    .home-page-background {
+        inset: -1rem;
+    }
+
+    .home-background-circle-one {
+        width: 15rem;
+        height: 15rem;
+    }
+
+    .home-background-circle-two {
+        left: -9rem;
+        width: 18rem;
+        height: 18rem;
+    }
+
+    .home-page-logo {
+        margin-top: 0;
+    }
+
     .study-hero {
         margin-top: 0;
         grid-template-columns: 1fr;
@@ -156,22 +270,7 @@
         border-radius: 18px;
     }
 
-    .study-tools {
-        margin-bottom: 1rem;
-    }
+    .study-tools { margin-bottom: 1rem; }
 
-    .study-tools-links {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .study-tools-links a {
-        justify-content: center;
-    }
-}
-
-@media (max-width: 420px) {
-    .study-tools-links {
-        grid-template-columns: 1fr;
-    }
+    .study-hero-actions { align-items: center; }
 }

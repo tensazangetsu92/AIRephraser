@@ -1,0 +1,45 @@
+/* Reusable placeholders for content that is requested after the page render. */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    color: transparent !important;
+    pointer-events: none;
+    user-select: none;
+    background: linear-gradient(
+        100deg,
+        var(--surface-card-muted) 20%,
+        color-mix(in srgb, var(--surface-card-hover) 82%, white) 43%,
+        var(--surface-card-muted) 66%
+    );
+    background-size: 220% 100%;
+    animation: skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+.skeleton-text {
+    display: block;
+    width: 100%;
+    min-height: 0.9em;
+    border-radius: 999px;
+}
+
+.skeleton-text--short { width: 34%; }
+.skeleton-text--medium { width: 58%; }
+.skeleton-text--long { width: 82%; }
+.skeleton-text--title { width: min(17rem, 72%); min-height: 1.1em; }
+
+.skeleton-line-stack {
+    display: grid;
+    gap: 0.7rem;
+}
+
+.skeleton-line-stack > :nth-child(2) { width: 86%; }
+.skeleton-line-stack > :nth-child(3) { width: 62%; }
+
+@keyframes skeleton-shimmer {
+    from { background-position: 100% 0; }
+    to { background-position: -120% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton { animation: none; }
+}

@@ -1,38 +1,51 @@
 /* Variables & Global Styles */
+@font-face {
+    font-family: 'Manrope';
+    src: url('/fonts/Manrope-Variable.ttf?v=20260928-static-cache') format('truetype');
+    font-weight: 200 800;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
     --text-color: #dfded8;
-    --main-color: #5787d9;
+    --main-color: #587de4;
+    --main-color-dark: #2d3652;
+    --main-color-light: #6a8be7;
+    --sidebar-active-color: #5d8cdd;
     --body-background-color: #1f1f1e;
-    --navbar-background-color: #1f1f1d;
+    --navbar-background-color: #202126;
     --navbar-border: 1px solid #303030;
     --sidebar-background-color: #1f1f1d;
     --sidebar-border: 1px solid #303030;
     --sidebar-border-color: #303030;
 
     /* Основная тёмная тема: использовать для новых страниц и компонентов */
-    --surface-card: #292928;
-    --surface-card-muted: #282827;
-    --surface-card-hover: #2d2d2c;
-    --surface-overlay: rgba(20, 20, 20, 0.42);
-    --border-subtle: #363636;
-    --border-card: #3b3b3b;
-    --border-accent: #6578c8;
-    --text-strong: #f5f6fb;
-    --text-muted: #bdbec6;
-    --text-subtle: #9b9ca3;
-    --accent-blue: #466cd6;
-    --accent-purple: #654bc3;
-    --accent-gradient: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-    --accent-border: #7597ff;
-    --accent-text: #bbcbff;
-    --accent-soft: rgba(83, 108, 206, 0.16);
-    --accent-soft-hover: rgba(76, 98, 185, 0.24);
-    --accent-glow: rgba(83, 104, 206, 0.2);
+    --surface-card: #2c2c2a;
+    --surface-card-muted: #252525;
+    --surface-card-hover: #30302e;
+    --surface-overlay: rgba(20, 20, 19, 0.56);
+    --border-subtle: #3b3b39;
+    --border-card: #454542;
+    --border-accent: #7487cb;
+    --text-strong: #f3f3f8;
+    --text-muted: #c0c1ca;
+    --text-subtle: #989aa7;
+    --accent-blue: #5b7ddd;
+    --accent-indigo: #5787d9;
+    --accent-purple: #6888e3;
+    --accent-mauve: #6a8be7;
+    --accent-gradient: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo), var(--accent-purple));
+    --accent-border: #8ba4f3;
+    --accent-text: #c9d4ff;
+    --accent-soft: rgba(94, 120, 217, 0.17);
+    --accent-soft-hover: rgba(88, 125, 228, 0.25);
+    --accent-glow: rgba(87, 135, 217, 0.23);
     --card-shadow: 0 12px 26px rgba(0, 0, 0, 0.18);
 
-    --primary-gradient: linear-gradient(135deg, #526ace, #4b63ce);
-    --primary-color: #6366f1;
-    --secondary-color: #10b981;
+    --primary-gradient: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+    --primary-color: #5787d9;
+    --secondary-color: #6888e3;
     --text-light: rgba(0, 0, 0, 0.6);
     --border-button-color: 2px solid #303030;
     --bg-white: #ffffff;
@@ -45,6 +58,6 @@
     --radius-lg: 12px;
     --radius-xl: 1rem;
     --control-group-max-width: 230px;
-    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-primary: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
 }

@@ -19,12 +19,24 @@ build/
 *.swp
 *.swo
 
+# Environment secrets
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+deploy/production.env
+deploy/caddy.env
+deploy/staging.env
+deploy/staging-caddy.env
+
 # Project specific
 backend/users.json
 backend/*.db
+backups/
+*.dump
 *.log
-.env
-backend/.env
 
 # OS
 .DS_Store
