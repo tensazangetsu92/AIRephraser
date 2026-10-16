@@ -155,6 +155,7 @@ VK_ID_REDIRECT_URI = os.getenv(
 
 SMTP_HOST = os.getenv("SMTP_HOST", "sandbox.smtp.mailtrap.io")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "2525"))
+SMTP_USE_SSL = _as_bool(os.getenv("SMTP_USE_SSL"), False)
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "noreply@humary.com")

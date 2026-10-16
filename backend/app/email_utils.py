@@ -1,11 +1,12 @@
 # app/email_utils.py
 import smtplib
 import logging
+import ssl
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.config import (
-    SMTP_HOST, SMTP_PORT, SMTP_USERNAME,
+    SMTP_HOST, SMTP_PORT, SMTP_USE_SSL, SMTP_USERNAME,
     SMTP_PASSWORD, SMTP_FROM_EMAIL, SMTP_FROM_NAME
 )
 import random
@@ -19,6 +20,33 @@ logger = logging.getLogger("uvicorn.error")
 
 class VerificationEmailDeliveryError(RuntimeError):
     """Raised when the verification email could not be handed to SMTP."""
+
+
+def _open_smtp_connection():
+    """Open an encrypted SMTP connection using implicit SSL or STARTTLS."""
+    tls_context = ssl.create_default_context()
+    if SMTP_USE_SSL:
+        return smtplib.SMTP_SSL(
+            SMTP_HOST,
+            SMTP_PORT,
+            timeout=20,
+            context=tls_context,
+        )
+
+    server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20)
+    server.ehlo()
+    server.starttls(context=tls_context)
+    server.ehlo()
+    return server
+
+
+def _send_message_via_smtp(message: MIMEMultipart) -> None:
+    server = _open_smtp_connection()
+    try:
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.send_message(message)
+    finally:
+        server.quit()
 
 
 def generate_verification_code(length: int = 6) -> str:
@@ -56,11 +84,7 @@ def send_email_login_code(email: str, code: str) -> bool:
         """
         msg.attach(MIMEText(html_body, 'html'))
 
-        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
-        server.starttls()
-        server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        server.send_message(msg)
-        server.quit()
+        _send_message_via_smtp(msg)
         logger.info("Passwordless sign-in code email delivered")
         return True
     except Exception as error:
@@ -93,11 +117,7 @@ def send_password_reset_email(email: str, code: str) -> bool:
         """
         msg.attach(MIMEText(html_body, 'html'))
 
-        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
-        server.starttls()
-        server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        server.send_message(msg)
-        server.quit()
+        _send_message_via_smtp(msg)
         return True
     except Exception as error:
         logger.warning("Password-reset email delivery failed: %s", error)
@@ -175,11 +195,7 @@ def send_verification_email(email: str, code: str) -> bool:
         msg.attach(MIMEText(html_body, 'html'))
 
         # Подключаемся к SMTP серверу (Mailtrap)
-        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
-        server.starttls()
-        server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        server.send_message(msg)
-        server.quit()
+        _send_message_via_smtp(msg)
 
         logger.info("Verification email delivered")
         return True
