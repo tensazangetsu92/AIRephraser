@@ -26,7 +26,6 @@ from app.subscription import (
     check_study_work_request_limit,
     complete_study_work_trial,
     count_words,
-    get_user_subscription,
     charge_words,
     release_study_work_trial,
     reserve_study_work_trial,
@@ -70,17 +69,9 @@ def ensure_text_not_empty(text: str) -> None:
         raise HTTPException(status_code=400, detail="В документе не найден текст для обработки.")
 
 
-def reserve_trial_or_require_paid_plan(db: Session, user_id: int) -> bool:
-    """Free users can use Study Work only through their one registration trial."""
-    uses_trial = reserve_study_work_trial(db, user_id)
-    if uses_trial:
-        return True
-    if get_user_subscription(db, user_id).plan_type == "free":
-        raise HTTPException(
-            status_code=403,
-            detail="Бесплатное использование «Учебной работы» уже использовано. Выберите платный тариф, чтобы продолжить.",
-        )
-    return False
+def reserve_study_work_trial_if_available(db: Session, user_id: int) -> bool:
+    """Use the one-time registration trial first, otherwise charge the word balance."""
+    return reserve_study_work_trial(db, user_id)
 
 
 def is_editable_docx_paragraph(paragraph) -> bool:
@@ -215,7 +206,7 @@ async def process_study_work(
     async with user_processing_guard(db, current_user.id):
         word_count = count_words(req.text)
         study_work_limit = check_study_work_request_limit(db, current_user.id, req.text)
-        uses_trial = reserve_trial_or_require_paid_plan(db, current_user.id)
+        uses_trial = reserve_study_work_trial_if_available(db, current_user.id)
         if not uses_trial:
             check_usage_limit(db, current_user.id, req.text, max_words_override=study_work_limit)
 
@@ -299,7 +290,7 @@ async def process_study_work_docx(
     async with user_processing_guard(db, current_user.id):
         word_count = count_words(source_text)
         study_work_limit = check_study_work_request_limit(db, current_user.id, source_text)
-        uses_trial = reserve_trial_or_require_paid_plan(db, current_user.id)
+        uses_trial = reserve_study_work_trial_if_available(db, current_user.id)
         if not uses_trial:
             check_usage_limit(db, current_user.id, source_text, max_words_override=study_work_limit)
         started_at = perf_counter()
