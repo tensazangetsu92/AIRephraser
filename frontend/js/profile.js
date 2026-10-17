@@ -72,7 +72,7 @@ async function loadProfile() {
 
             if (balanceText) {
                 balanceText.textContent = sub.free_entitlement_available === false && limit === 0
-                    ? profileText('free_entitlement_used', 'Бесплатный лимит уже использован')
+                    ? `${remaining} ${profileText('words', 'слов')}`
                     : `${remaining} / ${limit} ${profileText('words_remaining', 'слов осталось')}`;
             }
             if (fill) {

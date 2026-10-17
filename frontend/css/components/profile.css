@@ -131,6 +131,11 @@
     color: #fecaca;
 }
 
+.profile-danger-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .delete-account-modal {
     max-width: 460px;
 }
