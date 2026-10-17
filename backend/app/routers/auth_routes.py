@@ -47,7 +47,7 @@ from app.rate_limit import (
     enforce_login_failure_lock,
     record_failed_login,
 )
-from app.subscription import get_user_subscription, grant_study_work_trial
+from app.subscription import initialise_new_user_entitlements
 
 router = APIRouter(tags=["auth"])
 logger = logging.getLogger("uvicorn.error")
@@ -217,8 +217,7 @@ async def confirm_email_code(
     db.commit()
     db.refresh(user)
     if created:
-        get_user_subscription(db, user.id)
-        grant_study_work_trial(db, user.id)
+        initialise_new_user_entitlements(db, user.id, user.email)
 
     token = _token_response(user)
     set_refresh_token_cookie(response, create_refresh_session(db, user))
@@ -535,8 +534,7 @@ async def verify_registration_code(
 
     del pending_users[email]
 
-    get_user_subscription(db, db_user.id)
-    grant_study_work_trial(db, db_user.id)
+    initialise_new_user_entitlements(db, db_user.id, db_user.email)
 
     access_token = create_access_token(data={"sub": db_user.email})
     set_refresh_token_cookie(response, create_refresh_session(db, db_user))

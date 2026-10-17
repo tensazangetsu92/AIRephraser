@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.config import FRONTEND_URL, VK_ID_APP_ID, VK_ID_REDIRECT_URI
 from app.database import User, get_db
-from app.subscription import get_user_subscription
+from app.subscription import initialise_new_user_entitlements
 from auth import (
     create_refresh_session,
     get_hash_password,
@@ -177,7 +177,7 @@ async def vk_auth_callback(
         db.add(user)
         db.commit()
         db.refresh(user)
-        get_user_subscription(db, user.id)
+        initialise_new_user_entitlements(db, user.id, user.email)
     elif not user.is_active:
         raise HTTPException(status_code=403, detail="Этот аккаунт отключён.")
     else:

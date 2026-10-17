@@ -103,9 +103,6 @@
 .study-work-trial i { color: var(--success-color); font-size: .82rem; margin-right: -2px; }
 .study-work-trial-number { display: inline-flex; align-items: center; justify-content: center; min-width: 1.1rem; color: var(--success-color); font-size: 1rem; font-weight: 600; line-height: 1; }
 .study-work-trial-copy { display: flex; flex-direction: column; line-height: 1.05; }
-.study-work-processing-error { display: inline-flex; align-items: center; gap: .45rem; padding: .42rem .7rem; color: #fecaca; border: 1px solid color-mix(in srgb, var(--error-color) 58%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--error-color) 14%, transparent); font-size: .78rem; line-height: 1.2; white-space: nowrap; }
-.study-work-processing-error[hidden] { display: none !important; }
-.study-work-processing-error i { color: var(--error-color); font-size: .9rem; }
 .study-work-editor .study-work-result { margin: 0; }
 .study-work-editor .study-work-result[hidden] { display: none !important; }
 .study-work-result-heading { display: flex; align-items: center; justify-content: space-between; gap: .75rem; box-sizing: border-box; height: 55px; margin: 0 0 1.5rem; padding-bottom: 12px; }

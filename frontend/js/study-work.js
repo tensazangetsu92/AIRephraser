@@ -24,11 +24,6 @@
         return false;
     }
 
-    function setStudyWorkProcessingError(isVisible) {
-        const badge = document.getElementById('studyWorkProcessingError');
-        if (badge) badge.hidden = !isVisible;
-    }
-
     function setStudyWorkResultVisible(isVisible) {
         const result = document.getElementById('studyWorkResult');
         if (!result) return;
@@ -374,7 +369,6 @@
             return;
         }
         if (!startTextProcessing('humanize')) return;
-        setStudyWorkProcessingError(false);
 
         const workType = document.querySelector('input[name="workType"]:checked')?.value || 'other';
         const trialWasAvailable = document.getElementById('studyWorkTrialBadge')?.hidden === false;
@@ -412,7 +406,6 @@
             setStudyWorkNewCheckButtonVisible(true);
             showToolSuccess('humanize');
         } catch (error) {
-            setStudyWorkProcessingError(true);
             if (error instanceof Error) {
                 if (error.status) showToolError(error.status, { detail: error.message }, 'Не удалось подготовить документ Word.');
                 else showNotification(error.message, 'error');
@@ -456,7 +449,6 @@
             processedWordBlob = null;
             processedWordFilename = 'humary-учебная-работа.docx';
             hasStoredProcessedWord = false;
-            setStudyWorkProcessingError(false);
             const input = document.getElementById('studyWorkInput');
             if (input) {
                 input.value = '';

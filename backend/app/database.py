@@ -55,6 +55,9 @@ class Subscription(Base):
     start_date = Column(DateTime(timezone=True), server_default=func.now())
     end_date = Column(DateTime(timezone=True), nullable=True)
     payment_id = Column(String(255), nullable=True)
+    # The free quota is a one-time onboarding entitlement. Paid and purchased
+    # words remain available regardless of this flag.
+    free_entitlement_available = Column(Boolean, nullable=False, default=True)
 
     last_reset_date = Column(DateTime(timezone=True), nullable=True)
 
@@ -184,6 +187,20 @@ class EmailLoginCode(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class DeletedAccountMarker(Base):
+    """Pseudonymous marker preventing a repeated free grant after deletion.
+
+    It deliberately stores no email, text, document, session, or account id.
+    The marker is a keyed HMAC calculated only while a user proves control of
+    the email again, and expires after the documented retention period.
+    """
+    __tablename__ = "deleted_account_markers"
+
+    email_hmac = Column(String(64), primary_key=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+
+
 # Composite indexes for the filters used by the most frequent production requests.
 QUERY_INDEXES = (
     Index("ix_user_history_created_at", UserHistory.created_at),
@@ -200,6 +217,7 @@ QUERY_INDEXES = (
     Index("ix_user_refresh_sessions_user_revoked", UserRefreshSession.user_id, UserRefreshSession.revoked_at),
     Index("ix_password_reset_codes_user_used_expires", PasswordResetCode.user_id, PasswordResetCode.used_at, PasswordResetCode.expires_at),
     Index("ix_email_login_codes_email_used_expires", EmailLoginCode.email, EmailLoginCode.used_at, EmailLoginCode.expires_at),
+    Index("ix_deleted_account_markers_expires_at", DeletedAccountMarker.expires_at),
 )
 
 

@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.database import User, Subscription, UsageStats, WordTransaction, StudyWorkTrial
+from app.account_deletion import has_consumed_free_entitlement
 from uuid import uuid4
 import pytz
 
@@ -38,6 +39,25 @@ def grant_study_work_trial(db: Session, user_id: int) -> None:
         db.commit()
     except IntegrityError:
         db.rollback()
+
+
+def initialise_new_user_entitlements(db: Session, user_id: int, email: str) -> bool:
+    """Create the free plan and grant its one-time onboarding benefits once.
+
+    A user who has deleted an account for the same verified email can still
+    create a new account and purchase words, but does not receive a second
+    free quota or a second Study Work trial.
+    """
+    subscription = get_user_subscription(db, user_id)
+    if has_consumed_free_entitlement(db, email):
+        subscription.free_entitlement_available = False
+        db.commit()
+        return False
+
+    subscription.free_entitlement_available = True
+    db.commit()
+    grant_study_work_trial(db, user_id)
+    return True
 
 
 def reserve_study_work_trial(db: Session, user_id: int) -> bool:
@@ -131,7 +151,7 @@ def get_word_balance(
 ) -> dict:
     """Return available word balance without loading every credit row into Python."""
     subscription = subscription or get_user_subscription(db, user_id)
-    limits = get_plan_limits(subscription.plan_type)
+    limits = get_effective_plan_limits(subscription)
     if words_used is None:
         words_used = get_words_used(db, user_id)
     subscription_words = None if limits["word_limit"] is None else max(0, limits["word_limit"] - words_used)
@@ -201,6 +221,14 @@ def get_user_subscription(db: Session, user_id: int) -> Subscription:
 def get_plan_limits(plan_type: str) -> dict:
     """Получить лимиты для типа подписки"""
     return SUBSCRIPTION_PLANS.get(plan_type, SUBSCRIPTION_PLANS["free"])
+
+
+def get_effective_plan_limits(subscription: Subscription) -> dict:
+    """Return limits after applying the one-time free-entitlement state."""
+    limits = dict(get_plan_limits(subscription.plan_type))
+    if subscription.plan_type == "free" and not subscription.free_entitlement_available:
+        limits["word_limit"] = 0
+    return limits
 
 
 def get_study_work_max_words(plan_type: str) -> int:
@@ -301,7 +329,7 @@ def get_subscription_usage_snapshot(
     )
     words_used = int(snapshot.words_used or 0) if snapshot else 0
     trial_status = snapshot.status if snapshot and snapshot.status else "unavailable"
-    limits = get_plan_limits(subscription.plan_type)
+    limits = get_effective_plan_limits(subscription)
     word_limit = limits["word_limit"]
 
     return {
@@ -327,7 +355,7 @@ def check_request_word_limit(
     subscription = subscription or get_user_subscription(db, user_id)
     if check_expiration:
         check_subscription_expired(db, user_id, subscription)
-    limits = get_plan_limits(subscription.plan_type)
+    limits = get_effective_plan_limits(subscription)
     word_count = count_words(text)
     max_words_per_request = max_words_override or limits["max_words_per_request"]
 
@@ -373,8 +401,7 @@ def check_usage_limit(db: Session, user_id: int, text: str = "", max_words_overr
     subscription = get_user_subscription(db, user_id)
     check_subscription_expired(db, user_id, subscription)
 
-    plan_type = subscription.plan_type
-    limits = get_plan_limits(plan_type)
+    limits = get_effective_plan_limits(subscription)
     max_words_per_request = limits["max_words_per_request"]
     word_limit = limits["word_limit"]
     word_count = count_words(text)
@@ -526,7 +553,7 @@ def charge_words(
             stats = _locked_usage_stats(db, user_id)
             _refresh_subscription_period_locked(subscription, stats)
 
-            limits = get_plan_limits(subscription.plan_type)
+            limits = get_effective_plan_limits(subscription)
             max_words_per_request = max_words_override or limits["max_words_per_request"]
             if word_count > max_words_per_request:
                 raise HTTPException(

@@ -70,7 +70,11 @@ async function loadProfile() {
             const limit = usage.word_limit;
             const pct = limit > 0 ? (remaining / limit) * 100 : 0;
 
-            if (balanceText) balanceText.textContent = `${remaining} / ${limit} ${profileText('words_remaining', 'слов осталось')}`;
+            if (balanceText) {
+                balanceText.textContent = sub.free_entitlement_available === false && limit === 0
+                    ? profileText('free_entitlement_used', 'Бесплатный лимит уже использован')
+                    : `${remaining} / ${limit} ${profileText('words_remaining', 'слов осталось')}`;
+            }
             if (fill) {
                 fill.style.width = `${pct}%`;
                 fill.style.background = getProgressColor(pct);

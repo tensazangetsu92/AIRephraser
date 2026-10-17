@@ -71,7 +71,6 @@
 
     <div class="controls humanizer-controls">
         <span class="study-work-trial" id="studyWorkTrialBadge" hidden><i class="fa-solid fa-gift"></i><span class="study-work-trial-number">1</span><span class="study-work-trial-copy"><span data-i18n="study_work_trial_free">бесплатное</span><span data-i18n="study_work_trial_use">использование</span></span></span>
-        <span class="study-work-processing-error" id="studyWorkProcessingError" hidden><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span data-i18n="study_work_processing_error">Ошибка обработки</span></span>
         <button class="main-btn" id="studyWorkSubmit"><i class="fas fa-graduation-cap"></i><span data-i18n="study_work_process">Обработать</span></button>
         <button class="detector-new-check-btn tool-new-check-btn" id="studyWorkNewCheckBtn" style="display: none;">
             <i class="fas fa-redo"></i><span data-i18n="new_check">Новая проверка</span>
@@ -82,5 +81,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/js/study-work.js?v=20261018-history-processing-options" defer></script>
+<script src="/js/study-work.js?v=20261018-remove-inline-processing-error" defer></script>
 {% endblock %}

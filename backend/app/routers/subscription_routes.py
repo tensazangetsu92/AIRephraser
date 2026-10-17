@@ -6,7 +6,7 @@ from app.database import get_db, User
 from auth import get_current_user
 from app.subscription import (
     get_user_subscription,
-    get_plan_limits,
+    get_effective_plan_limits,
     get_study_work_max_words,
     get_subscription_usage_snapshot,
     check_subscription_expired,
@@ -38,7 +38,7 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: S
         current_user.id,
         subscription,
     )
-    limits = get_plan_limits(subscription.plan_type)
+    limits = get_effective_plan_limits(subscription)
     word_balance = get_word_balance(
         db,
         current_user.id,
@@ -52,6 +52,7 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: S
             "id": subscription.id,
             "plan_type": subscription.plan_type,
             "is_active": subscription.is_active,
+            "free_entitlement_available": subscription.free_entitlement_available,
             "start_date": subscription.start_date,
             "end_date": subscription.end_date,
             "word_limit": limits["word_limit"],

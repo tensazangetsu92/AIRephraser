@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
 from app.database import (
+    EmailLoginCode,
     get_db,
     PasswordResetCode,
     StudyWorkTrial,
@@ -20,6 +21,7 @@ from app.database import (
     UserRefreshSession,
     WordTransaction,
 )
+from app.account_deletion import record_deleted_account_marker
 from auth import (
     clear_refresh_token_cookie,
     create_access_token,
@@ -186,7 +188,7 @@ async def delete_user_account(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),
 ):
-    """Permanently remove the current user's account and all stored personal data."""
+    """Delete account data and retain only a finite anti-abuse email HMAC."""
     if data.get("confirmation") != "DELETE":
         raise HTTPException(status_code=400, detail="Введите DELETE для подтверждения удаления.")
 
@@ -201,11 +203,13 @@ async def delete_user_account(
         )
 
     user_id = current_user.id
+    email = current_user.email
     try:
         # Remove dependent records explicitly: existing database tables do not
         # use ON DELETE CASCADE, and account deletion must not leave text,
         # documents, sessions, reset codes, or word-accounting records behind.
         db.query(PasswordResetCode).filter(PasswordResetCode.user_id == user_id).delete(synchronize_session=False)
+        db.query(EmailLoginCode).filter(EmailLoginCode.email == email).delete(synchronize_session=False)
         db.query(UserRefreshSession).filter(UserRefreshSession.user_id == user_id).delete(synchronize_session=False)
         db.query(UserProcessingLock).filter(UserProcessingLock.user_id == user_id).delete(synchronize_session=False)
         db.query(StudyWorkTrial).filter(StudyWorkTrial.user_id == user_id).delete(synchronize_session=False)
@@ -213,6 +217,7 @@ async def delete_user_account(
         db.query(UsageStats).filter(UsageStats.user_id == user_id).delete(synchronize_session=False)
         db.query(Subscription).filter(Subscription.user_id == user_id).delete(synchronize_session=False)
         db.query(UserHistory).filter(UserHistory.user_id == user_id).delete(synchronize_session=False)
+        record_deleted_account_marker(db, email)
         db.query(User).filter(User.id == user_id).delete(synchronize_session=False)
         db.commit()
     except Exception as error:

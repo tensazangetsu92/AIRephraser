@@ -759,8 +759,7 @@
         margin: 10px auto 1rem;
     }
 
-    .study-work-trial,
-    .study-work-processing-error {
+    .study-work-trial {
         width: 100%;
         justify-content: center;
         white-space: normal;

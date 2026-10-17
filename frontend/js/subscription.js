@@ -202,7 +202,13 @@ function updateBalanceDisplayFromData(data) {
 
     balanceBarFill.style.setProperty('--visible-percent', `${pct}%`);
 
-    balanceText.textContent = `${remaining} / ${limit} ${typeof window.t === 'function' ? window.t('words') : 'Слов'}`;
+    if (data.subscription?.free_entitlement_available === false && limit === 0) {
+        balanceText.textContent = typeof window.t === 'function'
+            ? window.t('free_entitlement_used')
+            : 'Бесплатный лимит уже использован';
+    } else {
+        balanceText.textContent = `${remaining} / ${limit} ${typeof window.t === 'function' ? window.t('words') : 'Слов'}`;
+    }
 }
 
 function updateSubscriptionText(data) {
