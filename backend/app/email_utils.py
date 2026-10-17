@@ -72,12 +72,12 @@ def send_email_login_code(email: str, code: str) -> bool:
         html_body = f"""
         <!DOCTYPE html>
         <html lang="ru">
-        <body style="margin:0;padding:24px;background:#1f1f1e;color:#dfded8;font-family:Arial,sans-serif;">
-            <div style="max-width:480px;margin:0 auto;padding:28px;background:#292a31;border:1px solid #444552;border-radius:16px;">
-                <h2 style="margin:0 0 14px;color:#f3f3f8;">Вход в Humary</h2>
-                <p style="margin:0 0 18px;line-height:1.5;">Введите этот код на странице Humary. Если аккаунта ещё нет, он будет создан после подтверждения.</p>
-                <div style="padding:15px;text-align:center;color:#f3f3f8;font-size:30px;font-weight:700;letter-spacing:6px;background:#25262d;border-radius:10px;">{code}</div>
-                <p style="margin:18px 0 0;color:#c0c1ca;line-height:1.5;">Код действует 10 минут. Если вы не запрашивали вход, просто проигнорируйте это письмо.</p>
+        <body style="margin:0;padding:24px;background:#f4f6fb;color:#4d5666;font-family:Arial,sans-serif;">
+            <div style="max-width:480px;margin:0 auto;padding:28px;background:#ffffff;border:1px solid #e0e5ef;border-radius:16px;">
+                <h2 style="margin:0 0 14px;color:#283b6d;">Вход в Humary</h2>
+                <p style="margin:0 0 18px;color:#4d5666;line-height:1.5;">Введите этот код на странице Humary. Если аккаунта ещё нет, он будет создан после подтверждения.</p>
+                <div style="padding:16px;text-align:center;color:#314b8d;font-size:30px;font-weight:700;letter-spacing:6px;background:#edf2ff;border:1px solid #d8e2ff;border-radius:10px;">{code}</div>
+                <p style="margin:18px 0 0;color:#697386;line-height:1.5;">Код действует 10 минут. Если вы не запрашивали вход, просто проигнорируйте это письмо.</p>
             </div>
         </body>
         </html>
@@ -105,12 +105,12 @@ def send_password_reset_email(email: str, code: str) -> bool:
         html_body = f"""
         <!DOCTYPE html>
         <html lang="ru">
-        <body style="margin:0;padding:24px;background:#1f1f1e;color:#dfded8;font-family:Arial,sans-serif;">
-            <div style="max-width:480px;margin:0 auto;padding:28px;background:#292a31;border:1px solid #444552;border-radius:16px;">
-                <h2 style="margin:0 0 14px;color:#f3f3f8;">Восстановление пароля</h2>
-                <p style="margin:0 0 18px;line-height:1.5;">Введите этот код на странице Humary, чтобы задать новый пароль:</p>
-                <div style="padding:15px;text-align:center;color:#f3f3f8;font-size:30px;font-weight:700;letter-spacing:6px;background:#25262d;border-radius:10px;">{code}</div>
-                <p style="margin:18px 0 0;color:#c0c1ca;line-height:1.5;">Код действует 10 минут. Если вы не запрашивали смену пароля, просто проигнорируйте это письмо.</p>
+        <body style="margin:0;padding:24px;background:#f4f6fb;color:#4d5666;font-family:Arial,sans-serif;">
+            <div style="max-width:480px;margin:0 auto;padding:28px;background:#ffffff;border:1px solid #e0e5ef;border-radius:16px;">
+                <h2 style="margin:0 0 14px;color:#283b6d;">Восстановление пароля</h2>
+                <p style="margin:0 0 18px;color:#4d5666;line-height:1.5;">Введите этот код на странице Humary, чтобы задать новый пароль:</p>
+                <div style="padding:16px;text-align:center;color:#314b8d;font-size:30px;font-weight:700;letter-spacing:6px;background:#edf2ff;border:1px solid #d8e2ff;border-radius:10px;">{code}</div>
+                <p style="margin:18px 0 0;color:#697386;line-height:1.5;">Код действует 10 минут. Если вы не запрашивали смену пароля, просто проигнорируйте это письмо.</p>
             </div>
         </body>
         </html>
