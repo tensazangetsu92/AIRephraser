@@ -36,6 +36,19 @@ router = APIRouter(tags=["user"])
 logger = logging.getLogger("uvicorn.error")
 AVAILABLE_HISTORY_TOOL_TYPES = ("study_work", "humanizer", "detector", "paraphraser")
 HISTORY_PREVIEW_CHARS = 300
+HISTORY_PROCESSING_OPTION_VALUES = {
+    "humanizer": {
+        "style": {"human", "literary", "academic"},
+        "target_language": {"ru", "en"},
+    },
+    "paraphraser": {
+        "style": {"synonyms", "simple", "academic"},
+    },
+    "study_work": {
+        "work_type": {"report", "essay", "presentation", "coursework", "other"},
+    },
+    "detector": {},
+}
 
 
 class ChangePasswordRequest(BaseModel):
@@ -45,6 +58,19 @@ class ChangePasswordRequest(BaseModel):
 
 class DeleteHistoryRequest(BaseModel):
     confirmation: str = Field(min_length=1, max_length=32)
+
+
+def normalize_history_processing_options(tool_type: str, raw_options: object) -> dict[str, str]:
+    """Keep only known, valid UI options in history metadata."""
+    if not isinstance(raw_options, dict):
+        return {}
+
+    allowed_options = HISTORY_PROCESSING_OPTION_VALUES.get(tool_type, {})
+    return {
+        key: value
+        for key, allowed_values in allowed_options.items()
+        if isinstance((value := raw_options.get(key)), str) and value in allowed_values
+    }
 
 
 @router.get("/me")
@@ -210,6 +236,7 @@ async def get_user_history_item(
         UserHistory.tool_type,
         UserHistory.original_text,
         UserHistory.result_text,
+        UserHistory.processing_options,
         UserHistory.processed_docx_filename,
         UserHistory.created_at,
         UserHistory.processed_docx.isnot(None).label("has_processed_docx"),
@@ -228,6 +255,7 @@ async def get_user_history_item(
             "tool_type": history.tool_type,
             "original_text": history.original_text,
             "result_text": history.result_text,
+            "processing_options": history.processing_options or {},
             "has_processed_docx": history.has_processed_docx,
             "processed_docx_filename": history.processed_docx_filename,
             "created_at": history.created_at.isoformat(),
@@ -246,11 +274,16 @@ async def save_to_history(
         tool_type = data.get("tool_type", "humanizer")
         if tool_type not in AVAILABLE_HISTORY_TOOL_TYPES:
             raise HTTPException(status_code=400, detail="Неизвестный инструмент истории")
+        processing_options = normalize_history_processing_options(
+            tool_type,
+            data.get("processing_options"),
+        )
         history = UserHistory(
             user_id=current_user.id,
             tool_type=tool_type,
             original_text=data.get("original_text", ""),
-            result_text=data.get("result_text", "")
+            result_text=data.get("result_text", ""),
+            processing_options=processing_options,
         )
         db.add(history)
         db.commit()

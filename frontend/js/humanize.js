@@ -7,6 +7,9 @@ async function loadTextFromLocalStorage() {
     const elements = window.elements || {};
     const historyRestore = typeof getHistoryRestore === 'function' ? await getHistoryRestore('humanizer') : null;
     if (historyRestore) {
+        const options = historyRestore.processingOptions || {};
+        setCustomSelectValue('style', options.style);
+        setCustomSelectValue('targetLanguage', options.target_language);
         localStorage.setItem('saved_input_text', historyRestore.original || '');
         localStorage.setItem('saved_result_text', historyRestore.result || '');
         localStorage.setItem('saved_result_time', Date.now());
@@ -86,16 +89,21 @@ async function processText(text) {
     setNewCheckButtonVisible(false);
 
     try {
+        const style = elements.style?.value || 'human';
+        const targetLanguage = elements.targetLanguage?.value || 'ru';
         const { ok, status, data } = await API.humanize(
             text,
-            elements.style?.value || 'human',
-            elements.targetLanguage?.value || 'ru'
+            style,
+            targetLanguage,
         );
 
         if (ok) {
             clearWarning();
             if (typeof refreshAllSubscriptionData === 'function') await refreshAllSubscriptionData(true);
-            if (await redirectToSavedHistory('humanizer', text, data.result)) return;
+            if (await redirectToSavedHistory('humanizer', text, data.result, {
+                style,
+                target_language: targetLanguage,
+            })) return;
 
             if (elements.result) elements.result.value = data.result;
             updateResultWordCounter(data.result);

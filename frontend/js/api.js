@@ -83,11 +83,12 @@ const API = {
         return this.request('/paraphrase', 'POST', { text, style }, true);
     },
 
-    saveHistory(toolType, originalText, resultText) {
+    saveHistory(toolType, originalText, resultText, processingOptions = {}) {
         return this.request('/user/history/save', 'POST', {
             tool_type: toolType,
             original_text: originalText,
-            result_text: resultText
+            result_text: resultText,
+            processing_options: processingOptions,
         }, true);
     }
 

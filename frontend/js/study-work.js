@@ -83,6 +83,11 @@
         if (!input || !result) return;
 
         originalText = historyRestore.original || '';
+        const workType = historyRestore.processingOptions?.work_type;
+        const workTypeInput = workType
+            ? document.querySelector(`input[name="workType"][value="${workType}"]`)
+            : null;
+        if (workTypeInput) workTypeInput.checked = true;
         hasStoredProcessedWord = Boolean(historyRestore.hasProcessedDocx);
         processedWordFilename = historyRestore.processedDocxFilename || processedWordFilename;
         input.value = originalText;
@@ -398,7 +403,9 @@
                 window.location.assign(`/study-work/${encodeURIComponent(wordHistoryId)}`);
                 return;
             }
-            if (await redirectToSavedHistory('study_work', text, editedText)) return;
+            if (await redirectToSavedHistory('study_work', text, editedText, {
+                work_type: workType,
+            })) return;
 
             renderStudyWorkResult(editedText);
             setStudyWorkResultVisible(true);

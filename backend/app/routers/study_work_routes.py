@@ -331,6 +331,7 @@ async def process_study_work_docx(
             tool_type="study_work",
             original_text=source_text,
             result_text=result_text,
+            processing_options={"work_type": work_type},
             processed_docx=processed_docx,
             processed_docx_filename=output_filename,
         )

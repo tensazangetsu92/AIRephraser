@@ -6,6 +6,7 @@ async function loadTextFromLocalStorage() {
     const elements = window.elements || {};
     const historyRestore = typeof getHistoryRestore === 'function' ? await getHistoryRestore('paraphraser') : null;
     if (historyRestore) {
+        setCustomSelectValue('style', historyRestore.processingOptions?.style);
         localStorage.setItem('paraphrase_input_text', historyRestore.original || '');
         localStorage.setItem('paraphrase_result_text', historyRestore.result || '');
         localStorage.setItem('paraphrase_result_time', Date.now());
@@ -86,15 +87,18 @@ async function processText(text) {
     setNewCheckButtonVisible(false);
 
     try {
+        const style = elements.style?.value || 'synonyms';
         const { ok, status, data } = await API.paraphrase(
             text,
-            elements.style?.value || 'synonyms'
+            style,
         );
 
         if (ok) {
             clearWarning();
             if (typeof refreshAllSubscriptionData === 'function') await refreshAllSubscriptionData(true);
-            if (await redirectToSavedHistory('paraphraser', text, data.result)) return;
+            if (await redirectToSavedHistory('paraphraser', text, data.result, {
+                style,
+            })) return;
 
             if (elements.result) elements.result.value = data.result;
             updateResultWordCounter(data.result);

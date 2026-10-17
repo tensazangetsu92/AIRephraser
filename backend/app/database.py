@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 import logging
 
-from sqlalchemy import create_engine, Column, Integer, String, Text, LargeBinary, DateTime, Boolean, ForeignKey, Date, Index
+from sqlalchemy import create_engine, Column, Integer, String, Text, LargeBinary, DateTime, Boolean, ForeignKey, Date, Index, JSON
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 from sqlalchemy.sql import func
 from app.config import DATABASE_URL
@@ -37,6 +37,7 @@ class UserHistory(Base):
     tool_type = Column(String(50), default="humanizer")
     original_text = Column(Text, nullable=False)
     result_text = Column(Text, nullable=False)
+    processing_options = Column(JSON, nullable=False, default=dict)
     processed_docx = Column(LargeBinary, nullable=True)
     processed_docx_filename = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

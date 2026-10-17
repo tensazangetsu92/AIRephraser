@@ -319,6 +319,24 @@ function takeHistoryRestore(toolType) {
     }
 }
 
+function setCustomSelectValue(hiddenInputId, value) {
+    const hiddenInput = document.getElementById(hiddenInputId);
+    const select = hiddenInput?.previousElementSibling;
+    if (!hiddenInput || !select?.classList.contains('custom-select')) return false;
+
+    const option = Array.from(select.querySelectorAll('.custom-select-option'))
+        .find(item => item.dataset.value === value);
+    if (!option) return false;
+
+    hiddenInput.value = value;
+    select.dataset.value = value;
+    select.querySelector('.custom-select-label').textContent = option.textContent;
+    select.querySelectorAll('.custom-select-option').forEach(item => {
+        item.classList.toggle('selected', item === option);
+    });
+    return true;
+}
+
 const historyToolPaths = {
     humanizer: '/humanize',
     detector: '/detector',
@@ -353,6 +371,9 @@ async function takeHistoryRestoreFromUrl(toolType) {
                     toolType,
                     original: String(item.original_text || ''),
                     result: String(item.result_text || ''),
+                    processingOptions: item.processing_options && typeof item.processing_options === 'object'
+                        ? item.processing_options
+                        : {},
                     hasProcessedDocx: Boolean(item.has_processed_docx),
                     processedDocxFilename: String(item.processed_docx_filename || ''),
                 };
@@ -369,11 +390,11 @@ async function getHistoryRestore(toolType) {
     return takeHistoryRestore(toolType) || takeHistoryRestoreFromUrl(toolType);
 }
 
-async function redirectToSavedHistory(toolType, original, result) {
+async function redirectToSavedHistory(toolType, original, result, processingOptions = {}) {
     const toolPath = historyToolPaths[toolType];
     if (!toolPath || typeof API === 'undefined') return false;
     try {
-        const saved = await API.saveHistory(toolType, original, result);
+        const saved = await API.saveHistory(toolType, original, result, processingOptions);
         const historyId = saved?.data?.history_id;
         if (!saved?.ok || !saved?.data?.success || !historyId) {
             throw new Error('history_save_failed');
