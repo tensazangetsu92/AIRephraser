@@ -2,6 +2,7 @@
 
 import asyncio
 import unittest
+from datetime import datetime, timezone
 
 from fastapi import Request, Response
 from sqlalchemy import create_engine
@@ -10,10 +11,17 @@ from sqlalchemy.orm import sessionmaker
 from app.database import Base, EmailLoginCode, StudyWorkTrial, Subscription, User
 from app.models import EmailCodeConfirm, EmailCodeRequest
 from app.routers import auth_routes
+from app.legal_consent import LEGAL_DOCUMENTS_VERSION
 
 
-def _request() -> Request:
-    return Request({"type": "http", "method": "POST", "path": "/", "headers": [], "client": ("127.0.0.1", 12345)})
+def _request(consented: bool = True) -> Request:
+    session = {}
+    if consented:
+        session = {
+            "legal_documents_version": LEGAL_DOCUMENTS_VERSION,
+            "legal_documents_accepted_at": datetime.now(timezone.utc).isoformat(),
+        }
+    return Request({"type": "http", "method": "POST", "path": "/", "headers": [], "client": ("127.0.0.1", 12345), "session": session})
 
 
 class EmailCodeAuthTests(unittest.TestCase):
@@ -67,3 +75,10 @@ class EmailCodeAuthTests(unittest.TestCase):
         self.assertTrue(result["already_sent"])
         self.assertEqual(result["email"], email)
         self.assertEqual(len(self.codes), 1)
+
+    def test_email_code_request_requires_legal_consent(self):
+        with self.assertRaises(Exception) as raised:
+            asyncio.run(auth_routes.request_email_code(
+                EmailCodeRequest(email="no-consent@humary-test.dev"), _request(consented=False), self.db,
+            ))
+        self.assertEqual(getattr(raised.exception, "status_code", None), 403)

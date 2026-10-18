@@ -3,7 +3,7 @@
 @import url('variables.css?v=20260928-static-cache');
 @import url('components/logo.css?v=20260928-static-cache');
 @import url('components/modal.css?v=20260928-static-cache');
-@import url('components/auth-page.css?v=20260925-cookie-policy-page');
+@import url('components/auth-page.css?v=20261019-oauth-provider-buttons');
 @import url('components/editor.css?v=20261009-compact-mobile-document-actions');
 @import url('components/controls.css?v=20260905-main-button-loader-gap');
 @import url('components/skeleton.css?v=20261011-loading-states');
@@ -19,7 +19,7 @@
 @import url('components/detector.css?v=20260905-tool-new-check');
 @import url('components/home.css?v=20260925-tool-guide-link-inherit-font');
 @import url('components/how-it-works.css?v=20260927-history-link-hover');
-@import url('components/terms.css?v=20261003-terms-eyebrow-size');
+@import url('components/terms.css?v=20261019-support-page');
 @import url('components/study-work.css?v=20261009-shared-input-height');
 @import url('responsive.css?v=20261009-mobile-footer-grid');
 

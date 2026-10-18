@@ -48,6 +48,12 @@ from app.rate_limit import (
     record_failed_login,
 )
 from app.subscription import initialise_new_user_entitlements
+from app.legal_consent import (
+    LEGAL_DOCUMENTS_VERSION,
+    persist_legal_consent,
+    record_pending_legal_consent,
+    require_pending_legal_consent,
+)
 
 router = APIRouter(tags=["auth"])
 logger = logging.getLogger("uvicorn.error")
@@ -58,6 +64,13 @@ PASSWORD_RESET_MAX_ATTEMPTS = 5
 EMAIL_CODE_LIFETIME = timedelta(minutes=10)
 EMAIL_CODE_RESEND_DELAY = timedelta(seconds=60)
 EMAIL_CODE_MAX_ATTEMPTS = 5
+
+
+@router.post("/auth/legal-consent")
+async def accept_legal_documents(request: Request):
+    """Store a short-lived, signed pre-auth acknowledgement in the session."""
+    record_pending_legal_consent(request)
+    return {"success": True, "version": LEGAL_DOCUMENTS_VERSION}
 
 
 def _utc_now() -> datetime:
@@ -95,6 +108,7 @@ async def request_email_code(
         db: Session = Depends(get_db),
 ):
     """Issue a passwordless sign-in code for an existing or new account."""
+    require_pending_legal_consent(request)
     email = str(data.email).strip().casefold()
     now = _utc_now()
     recent_code = db.query(EmailLoginCode).filter(
@@ -170,6 +184,7 @@ async def confirm_email_code(
         db: Session = Depends(get_db),
 ):
     """Validate the code, then sign in or create the verified account."""
+    require_pending_legal_consent(request)
     email = str(data.email).strip().casefold()
     enforce_auth_rate_limit(db, request, scope="email-code-confirm", email=email)
     if not data.code.isdigit() or len(data.code) != 6:
@@ -213,6 +228,7 @@ async def confirm_email_code(
         db.flush()
         created = True
 
+    persist_legal_consent(db, user)
     login_code.used_at = now
     db.commit()
     db.refresh(user)

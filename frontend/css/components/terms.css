@@ -100,6 +100,60 @@
     margin: 0 auto;
 }
 
+.support-document {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.support-email-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    margin-top: .9rem;
+    padding: .72rem .9rem;
+    color: var(--text-strong) !important;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--surface-card-muted);
+    font-weight: 600;
+    text-decoration: none !important;
+    font: inherit;
+    cursor: pointer;
+}
+
+.support-email-link i { color: var(--accent-text); }
+
+.support-email-address {
+    margin-top: .85rem !important;
+    color: var(--text-strong) !important;
+    font-weight: 600;
+}
+
+.support-email-link:hover {
+    border-color: var(--border-card);
+    background: var(--surface-card-hover);
+}
+
+.support-checklist {
+    display: grid;
+    gap: .55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.support-checklist li {
+    display: flex;
+    gap: .55rem;
+    align-items: flex-start;
+}
+
+.support-checklist i {
+    margin-top: .3rem;
+    color: var(--accent-text);
+    font-size: .8rem;
+}
+
 .contacts-requisites {
     display: grid;
     gap: .8rem;

@@ -63,6 +63,10 @@ const API = {
         return this.request('/auth/email-code/request', 'POST', { email });
     },
 
+    acceptLegalDocuments() {
+        return this.request('/auth/legal-consent', 'POST');
+    },
+
     confirmEmailCode(email, code) {
         return this.request('/auth/email-code/confirm', 'POST', { email, code });
     },

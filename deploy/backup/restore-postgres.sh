@@ -8,6 +8,8 @@ set -Eeuo pipefail
 : "${POSTGRES_DB:?POSTGRES_DB is required}"
 
 POSTGRES_SERVICE="${POSTGRES_SERVICE:-postgres}"
+COMPOSE_ENV_FILE="${COMPOSE_ENV_FILE:-}"
+COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-}"
 BACKUP_FILE="${1:-}"
 
 if [[ "${CONFIRM_RESTORE:-}" != "YES" ]]; then
@@ -19,12 +21,25 @@ if [[ -z "$BACKUP_FILE" || ! -f "$BACKUP_FILE" ]]; then
     exit 2
 fi
 
-docker compose -f "$COMPOSE_FILE" exec -T "$POSTGRES_SERVICE" \
+compose_command=(docker compose)
+if [[ -n "$COMPOSE_ENV_FILE" ]]; then
+    if [[ ! -f "$COMPOSE_ENV_FILE" ]]; then
+        echo "Compose environment file does not exist: $COMPOSE_ENV_FILE" >&2
+        exit 2
+    fi
+    compose_command+=(--env-file "$COMPOSE_ENV_FILE")
+fi
+if [[ -n "$COMPOSE_PROJECT_NAME" ]]; then
+    compose_command+=(-p "$COMPOSE_PROJECT_NAME")
+fi
+compose_command+=(-f "$COMPOSE_FILE")
+
+"${compose_command[@]}" exec -T "$POSTGRES_SERVICE" \
     sh -ec 'PGPASSWORD="$POSTGRES_PASSWORD" pg_restore --host=127.0.0.1 --username="$1" --list' \
     restore-postgres "$POSTGRES_USER" < "$BACKUP_FILE" >/dev/null
 
 echo "Restoring database from $(basename "$BACKUP_FILE")"
-docker compose -f "$COMPOSE_FILE" exec -T "$POSTGRES_SERVICE" \
+"${compose_command[@]}" exec -T "$POSTGRES_SERVICE" \
     sh -ec 'PGPASSWORD="$POSTGRES_PASSWORD" pg_restore --host=127.0.0.1 --username="$1" --dbname="$2" --clean --if-exists --exit-on-error --no-owner --no-privileges' \
     restore-postgres "$POSTGRES_USER" "$POSTGRES_DB" < "$BACKUP_FILE"
 

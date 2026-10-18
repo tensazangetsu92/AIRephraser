@@ -24,6 +24,15 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now humary-db-backup.timer
 ```
 
+For the current staging deployment, set these values in `/etc/humary/backup.env`:
+
+```bash
+COMPOSE_FILE=/opt/humary/docker-compose.yml
+COMPOSE_ENV_FILE=/opt/humary/deploy/compose.staging.env
+COMPOSE_PROJECT_NAME=humary-staging
+POSTGRES_SERVICE=db
+```
+
 Run the first backup manually and inspect its result:
 
 ```bash
@@ -43,6 +52,8 @@ sudo journalctl -u humary-db-backup.service --since today
 A backup that stays only on the same VPS does not protect against losing that
 VPS. Configure `rclone` with a **crypt remote** that points to storage separate
 from the VPS, then set `BACKUP_RCLONE_REMOTE` in `/etc/humary/backup.env`.
+The crypt remote encrypts filenames and file contents before the copy leaves
+the VPS; keep its rclone configuration and password recovery material separate.
 Choose a storage location appropriate for the personal-data requirements of the
 project.
 

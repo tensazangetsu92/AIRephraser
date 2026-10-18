@@ -1,0 +1,41 @@
+{% extends "template.html" %}
+
+{% block title %}Обратная связь{% endblock %}
+
+{% block content %}
+<section class="terms-page support-page" aria-labelledby="supportTitle">
+    <header class="terms-intro">
+        <span class="terms-eyebrow"><i class="fa-solid fa-headset" aria-hidden="true"></i> <span data-i18n="support_title">Обратная связь</span></span>
+        <h1 id="supportTitle" data-i18n="support_title" data-i18n-document-title="support_title">Обратная связь</h1>
+        <p data-i18n="support_intro">Напишите нам, если нужна помощь с Humary или вы заметили техническую проблему.</p>
+    </header>
+
+    <article class="terms-document support-document">
+        <section>
+            <h2 data-i18n="support_contact_title">Техническая поддержка</h2>
+            <p data-i18n="support_contact_text">Опишите вопрос или проблему в письме — мы ответим на указанный адрес электронной почты.</p>
+            <p class="support-email-address">humary.service@mail.ru</p>
+            <button type="button" class="support-email-link" id="supportCopyEmailBtn"><i class="fa-solid fa-clone" aria-hidden="true"></i><span data-i18n="support_email_button">Скопировать email</span></button>
+        </section>
+
+        <section>
+            <h2 data-i18n="support_details_title">Что указать в обращении</h2>
+            <ul class="support-checklist">
+                <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="support_detail_1">email аккаунта, с которым возникла проблема;</span></li>
+                <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="support_detail_2">название инструмента или ссылку на страницу;</span></li>
+                <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="support_detail_3">что вы делали и какой результат получили;</span></li>
+                <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="support_detail_4">скриншот ошибки и приблизительное время её появления — если это возможно.</span></li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 data-i18n="support_privacy_title">Вопросы по данным и аккаунту</h2>
+            <p><span data-i18n="support_privacy_before">Для вопросов о персональных данных, истории или удалении аккаунта также можно использовать эту почту. Подробнее — на странице </span><a href="/privacy" data-i18n="support_privacy_link">Конфиденциальность</a>.</p>
+        </section>
+    </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/js/support.js?v=20261019-copy-support-email" defer></script>
+{% endblock %}

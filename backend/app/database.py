@@ -25,6 +25,10 @@ class User(Base):
     avatar_url = Column(String(1024), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     is_active = Column(Boolean, default=True)
+    # Version and timestamp of the Terms/Privacy acknowledgement made before
+    # the user completed any sign-in method.
+    legal_documents_version = Column(String(32), nullable=True)
+    legal_accepted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Связь с подпиской
     subscription = relationship("Subscription", back_populates="user", uselist=False)

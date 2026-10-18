@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.config import FRONTEND_URL, VK_ID_APP_ID, VK_ID_REDIRECT_URI
 from app.database import OAuthIdentity, User, get_db
 from app.subscription import initialise_new_user_entitlements
+from app.legal_consent import persist_legal_consent, require_pending_legal_consent
 from auth import (
     create_refresh_session,
     get_hash_password,
@@ -76,6 +77,7 @@ def _code_challenge(verifier: str) -> str:
 async def vk_login(request: Request):
     """Start VK ID OAuth 2.1 authorization code flow with PKCE."""
     _require_vk_configuration()
+    require_pending_legal_consent(request)
     state = secrets.token_urlsafe(32)
     verifier = secrets.token_urlsafe(48)
     request.session["vk_oauth_state"] = state
@@ -108,6 +110,7 @@ async def vk_auth_callback(
 ):
     """Exchange a VK ID code for a token and sign the user in by verified email."""
     _require_vk_configuration()
+    require_pending_legal_consent(request)
     expected_state = request.session.pop("vk_oauth_state", None)
     verifier = request.session.pop("vk_oauth_verifier", None)
     if not (
@@ -215,6 +218,9 @@ async def vk_auth_callback(
         user.avatar_url = avatar_url
         profile_changed = True
     if profile_changed:
+        db.commit()
+
+    if persist_legal_consent(db, user):
         db.commit()
 
     refresh_token = create_refresh_session(db, user)

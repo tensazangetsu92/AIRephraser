@@ -105,6 +105,14 @@
     cursor: pointer;
 }
 
+.auth-legal-consent {
+    align-items: center;
+}
+
+.auth-legal-consent input {
+    margin-top: 0;
+}
+
 .auth-cookie-consent a {
     grid-column: 2;
     width: fit-content;
@@ -114,7 +122,6 @@
 }
 
 .auth-page-submit,
-.auth-page-oauth,
 .auth-page-secondary,
 .auth-mode-toggle {
     display: inline-flex;
@@ -135,7 +142,6 @@
 }
 
 .auth-page-submit:hover,
-.auth-page-oauth:hover,
 .auth-page-secondary:hover,
 .auth-mode-toggle:hover {
     background: #5c74b8;
@@ -156,9 +162,60 @@
 .auth-divider::after { height: 1px; background: var(--border-subtle); content: ""; }
 
 .auth-oauth-actions { display: grid; gap: .7rem; }
-.auth-page-oauth { width: 100%; }
-.auth-page-oauth .yandex-mark { color: #fff; }
-.auth-page-oauth .fa-vk { color: #2787f5; }
+.auth-page-oauth {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 48px;
+    gap: 7px;
+    padding: .75rem 1rem;
+    color: var(--text-strong);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    background: var(--surface-card-muted);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+
+.auth-page-oauth:hover {
+    border-color: var(--border-card);
+    background: var(--surface-card-hover);
+    transform: translateY(-1px);
+}
+
+.auth-page-oauth:active { transform: translateY(0); }
+
+.auth-page-oauth:focus-visible {
+    outline: none;
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-blue) 18%, transparent);
+}
+
+.oauth-provider-icon {
+    display: inline-grid;
+    flex: 0 0 1.8rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--border-subtle) 82%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--body-background-color) 62%, transparent);
+}
+
+.oauth-brand-glyph {
+    font-family: "Font Awesome 6 Brands";
+    font-size: 1.12rem;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.oauth-provider-icon--yandex .oauth-brand-glyph { color: #fc3f1d; }
+.oauth-provider-icon--vk .oauth-brand-glyph { color: #2787f5; }
 
 .auth-mode-toggle {
     display: flex;

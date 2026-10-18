@@ -142,6 +142,9 @@ function updateUI() {
             const balanceBlock = document.getElementById(id);
             if (balanceBlock) balanceBlock.style.display = 'none';
         });
+        // Do not leave a loading placeholder behind if restoring the mobile
+        // session failed or the visitor has just logged out.
+        if (typeof setSidebarBalanceLoading === 'function') setSidebarBalanceLoading(false);
     }
 
     if (typeof updateWordCounter === 'function') updateWordCounter();

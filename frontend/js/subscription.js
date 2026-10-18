@@ -224,7 +224,17 @@ function updateMaxWordsLimit(data) {
 function setSidebarBalanceLoading(isLoading) {
     const skeleton = document.getElementById('balanceLoadingSkeleton');
     if (!skeleton) return;
-    skeleton.hidden = !isLoading;
+
+    // A balance request only exists for an authenticated user.  This extra
+    // guard makes a completed logout / failed session restoration win over a
+    // request that was started a moment earlier.
+    const balanceIsVisible = document.getElementById('balanceBlock')?.style.display === 'block';
+    // Keep the last known balance on screen during a background refresh. This
+    // also prevents a late request from rendering both the skeleton and the
+    // already populated balance card at the same time.
+    const shouldShow = Boolean(isLoading && Auth.isAuthenticated() && !balanceIsVisible);
+    skeleton.hidden = !shouldShow;
+    skeleton.setAttribute('aria-hidden', String(!shouldShow));
 }
 
 function updateStudyWorkMaxWordsLimit(data) {
@@ -295,6 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshAllSubscriptionData();
     } else {
         resetTariffCards();
+        setSidebarBalanceLoading(false);
     }
 
     document.querySelectorAll('.word-pack-btn').forEach(button => {

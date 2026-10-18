@@ -8,6 +8,8 @@ umask 077
 : "${POSTGRES_DB:?POSTGRES_DB is required}"
 
 POSTGRES_SERVICE="${POSTGRES_SERVICE:-postgres}"
+COMPOSE_ENV_FILE="${COMPOSE_ENV_FILE:-}"
+COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-}"
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/humary}"
 BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-14}"
 BACKUP_RCLONE_REMOTE="${BACKUP_RCLONE_REMOTE:-}"
@@ -26,6 +28,19 @@ if [[ ! -f "$COMPOSE_FILE" ]]; then
     echo "Compose file does not exist: $COMPOSE_FILE" >&2
     exit 2
 fi
+
+compose_command=(docker compose)
+if [[ -n "$COMPOSE_ENV_FILE" ]]; then
+    if [[ ! -f "$COMPOSE_ENV_FILE" ]]; then
+        echo "Compose environment file does not exist: $COMPOSE_ENV_FILE" >&2
+        exit 2
+    fi
+    compose_command+=(--env-file "$COMPOSE_ENV_FILE")
+fi
+if [[ -n "$COMPOSE_PROJECT_NAME" ]]; then
+    compose_command+=(-p "$COMPOSE_PROJECT_NAME")
+fi
+compose_command+=(-f "$COMPOSE_FILE")
 
 mkdir -p "$BACKUP_DIR"
 chmod 700 "$BACKUP_DIR"
@@ -48,7 +63,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Creating PostgreSQL backup: $backup_name"
-docker compose -f "$COMPOSE_FILE" exec -T "$POSTGRES_SERVICE" \
+"${compose_command[@]}" exec -T "$POSTGRES_SERVICE" \
     sh -ec 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump --host=127.0.0.1 --username="$1" --dbname="$2" --format=custom --no-owner --no-privileges' \
     backup-postgres "$POSTGRES_USER" "$POSTGRES_DB" > "$temporary_file"
 
@@ -58,7 +73,7 @@ if [[ ! -s "$temporary_file" ]]; then
 fi
 
 # A dump is useful only if PostgreSQL can read its archive index.
-docker compose -f "$COMPOSE_FILE" exec -T "$POSTGRES_SERVICE" \
+"${compose_command[@]}" exec -T "$POSTGRES_SERVICE" \
     sh -ec 'PGPASSWORD="$POSTGRES_PASSWORD" pg_restore --host=127.0.0.1 --username="$1" --list' \
     backup-postgres "$POSTGRES_USER" < "$temporary_file" >/dev/null
 

@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.config import FRONTEND_URL, YANDEX_CLIENT_ID, YANDEX_CLIENT_SECRET, YANDEX_REDIRECT_URI
 from app.database import User, get_db
 from app.subscription import initialise_new_user_entitlements
+from app.legal_consent import persist_legal_consent, require_pending_legal_consent
 from auth import (
     create_refresh_session,
     get_hash_password,
@@ -61,6 +62,7 @@ def _require_yandex_configuration() -> None:
 async def yandex_login(request: Request):
     """Start an authorization-code OAuth flow with a CSRF-protected state."""
     _require_yandex_configuration()
+    require_pending_legal_consent(request)
     state = secrets.token_urlsafe(32)
     request.session["yandex_oauth_state"] = state
     params = {
@@ -83,6 +85,7 @@ async def yandex_auth_callback(
 ):
     """Exchange the Yandex authorization code and create or sign in a user."""
     _require_yandex_configuration()
+    require_pending_legal_consent(request)
     expected_state = request.session.pop("yandex_oauth_state", None)
     if not (
         isinstance(expected_state, str)
@@ -156,6 +159,9 @@ async def yandex_auth_callback(
             profile_changed = True
         if profile_changed:
             db.commit()
+
+    if persist_legal_consent(db, user):
+        db.commit()
 
     refresh_token = create_refresh_session(db, user)
     # Do not put bearer credentials into the redirect URL or browser storage.

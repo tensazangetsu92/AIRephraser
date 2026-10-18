@@ -143,6 +143,11 @@ async def contacts_page(request: Request):
     return _public_template(request, "contacts.html")
 
 
+@router.get("/support", response_class=HTMLResponse)
+async def support_page(request: Request):
+    return _public_template(request, "support.html")
+
+
 @router.get("/how-it-works", response_class=HTMLResponse)
 async def how_it_works_page(request: Request):
     return _public_template(request, "how-it-works.html")

@@ -109,8 +109,26 @@ const Auth = {
         return false;
     },
 
-    loginWithYandex() { window.location.assign('/auth/yandex/login'); },
-    loginWithVK() { window.location.assign('/auth/vk/login'); },
+    async prepareLegalConsent() {
+        if (!this.ensureCookieConsent() || !this.ensureTermsAcceptance()) return false;
+        try {
+            const result = await API.acceptLegalDocuments();
+            if (result.ok) return true;
+            this.showError(result.data?.detail || (typeof t === 'function'
+                ? t('auth_terms_accept_required')
+                : 'Примите Условия использования и ознакомьтесь с Политикой конфиденциальности'));
+        } catch {
+            this.showError(typeof t === 'function' ? t('auth_network_error') : 'Ошибка сети. Проверьте подключение и попробуйте ещё раз.');
+        }
+        return false;
+    },
+
+    async loginWithYandex() {
+        if (await this.prepareLegalConsent()) window.location.assign('/auth/yandex/login');
+    },
+    async loginWithVK() {
+        if (await this.prepareLegalConsent()) window.location.assign('/auth/vk/login');
+    },
     async handleOAuthCallback() { return false; },
     async logout() {
         try { await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
@@ -216,7 +234,7 @@ const Auth = {
         const email = document.getElementById('authEmail')?.value.trim();
         if (!email) return this.showError(typeof t === 'function' ? t('auth_email_required') : 'Введите email');
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return this.showError(typeof t === 'function' ? t('auth_email_invalid') : 'Введите корректный email');
-        if (!this.ensureCookieConsent() || !this.ensureTermsAcceptance()) return;
+        if (!await this.prepareLegalConsent()) return;
 
         const button = document.getElementById('authSubmitBtn');
         const initialText = button?.textContent;
@@ -259,6 +277,7 @@ const Auth = {
         const code = document.getElementById('verificationCode')?.value.trim();
         if (!this.pendingEmail) return this.showError(typeof t === 'function' ? t('auth_email_code_restart') : 'Запросите новый код.');
         if (!/^\d{6}$/.test(code || '')) return this.setError('verificationError', typeof t === 'function' ? t('auth_email_code_invalid') : 'Введите 6-значный код из письма');
+        if (!await this.prepareLegalConsent()) return;
 
         const button = document.getElementById('verificationSubmitBtn');
         const initialText = button?.textContent;
@@ -283,6 +302,7 @@ const Auth = {
     },
     async resendEmailCode() {
         if (!this.pendingEmail) return this.showError(typeof t === 'function' ? t('auth_email_code_restart') : 'Запросите новый код.');
+        if (!await this.prepareLegalConsent()) return;
         this.setError('verificationError');
         try {
             const result = await API.requestEmailCode(this.pendingEmail);

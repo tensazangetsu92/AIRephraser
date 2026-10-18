@@ -32,8 +32,14 @@
         </form>
         <div class="auth-divider"><span data-i18n="auth_or">или</span></div>
         <div class="auth-oauth-actions">
-            <button type="button" id="yandexLoginBtn" class="auth-page-oauth"><span class="yandex-mark" aria-hidden="true">Я</span><span data-i18n="login_yandex">Войти через Яндекс</span></button>
-            <button type="button" id="vkLoginBtn" class="auth-page-oauth"><i class="fab fa-vk" aria-hidden="true"></i><span data-i18n="login_vk">Войти через VK ID</span></button>
+            <button type="button" id="yandexLoginBtn" class="auth-page-oauth">
+                <span class="oauth-provider-icon oauth-provider-icon--yandex" aria-hidden="true"><i class="oauth-brand-glyph">&#xf413;</i></span>
+                <span data-i18n="login_yandex">Войти через Яндекс</span>
+            </button>
+            <button type="button" id="vkLoginBtn" class="auth-page-oauth">
+                <span class="oauth-provider-icon oauth-provider-icon--vk" aria-hidden="true"><i class="oauth-brand-glyph">&#xf189;</i></span>
+                <span data-i18n="login_vk">Войти через VK ID</span>
+            </button>
         </div>
     </section>
 
@@ -58,9 +64,9 @@
     </button>
 </div>
 <script src="/js/utils.js?v=20261011-lazy-upload-libraries" defer></script>
-<script src="/js/api.js?v=20261010-email-code-resend-timer" defer></script>
+<script src="/js/api.js?v=20261019-server-legal-consent" defer></script>
 <script src="/js/notifications.js?v=20261011-toast-accessibility" defer></script>
-<script src="/js/auth.js?v=20261011-terms-acceptance" defer></script>
+<script src="/js/auth.js?v=20261019-server-legal-consent" defer></script>
 <script src="/js/lang.js?v=20261011-history-empty-states" defer></script>
 <script src="/js/cookie-consent.js?v=20261010-auth-cookie-consent" defer></script>
 </body>
