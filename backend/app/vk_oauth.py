@@ -84,7 +84,9 @@ async def vk_login(request: Request):
         "client_id": VK_ID_APP_ID,
         "redirect_uri": VK_ID_REDIRECT_URI,
         "response_type": "code",
-        "scope": "email",
+        # VK ID's current web SDK requests both basic contact scopes.  Some
+        # accounts do not return the email field when only `email` is passed.
+        "scope": "phone email",
         "state": state,
         "code_challenge": _code_challenge(verifier),
         # VK ID expects the lowercase literal used by its OAuth 2.1 SDK.
@@ -159,9 +161,11 @@ async def vk_auth_callback(
     profile = profile_data.get("user") if isinstance(profile_data, dict) else None
     email = profile.get("email") if isinstance(profile, dict) else None
     if not isinstance(email, str) or not email.strip():
+        profile_keys = sorted(profile) if isinstance(profile, dict) else []
+        logger.warning("VK ID profile omitted email; returned profile fields: %s", profile_keys)
         raise HTTPException(
             status_code=400,
-            detail="VK ID не передал email. Разрешите доступ к email и повторите вход.",
+            detail="VK ID не передал адрес электронной почты. Войдите через email-код или используйте другой аккаунт VK.",
         )
     email = email.strip().lower()
     avatar_url = _get_vk_avatar_url(profile)
