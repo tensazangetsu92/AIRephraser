@@ -28,6 +28,8 @@ backend/.env.*
 !backend/.env.example
 deploy/production.env
 deploy/caddy.env
+deploy/production-caddy.env
+deploy/compose.production.env
 deploy/staging.env
 deploy/staging-caddy.env
 

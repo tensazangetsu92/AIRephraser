@@ -44,6 +44,13 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+    # The shared edge network lets one public Caddy instance route traffic to
+    # the otherwise isolated staging and production application containers.
+    networks:
+      default:
+      humary_proxy:
+        aliases:
+          - ${PROXY_APP_ALIAS:-humary-app}
 
   caddy:
     image: caddy:2.8-alpine
@@ -58,11 +65,22 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${CADDYFILE:-./deploy/Caddyfile}:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      default:
+      humary_proxy:
 
 volumes:
   postgres_data:
   caddy_data:
   caddy_config:
+
+networks:
+  # Create this once on the server: docker network create humary-proxy
+  # It deliberately has no public ports; only Caddy and the app containers
+  # use it to communicate with each other.
+  humary_proxy:
+    external: true
+    name: ${PROXY_NETWORK_NAME:-humary-proxy}

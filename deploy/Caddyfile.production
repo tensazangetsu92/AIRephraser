@@ -1,0 +1,23 @@
+{
+    email {$ACME_EMAIL}
+}
+
+# Production is the only public HTTPS entry point. It proxies both host names
+# to separate application containers over the private humary-proxy network.
+{$SITE_DOMAIN} {
+    encode zstd gzip
+    reverse_proxy humary-production-app:8000
+
+    header {
+        -Server
+    }
+}
+
+{$STAGING_SITE_DOMAIN} {
+    encode zstd gzip
+    reverse_proxy humary-staging-app:8000
+
+    header {
+        -Server
+    }
+}
