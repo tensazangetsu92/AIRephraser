@@ -87,7 +87,8 @@ async def vk_login(request: Request):
         "scope": "email",
         "state": state,
         "code_challenge": _code_challenge(verifier),
-        "code_challenge_method": "S256",
+        # VK ID expects the lowercase literal used by its OAuth 2.1 SDK.
+        "code_challenge_method": "s256",
         "prompt": "login",
     }
     return RedirectResponse(url=f"{VK_ID_AUTHORIZE_URL}?{urlencode(params)}")
