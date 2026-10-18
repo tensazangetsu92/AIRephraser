@@ -38,6 +38,22 @@ class LoggingSecurityTests(unittest.TestCase):
         self.assertTrue(SensitiveLogFilter().filter(record))
         self.assertEqual(record.getMessage(), "Login rejected: password=[REDACTED]")
 
+    def test_redacts_oauth_callback_credentials_from_access_logs(self) -> None:
+        message = (
+            'GET /auth/vk/callback?code=oauth-one-time-code&state=csrf-state&'
+            'device_id=device-identifier&ext_id=external-identifier HTTP/1.1'
+        )
+        sanitized = _redact_sensitive_log_values(message)
+
+        for sensitive_value in (
+            "oauth-one-time-code",
+            "csrf-state",
+            "device-identifier",
+            "external-identifier",
+        ):
+            self.assertNotIn(sensitive_value, sanitized)
+        self.assertEqual(sanitized.count("[REDACTED]"), 4)
+
     def test_redacts_full_user_text_in_structured_or_interpolated_logs(self) -> None:
         source_text = "Первое предложение пользователя.\nВторое предложение пользователя."
         rendered_payload = repr({"original_text": source_text})

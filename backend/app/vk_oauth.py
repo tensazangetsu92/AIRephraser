@@ -91,7 +91,9 @@ async def vk_login(request: Request):
         "code_challenge": _code_challenge(verifier),
         # VK ID expects the lowercase literal used by its OAuth 2.1 SDK.
         "code_challenge_method": "s256",
-        "prompt": "login",
+        # Require VK ID to show the consent screen for contact data.  Without
+        # it an already-authorized account may return a partial profile.
+        "prompt": "login consent",
     }
     return RedirectResponse(url=f"{VK_ID_AUTHORIZE_URL}?{urlencode(params)}")
 

@@ -55,6 +55,7 @@ _SENSITIVE_LOG_VALUE_PATTERN = re.compile(
     (?P<key>
         [\"']?(?:password|current_password|new_password|password_hash|smtp_password|
         authorization|proxy-authorization|access_token|refresh_token|id_token|token|cookie|
+        code|code_verifier|code_challenge|state|device_id|ext_id|
         (?:x-)?api[_-]?key|client_secret|gigachat_auth_key|gpt_auth_key)[\"']?
     )
     \s*(?P<separator>[:=])\s*
@@ -118,7 +119,9 @@ def configure_logging() -> None:
     # Uvicorn installs handlers before importing the application. Add the
     # redaction filter to both possible handler sets, without adding handlers
     # or duplicating records.
-    for configured_logger in (logging.getLogger(), uvicorn_error_logger):
+    uvicorn_access_logger = logging.getLogger("uvicorn.access")
+    uvicorn_access_logger.setLevel(numeric_level)
+    for configured_logger in (logging.getLogger(), uvicorn_error_logger, uvicorn_access_logger):
         for handler in configured_logger.handlers:
             if not any(isinstance(item, SensitiveLogFilter) for item in handler.filters):
                 handler.addFilter(SensitiveLogFilter())
