@@ -23,23 +23,28 @@ def _as_utc(value: datetime) -> datetime:
     return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
 
 
-def normalise_email(email: str) -> str:
-    return email.strip().casefold()
+def normalise_entitlement_subject(subject: str) -> str:
+    return subject.strip().casefold()
 
 
-def email_deletion_hmac(email: str) -> str:
-    """Return a keyed, non-plain-email lookup value for the deletion marker."""
+def entitlement_subject_hmac(subject: str) -> str:
+    """Return a keyed lookup value without storing the source identifier."""
     return hmac.new(
         SECRET_KEY.encode("utf-8"),
-        f"humary:deleted-account-free-entitlement:{normalise_email(email)}".encode("utf-8"),
+        f"humary:deleted-account-free-entitlement:{normalise_entitlement_subject(subject)}".encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()
 
 
-def has_consumed_free_entitlement(db: Session, email: str, *, now: datetime | None = None) -> bool:
-    """Return whether a still-valid deletion marker exists for this email."""
+def email_deletion_hmac(email: str) -> str:
+    """Compatibility alias for existing callers using email as the subject."""
+    return entitlement_subject_hmac(email)
+
+
+def has_consumed_free_entitlement(db: Session, subject: str, *, now: datetime | None = None) -> bool:
+    """Return whether a still-valid deletion marker exists for this login identity."""
     now = now or _utc_now()
-    marker = db.get(DeletedAccountMarker, email_deletion_hmac(email))
+    marker = db.get(DeletedAccountMarker, entitlement_subject_hmac(subject))
     if not marker:
         return False
     if _as_utc(marker.expires_at) > now:
@@ -50,17 +55,17 @@ def has_consumed_free_entitlement(db: Session, email: str, *, now: datetime | No
     return False
 
 
-def record_deleted_account_marker(db: Session, email: str, *, now: datetime | None = None) -> None:
+def record_deleted_account_marker(db: Session, subject: str, *, now: datetime | None = None) -> None:
     """Record the finite anti-abuse marker in the same transaction as deletion."""
     now = now or _utc_now()
     expires_at = now + timedelta(days=FREE_ENTITLEMENT_MARKER_RETENTION_DAYS)
-    marker = db.get(DeletedAccountMarker, email_deletion_hmac(email))
+    marker = db.get(DeletedAccountMarker, entitlement_subject_hmac(subject))
     if marker:
         marker.deleted_at = now
         marker.expires_at = expires_at
         return
     db.add(DeletedAccountMarker(
-        email_hmac=email_deletion_hmac(email),
+        email_hmac=entitlement_subject_hmac(subject),
         deleted_at=now,
         expires_at=expires_at,
     ))

@@ -46,7 +46,7 @@ class Token(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
-    email: str
+    email: Optional[str] = None
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
     created_at: Optional[datetime] = None

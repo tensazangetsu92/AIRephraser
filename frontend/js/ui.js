@@ -22,20 +22,21 @@ function getAvatarUrl(email) {
 
 function getUserDisplayName(user) {
     const displayName = String(user?.display_name || '').trim();
-    return displayName || String(user?.email || '').trim();
+    return displayName || String(user?.email || '').trim() || 'Humary';
 }
 
 function setUserAvatar(image, user) {
-    if (!image || !user?.email) return;
-    const fallbackUrl = getAvatarUrl(user.email);
+    if (!image || !user) return;
+    const email = String(user.email || '').trim();
+    const fallbackUrl = getAvatarUrl(email);
     image.onerror = () => {
-        if (image.src !== fallbackUrl) {
+        if (fallbackUrl && image.src !== fallbackUrl) {
             image.onerror = null;
             image.src = fallbackUrl;
         }
     };
-    image.src = user.avatar_url || fallbackUrl;
-    image.alt = user.email;
+    if (user.avatar_url || fallbackUrl) image.src = user.avatar_url || fallbackUrl;
+    image.alt = getUserDisplayName(user);
 }
 
 let userMenuInited = false;

@@ -129,6 +129,11 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return encoded_jwt
 
 
+def create_user_access_token(user: User) -> str:
+    """Create an access token addressed to the immutable internal user id."""
+    return create_access_token(data={"sub": f"user:{user.id}"})
+
+
 def _refresh_token_hash(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
@@ -253,11 +258,19 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     token = credentials.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        if email is None:
+        subject = payload.get("sub")
+        if not isinstance(subject, str) or not subject:
             raise HTTPException(status_code=401, detail="Неверный токен")
 
-        user = db.query(User).filter(User.email == email).first()
+        if subject.startswith("user:"):
+            try:
+                user_id = int(subject.removeprefix("user:"))
+            except ValueError:
+                raise HTTPException(status_code=401, detail="Неверный токен")
+            user = db.query(User).filter(User.id == user_id).first()
+        else:
+            # Existing access tokens are email-based; accept them until expiry.
+            user = db.query(User).filter(User.email == subject).first()
         if user is None:
             raise HTTPException(status_code=401, detail="Пользователь не найден")
 

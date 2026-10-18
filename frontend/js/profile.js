@@ -32,7 +32,7 @@ async function loadProfile() {
     const user = Auth.getUser();
     const profileEmail = document.getElementById('profileEmail');
     const profileAvatar = document.getElementById('profileAvatar');
-    if (profileEmail) profileEmail.textContent = user.email;
+    if (profileEmail) profileEmail.textContent = user.email || '—';
     if (profileAvatar) setUserAvatar(profileAvatar, user);
 
     try {

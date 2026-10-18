@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from app.database import (
     EmailLoginCode,
     get_db,
+    OAuthIdentity,
     PasswordResetCode,
     StudyWorkTrial,
     Subscription,
@@ -24,7 +25,7 @@ from app.database import (
 from app.account_deletion import record_deleted_account_marker
 from auth import (
     clear_refresh_token_cookie,
-    create_access_token,
+    create_user_access_token,
     create_refresh_session,
     get_current_user,
     get_hash_password,
@@ -87,6 +88,11 @@ async def get_me(current_user: User = Depends(get_current_user), db: Session = D
             "id": current_user.id,
             "display_name": current_user.display_name,
             "avatar_url": current_user.avatar_url,
+            "auth_provider": (
+                current_user.oauth_identities[0].provider
+                if not current_user.email and current_user.oauth_identities
+                else None
+            ),
         }
     }
 
@@ -176,7 +182,7 @@ async def change_password(
     set_refresh_token_cookie(response, create_refresh_session(db, current_user))
     return {
         "success": True,
-        "access_token": create_access_token(data={"sub": current_user.email}),
+        "access_token": create_user_access_token(current_user),
         "token_type": "bearer",
     }
 
@@ -188,7 +194,7 @@ async def delete_user_account(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),
 ):
-    """Delete account data and retain only a finite anti-abuse email HMAC."""
+    """Delete account data and retain only finite anti-abuse login markers."""
     if data.get("confirmation") != "DELETE":
         raise HTTPException(status_code=400, detail="Введите DELETE для подтверждения удаления.")
 
@@ -204,12 +210,18 @@ async def delete_user_account(
 
     user_id = current_user.id
     email = current_user.email
+    oauth_subjects = [
+        f"{identity.provider}:{identity.provider_subject}"
+        for identity in current_user.oauth_identities
+    ]
+    entitlement_subjects = [email] if email else oauth_subjects
     try:
         # Remove dependent records explicitly: existing database tables do not
         # use ON DELETE CASCADE, and account deletion must not leave text,
         # documents, sessions, reset codes, or word-accounting records behind.
         db.query(PasswordResetCode).filter(PasswordResetCode.user_id == user_id).delete(synchronize_session=False)
-        db.query(EmailLoginCode).filter(EmailLoginCode.email == email).delete(synchronize_session=False)
+        if email:
+            db.query(EmailLoginCode).filter(EmailLoginCode.email == email).delete(synchronize_session=False)
         db.query(UserRefreshSession).filter(UserRefreshSession.user_id == user_id).delete(synchronize_session=False)
         db.query(UserProcessingLock).filter(UserProcessingLock.user_id == user_id).delete(synchronize_session=False)
         db.query(StudyWorkTrial).filter(StudyWorkTrial.user_id == user_id).delete(synchronize_session=False)
@@ -217,7 +229,9 @@ async def delete_user_account(
         db.query(UsageStats).filter(UsageStats.user_id == user_id).delete(synchronize_session=False)
         db.query(Subscription).filter(Subscription.user_id == user_id).delete(synchronize_session=False)
         db.query(UserHistory).filter(UserHistory.user_id == user_id).delete(synchronize_session=False)
-        record_deleted_account_marker(db, email)
+        for subject in entitlement_subjects:
+            record_deleted_account_marker(db, subject)
+        db.query(OAuthIdentity).filter(OAuthIdentity.user_id == user_id).delete(synchronize_session=False)
         db.query(User).filter(User.id == user_id).delete(synchronize_session=False)
         db.commit()
     except Exception as error:

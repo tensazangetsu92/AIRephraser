@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 import logging
 
-from sqlalchemy import create_engine, Column, Integer, String, Text, LargeBinary, DateTime, Boolean, ForeignKey, Date, Index, JSON
+from sqlalchemy import create_engine, Column, Integer, String, Text, LargeBinary, DateTime, Boolean, ForeignKey, Date, Index, JSON, UniqueConstraint
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 from sqlalchemy.sql import func
 from app.config import DATABASE_URL
@@ -18,7 +18,8 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=False)
+    # Email is optional for OAuth accounts whose provider does not disclose it.
+    email = Column(String(255), unique=True, index=True, nullable=True)
     password_hash = Column(String(255), nullable=False)
     display_name = Column(String(255), nullable=True)
     avatar_url = Column(String(1024), nullable=True)
@@ -27,6 +28,23 @@ class User(Base):
 
     # Связь с подпиской
     subscription = relationship("Subscription", back_populates="user", uselist=False)
+    oauth_identities = relationship("OAuthIdentity", back_populates="user")
+
+
+class OAuthIdentity(Base):
+    """Stable external identity used for passwordless OAuth-only accounts."""
+    __tablename__ = "oauth_identities"
+    __table_args__ = (
+        UniqueConstraint("provider", "provider_subject", name="uq_oauth_identities_provider_subject"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    provider = Column(String(32), nullable=False)
+    provider_subject = Column(String(255), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="oauth_identities")
 
 
 class UserHistory(Base):
@@ -218,6 +236,7 @@ QUERY_INDEXES = (
     Index("ix_password_reset_codes_user_used_expires", PasswordResetCode.user_id, PasswordResetCode.used_at, PasswordResetCode.expires_at),
     Index("ix_email_login_codes_email_used_expires", EmailLoginCode.email, EmailLoginCode.used_at, EmailLoginCode.expires_at),
     Index("ix_deleted_account_markers_expires_at", DeletedAccountMarker.expires_at),
+    Index("ix_oauth_identities_user_id", OAuthIdentity.user_id),
 )
 
 

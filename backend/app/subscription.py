@@ -41,15 +41,15 @@ def grant_study_work_trial(db: Session, user_id: int) -> None:
         db.rollback()
 
 
-def initialise_new_user_entitlements(db: Session, user_id: int, email: str) -> bool:
+def initialise_new_user_entitlements(db: Session, user_id: int, entitlement_subject: str) -> bool:
     """Create the free plan and grant its one-time onboarding benefits once.
 
-    A user who has deleted an account for the same verified email can still
-    create a new account and purchase words, but does not receive a second
-    free quota or a second Study Work trial.
+    A user who has deleted an account for the same verified email or OAuth
+    identity can still create a new account and purchase words, but does not
+    receive a second free quota or a second Study Work trial.
     """
     subscription = get_user_subscription(db, user_id)
-    if has_consumed_free_entitlement(db, email):
+    if has_consumed_free_entitlement(db, entitlement_subject):
         subscription.free_entitlement_available = False
         db.commit()
         return False

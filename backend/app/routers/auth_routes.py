@@ -13,7 +13,7 @@ from app.database import EmailLoginCode, get_db, PasswordResetCode, User
 from auth import (
     authenticate_user,
     clear_refresh_token_cookie,
-    create_access_token,
+    create_user_access_token,
     create_refresh_session,
     get_user_by_email,
     get_hash_password,
@@ -82,7 +82,7 @@ def _email_login_code_hash(email: str, code: str) -> str:
 
 def _token_response(user: User) -> Token:
     return Token(
-        access_token=create_access_token(data={"sub": user.email}),
+        access_token=create_user_access_token(user),
         token_type="bearer",
         user={"email": user.email, "id": user.id, "display_name": user.display_name, "avatar_url": user.avatar_url},
     )
@@ -292,7 +292,7 @@ async def login(
         raise HTTPException(status_code=401, detail="Неверный email или пароль")
 
     clear_failed_login_attempts(db, user_data.email)
-    access_token = create_access_token(data={"sub": user.email})
+    access_token = create_user_access_token(user)
     set_refresh_token_cookie(response, create_refresh_session(db, user))
     return Token(
         access_token=access_token,
@@ -315,7 +315,7 @@ async def refresh_login(
         return {"detail": "Сессия истекла. Войдите снова."}
 
     return Token(
-        access_token=create_access_token(data={"sub": user.email}),
+        access_token=create_user_access_token(user),
         token_type="bearer",
         user={"email": user.email, "id": user.id, "display_name": user.display_name, "avatar_url": user.avatar_url},
     )
@@ -536,7 +536,7 @@ async def verify_registration_code(
 
     initialise_new_user_entitlements(db, db_user.id, db_user.email)
 
-    access_token = create_access_token(data={"sub": db_user.email})
+    access_token = create_user_access_token(db_user)
     set_refresh_token_cookie(response, create_refresh_session(db, db_user))
 
     return {

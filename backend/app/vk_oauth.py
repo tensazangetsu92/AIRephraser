@@ -14,7 +14,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import FRONTEND_URL, VK_ID_APP_ID, VK_ID_REDIRECT_URI
-from app.database import User, get_db
+from app.database import OAuthIdentity, User, get_db
 from app.subscription import initialise_new_user_entitlements
 from auth import (
     create_refresh_session,
@@ -161,42 +161,61 @@ async def vk_auth_callback(
         raise HTTPException(status_code=502, detail="VK ID временно недоступен. Попробуйте ещё раз.") from error
 
     profile = profile_data.get("user") if isinstance(profile_data, dict) else None
+    provider_user_id = profile.get("user_id") if isinstance(profile, dict) else None
+    if isinstance(provider_user_id, int):
+        provider_user_id = str(provider_user_id)
+    if not isinstance(provider_user_id, str) or not provider_user_id.strip():
+        raise HTTPException(status_code=502, detail="VK ID не вернул идентификатор аккаунта. Попробуйте ещё раз.")
+    provider_user_id = provider_user_id.strip()
+
     email = profile.get("email") if isinstance(profile, dict) else None
-    if not isinstance(email, str) or not email.strip():
-        profile_keys = sorted(profile) if isinstance(profile, dict) else []
-        logger.warning("VK ID profile omitted email; returned profile fields: %s", profile_keys)
-        raise HTTPException(
-            status_code=400,
-            detail="VK ID не передал адрес электронной почты. Войдите через email-код или используйте другой аккаунт VK.",
-        )
-    email = email.strip().lower()
+    email = email.strip().lower() if isinstance(email, str) and email.strip() else None
     avatar_url = _get_vk_avatar_url(profile)
     display_name = _get_vk_display_name(profile)
-    user = db.query(User).filter(func.lower(User.email) == email).first()
-    if user is None:
-        user = User(
-            email=email,
-            password_hash=get_hash_password(secrets.token_urlsafe(32)),
-            is_active=True,
-            display_name=display_name,
-            avatar_url=avatar_url,
-        )
-        db.add(user)
+
+    identity = db.query(OAuthIdentity).filter(
+        OAuthIdentity.provider == "vk",
+        OAuthIdentity.provider_subject == provider_user_id,
+    ).first()
+    created_user = False
+    if identity:
+        user = identity.user
+    else:
+        user = db.query(User).filter(func.lower(User.email) == email).first() if email else None
+        if user is None:
+            user = User(
+                email=email,
+                password_hash=get_hash_password(secrets.token_urlsafe(32)),
+                is_active=True,
+                display_name=display_name,
+                avatar_url=avatar_url,
+            )
+            db.add(user)
+            db.flush()
+            created_user = True
+        db.add(OAuthIdentity(provider="vk", provider_subject=provider_user_id, user_id=user.id))
         db.commit()
         db.refresh(user)
-        initialise_new_user_entitlements(db, user.id, user.email)
-    elif not user.is_active:
+        if created_user:
+            initialise_new_user_entitlements(db, user.id, email or f"vk:{provider_user_id}")
+
+    if not user.is_active:
         raise HTTPException(status_code=403, detail="Этот аккаунт отключён.")
-    else:
-        profile_changed = False
-        if display_name and user.display_name != display_name:
-            user.display_name = display_name
+
+    profile_changed = False
+    if email and not user.email:
+        email_owner = db.query(User).filter(func.lower(User.email) == email).first()
+        if email_owner is None:
+            user.email = email
             profile_changed = True
-        if avatar_url and user.avatar_url != avatar_url:
-            user.avatar_url = avatar_url
-            profile_changed = True
-        if profile_changed:
-            db.commit()
+    if display_name and user.display_name != display_name:
+        user.display_name = display_name
+        profile_changed = True
+    if avatar_url and user.avatar_url != avatar_url:
+        user.avatar_url = avatar_url
+        profile_changed = True
+    if profile_changed:
+        db.commit()
 
     refresh_token = create_refresh_session(db, user)
     # Do not put bearer credentials into the redirect URL or browser storage.
