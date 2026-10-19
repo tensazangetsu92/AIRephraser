@@ -13,6 +13,12 @@
     }
 }
 
+{$WWW_SITE_DOMAIN} {
+    # Keep a single canonical public address while preserving the requested
+    # path and query string. Caddy also obtains a certificate for this name.
+    redir https://{$SITE_DOMAIN}{uri} permanent
+}
+
 {$STAGING_SITE_DOMAIN} {
     encode zstd gzip
     reverse_proxy humary-staging-app:8000

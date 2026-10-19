@@ -7,8 +7,8 @@ public ports 80 and 443; it routes each domain to the correct private app.
 
 ## Before the first launch
 
-1. Confirm that both `humary.ru` and `staging.humary.ru` A records point to
-   the VPS.
+1. Confirm that `humary.ru`, `www.humary.ru` and `staging.humary.ru` A records
+   point to the VPS. `www.humary.ru` is redirected permanently to `humary.ru`.
 2. In the Yandex OAuth and VK ID dashboards, add these production callbacks:
 
    ```text

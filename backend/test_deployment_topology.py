@@ -10,9 +10,11 @@ class DeploymentTopologyTests(unittest.TestCase):
         caddyfile = (ROOT / "deploy" / "Caddyfile.production").read_text(encoding="utf-8")
 
         self.assertIn("{$SITE_DOMAIN}", caddyfile)
+        self.assertIn("{$WWW_SITE_DOMAIN}", caddyfile)
         self.assertIn("{$STAGING_SITE_DOMAIN}", caddyfile)
         self.assertIn("reverse_proxy humary-production-app:8000", caddyfile)
         self.assertIn("reverse_proxy humary-staging-app:8000", caddyfile)
+        self.assertIn("redir https://{$SITE_DOMAIN}{uri} permanent", caddyfile)
 
     def test_compose_uses_a_shared_private_proxy_network(self):
         compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
