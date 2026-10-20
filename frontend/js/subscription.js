@@ -225,14 +225,15 @@ function setSidebarBalanceLoading(isLoading) {
     const skeleton = document.getElementById('balanceLoadingSkeleton');
     if (!skeleton) return;
 
-    // A balance request only exists for an authenticated user.  This extra
-    // guard makes a completed logout / failed session restoration win over a
-    // request that was started a moment earlier.
+    // A temporary access token can exist while the refresh-cookie session is
+    // still being restored (or has just failed).  Do not show account UI
+    // until the user profile is confirmed as well.
+    const hasConfirmedUser = Auth.isAuthenticated() && Boolean(Auth.getUser());
     const balanceIsVisible = document.getElementById('balanceBlock')?.style.display === 'block';
     // Keep the last known balance on screen during a background refresh. This
     // also prevents a late request from rendering both the skeleton and the
     // already populated balance card at the same time.
-    const shouldShow = Boolean(isLoading && Auth.isAuthenticated() && !balanceIsVisible);
+    const shouldShow = Boolean(isLoading && hasConfirmedUser && !balanceIsVisible);
     skeleton.hidden = !shouldShow;
     skeleton.setAttribute('aria-hidden', String(!shouldShow));
 }
@@ -283,6 +284,11 @@ function upgradePlan() {
 }
 
 async function loadCurrentSubscription() {
+    if (!Auth.isAuthenticated() || !Auth.getUser()) {
+        setSidebarBalanceLoading(false);
+        return;
+    }
+
     const shouldShowLoading = !cachedSubscriptionData;
     if (shouldShowLoading) setSidebarBalanceLoading(true);
     try {

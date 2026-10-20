@@ -345,7 +345,8 @@
 }
 
 .balance-loading-skeleton[hidden] {
-    display: none;
+    /* Override the mobile collapsed-sidebar rule for generic balance blocks. */
+    display: none !important;
 }
 
 .balance-loading-skeleton-bar {
