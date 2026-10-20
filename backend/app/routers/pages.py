@@ -1,15 +1,17 @@
 # app/routers/pages.py
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from jinja2 import select_autoescape
 from hashlib import sha256
 from pathlib import Path
 from urllib.parse import quote
+from xml.sax.saxutils import escape
 
 from sqlalchemy.orm import Session
 
 from app.database import UserHistory, get_db
+from app.config import FRONTEND_URL
 from auth import REFRESH_COOKIE_NAME, get_user_from_refresh_session
 
 router = APIRouter(tags=["pages"])
@@ -34,6 +36,33 @@ templates.env.globals["css_bundle_url"] = _css_bundle_url
 AVAILABLE_HISTORY_TOOL_TYPES = ("study_work", "humanizer", "detector", "paraphraser")
 PUBLIC_PAGE_CACHE_CONTROL = "public, max-age=300, must-revalidate"
 PRIVATE_PAGE_CACHE_CONTROL = "private, no-store"
+
+# Only public, useful pages belong in the sitemap. Personal history, profiles,
+# authentication and legal pages are intentionally not promoted to search.
+SITEMAP_PUBLIC_PATHS = (
+    "/",
+    "/humanize",
+    "/paraphraser",
+    "/detector",
+    "/study-work",
+    "/pricing",
+    "/how-it-works",
+    "/support",
+    "/contacts",
+)
+
+
+def _sitemap_xml() -> str:
+    """Return a stable sitemap for search engines without private URLs."""
+    urls = "".join(
+        f"<url><loc>{escape(f'{FRONTEND_URL}{path}')}</loc></url>"
+        for path in SITEMAP_PUBLIC_PATHS
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{urls}</urlset>"
+    )
 
 
 def _public_template(request: Request, name: str):
@@ -86,6 +115,40 @@ def _require_owned_history(
     if query.first() is None:
         # A 404 deliberately does not disclose whether this ID exists for another user.
         raise HTTPException(status_code=404, detail="Текст не найден")
+
+
+@router.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    """Guide crawlers to public pages and the canonical sitemap."""
+    content = "\n".join(
+        (
+            "User-agent: *",
+            "Allow: /",
+            "Disallow: /api",
+            "Disallow: /docs",
+            "Disallow: /redoc",
+            "Disallow: /auth",
+            "Disallow: /profile",
+            "Disallow: /history",
+            "Disallow: /humanize/",
+            "Disallow: /paraphraser/",
+            "Disallow: /detector/",
+            "Disallow: /study-work/",
+            f"Sitemap: {FRONTEND_URL}/sitemap.xml",
+            "",
+        )
+    )
+    return PlainTextResponse(content, headers={"Cache-Control": PUBLIC_PAGE_CACHE_CONTROL})
+
+
+@router.get("/sitemap.xml", include_in_schema=False)
+async def sitemap_xml():
+    """Expose the public page list for Yandex and Google crawlers."""
+    return Response(
+        content=_sitemap_xml(),
+        media_type="application/xml",
+        headers={"Cache-Control": PUBLIC_PAGE_CACHE_CONTROL},
+    )
 
 
 @router.get("/")
