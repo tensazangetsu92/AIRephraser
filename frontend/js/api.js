@@ -67,6 +67,17 @@ const API = {
         return this.request('/auth/legal-consent', 'POST');
     },
 
+    createYooKassaPayment(productType, productId) {
+        return this.request('/payments/yookassa/create', 'POST', {
+            product_type: productType,
+            product_id: productId,
+        }, true);
+    },
+
+    getYooKassaPayment(paymentId) {
+        return this.request(`/payments/yookassa/${encodeURIComponent(paymentId)}`, 'GET', null, true);
+    },
+
     confirmEmailCode(email, code) {
         return this.request('/auth/email-code/confirm', 'POST', { email, code });
     },

@@ -1,7 +1,7 @@
 (function () {
     const STORAGE_KEY = 'humary_cookie_preferences';
-    // Version 3 explicitly connects the site-wide consent banner with sign-in.
-    const CONSENT_VERSION = 3;
+    // Version 4 adds Yandex Metrica to the optional analytics category.
+    const CONSENT_VERSION = 4;
 
     const copy = {
         ru: {

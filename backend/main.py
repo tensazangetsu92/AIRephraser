@@ -56,7 +56,7 @@ _SENSITIVE_LOG_VALUE_PATTERN = re.compile(
         [\"']?(?:password|current_password|new_password|password_hash|smtp_password|
         authorization|proxy-authorization|access_token|refresh_token|id_token|token|cookie|
         code|code_verifier|code_challenge|state|device_id|ext_id|
-        (?:x-)?api[_-]?key|client_secret|gigachat_auth_key|gpt_auth_key)[\"']?
+        (?:x-)?api[_-]?key|client_secret|gigachat_auth_key|gpt_auth_key|yookassa_secret_key)[\"']?
     )
     \s*(?P<separator>[:=])\s*
     (?P<value>
@@ -207,6 +207,7 @@ def _is_state_changing_api_request(request: Request) -> bool:
         or path.startswith("/auth/")
         or path.startswith("/study-work/")
         or path.startswith("/subscription/")
+        or (path.startswith("/payments/") and path != "/payments/yookassa/webhook")
         or path.startswith("/user/")
     )
 

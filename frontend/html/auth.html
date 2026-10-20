@@ -18,7 +18,7 @@
         <p class="auth-card-description" data-i18n="auth_email_code_description">Укажите email — отправим одноразовый код. Если аккаунта ещё нет, создадим его после подтверждения.</p>
         <div id="authError" class="error-message" style="display: none;" role="alert"></div>
         <form class="auth-form" id="authForm" novalidate>
-            <input type="email" id="authEmail" name="email" placeholder="Email" autocomplete="email" inputmode="email" required>
+            <input type="email" id="authEmail" class="ym-disable-keys" name="email" placeholder="Email" autocomplete="email" inputmode="email" required>
             <label class="auth-cookie-consent" for="authCookieConsent">
                 <input type="checkbox" id="authCookieConsent" required>
                 <span data-i18n="auth_cookie_consent">Я соглашаюсь на использование cookie для авторизации и сохранения сессии.</span>
@@ -47,7 +47,7 @@
         <h2 id="verificationTitle" data-i18n="auth_email_code_verify_title">Введите код из письма</h2>
         <p id="verificationEmail"></p>
         <div id="verificationError" class="error-message" style="display: none;" role="alert"></div>
-        <input type="text" id="verificationCode" placeholder="Код из письма" data-i18n-placeholder="auth_email_code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+        <input type="text" id="verificationCode" class="ym-disable-keys" placeholder="Код из письма" data-i18n-placeholder="auth_email_code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
         <div class="auth-verification-actions">
             <button type="button" class="auth-page-submit" id="verificationSubmitBtn" data-i18n="auth_email_code_confirm">Продолжить</button>
             <button type="button" class="auth-page-secondary" id="resendCodeBtn" data-i18n="resend_code">Отправить код повторно</button>

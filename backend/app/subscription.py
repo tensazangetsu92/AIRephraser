@@ -182,22 +182,49 @@ def get_word_balance(
     }
 
 
-def grant_words(db: Session, user_id: int, bucket: str, words: int, reason: str, payment_id: str = None):
+def grant_words(
+        db: Session,
+        user_id: int,
+        bucket: str,
+        words: int,
+        reason: str,
+        payment_id: str = None,
+        commit: bool = True,
+):
     """Credit a confirmed bonus or paid package. Call from a verified payment webhook."""
     if bucket not in {"bonus", "purchased"} or words <= 0:
         raise ValueError("Invalid word credit")
     row = WordTransaction(user_id=user_id, operation_id=str(uuid4()), kind="credit", bucket=bucket,
                           reason=reason, words=words, remaining_words=words, payment_id=payment_id)
-    db.add(row); db.commit(); db.refresh(row)
+    db.add(row)
+    if commit:
+        db.commit()
+        db.refresh(row)
+    else:
+        db.flush()
     return row
 
 
-def purchase_word_package(db: Session, user_id: int, package_id: str, payment_id: str = None):
-    """Activate a package for MVP; production should call this from a verified payment webhook."""
+def purchase_word_package(
+        db: Session,
+        user_id: int,
+        package_id: str,
+        payment_id: str = None,
+        commit: bool = True,
+):
+    """Credit a package after the payment provider has confirmed it."""
     package = PURCHASE_PACKAGES.get(package_id)
     if not package:
         raise HTTPException(status_code=400, detail="Invalid word package")
-    row = grant_words(db, user_id, "purchased", package["words"], f"purchase:{package_id}", payment_id or f"mvp_{uuid4()}")
+    row = grant_words(
+        db,
+        user_id,
+        "purchased",
+        package["words"],
+        f"purchase:{package_id}",
+        payment_id or f"manual_{uuid4()}",
+        commit=commit,
+    )
     return package, row
 
 
@@ -235,7 +262,14 @@ def get_study_work_max_words(plan_type: str) -> int:
     return STUDY_WORK_MAX_WORDS_PER_REQUEST.get(plan_type, STUDY_WORK_MAX_WORDS_PER_REQUEST["free"])
 
 
-def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: str = None, duration_days: int = 30):
+def upgrade_subscription(
+        db: Session,
+        user_id: int,
+        plan_type: str,
+        payment_id: str = None,
+        duration_days: int = 30,
+        commit: bool = True,
+):
     """Обновить подписку пользователя и сбросить статистику использования слов"""
     if plan_type not in SUBSCRIPTION_PLANS:
         raise HTTPException(status_code=400, detail="Invalid plan type")
@@ -251,10 +285,13 @@ def upgrade_subscription(db: Session, user_id: int, plan_type: str, payment_id: 
     subscription.payment_id = payment_id
     subscription.last_reset_date = now
 
-    reset_usage_stats(db, user_id)
+    reset_usage_stats(db, user_id, commit=False)
 
-    db.commit()
-    db.refresh(subscription)
+    if commit:
+        db.commit()
+        db.refresh(subscription)
+    else:
+        db.flush()
 
     return subscription
 
@@ -642,7 +679,7 @@ def charge_words(
     }
 
 
-def reset_usage_stats(db: Session, user_id: int):
+def reset_usage_stats(db: Session, user_id: int, commit: bool = True):
     """Сбрасывает статистику использования слов (при оплате или ежемесячном цикле)"""
     stats = db.query(UsageStats).filter(UsageStats.user_id == user_id).first()
 
@@ -652,5 +689,8 @@ def reset_usage_stats(db: Session, user_id: int):
         stats = UsageStats(user_id=user_id, words_used=0)
         db.add(stats)
 
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     logger.info("Reset word-usage statistics for user_id=%s", user_id)

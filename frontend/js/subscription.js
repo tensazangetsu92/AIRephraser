@@ -51,6 +51,43 @@ function showPaymentsUnavailable() {
     showNotification(message, 'info');
 }
 
+async function startYooKassaCheckout(productType, productId, button = null) {
+    if (!Auth.isAuthenticated() || !Auth.getUser()) {
+        showNotification('Пожалуйста, войдите в аккаунт', 'warning');
+        Auth.showAuthModal();
+        return;
+    }
+
+    const initialText = button?.textContent;
+    if (button) {
+        button.disabled = true;
+        button.textContent = typeof window.t === 'function' ? window.t('payment_redirecting') : 'Переходим к оплате…';
+    }
+
+    try {
+        window.HumaryAnalytics?.track('payment_checkout_started', {
+            product_type: productType,
+            product_id: productId,
+        });
+        const result = await API.createYooKassaPayment(productType, productId);
+        if (!result.ok || !result.data?.confirmation_url) {
+            throw new Error(result.data?.detail || 'Payment creation failed');
+        }
+        window.location.assign(result.data.confirmation_url);
+    } catch (error) {
+        showNotification(
+            error?.message || (typeof window.t === 'function'
+                ? window.t('payment_create_error')
+                : 'Не удалось создать платёж. Повторите попытку позже.'),
+            'error',
+        );
+        if (button) {
+            button.disabled = false;
+            button.textContent = initialText;
+        }
+    }
+}
+
 function clearSubscriptionData() {
     cachedSubscriptionData = null;
     window.currentSubscription = null;
@@ -84,7 +121,7 @@ function resetTariffCards() {
         btn.classList.remove('tariff-btn-current', 'tariff-btn-included');
         btn.onclick = plan === 'free'
             ? () => Auth.showAuthModal('register')
-            : showPaymentsUnavailable;
+            : () => upgradePlan(plan, btn);
     });
 }
 
@@ -159,7 +196,7 @@ function updateSubscriptionUIFromData(data, activePlan = null) {
             btn.textContent = typeof window.t === 'function' ? window.t('select_plan') : 'Оформить';
             btn.disabled = false;
             btn.classList.remove('tariff-btn-current', 'tariff-btn-included');
-            btn.onclick = showPaymentsUnavailable;
+            btn.onclick = () => upgradePlan(plan, btn);
         }
     });
 }
@@ -274,13 +311,8 @@ async function refreshAllSubscriptionData(force = false) {
     }
 }
 
-function upgradePlan() {
-    if (!Auth.isAuthenticated()) {
-        showNotification('Пожалуйста, войдите в аккаунт', 'warning');
-        Auth.showAuthModal();
-        return;
-    }
-    showPaymentsUnavailable();
+function upgradePlan(planType, button = null) {
+    return startYooKassaCheckout('subscription', planType, button);
 }
 
 async function loadCurrentSubscription() {
@@ -316,13 +348,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.word-pack-btn').forEach(button => {
         button.addEventListener('click', () => {
-            if (!Auth.isAuthenticated()) {
-                showNotification('Войдите в аккаунт, чтобы купить пакет слов', 'warning');
-                Auth.showAuthModal();
-                return;
-            }
-            showPaymentsUnavailable();
+            startYooKassaCheckout('word_package', button.dataset.package, button);
         });
+    });
+
+    const paymentId = new URLSearchParams(window.location.search).get('payment');
+    if (!paymentId) return;
+
+    window.history.replaceState({}, '', window.location.pathname);
+    API.getYooKassaPayment(paymentId).then((result) => {
+        const payment = result.data?.payment;
+        if (!result.ok || !payment) return;
+        if (payment.fulfilled) {
+            window.HumaryAnalytics?.trackPurchase(payment);
+            clearSubscriptionData();
+            forceUpdateBalance();
+            showNotification(
+                typeof window.t === 'function' ? window.t('payment_succeeded') : 'Оплата подтверждена. Доступ обновлён.',
+                'success',
+            );
+        } else if (payment.status === 'canceled') {
+            showNotification(
+                typeof window.t === 'function' ? window.t('payment_canceled') : 'Платёж отменён.',
+                'warning',
+            );
+        } else {
+            showNotification(
+                typeof window.t === 'function' ? window.t('payment_pending') : 'Платёж обрабатывается. Доступ появится после подтверждения.',
+                'info',
+            );
+        }
+    }).catch(() => {
+        showNotification(
+            typeof window.t === 'function' ? window.t('payment_pending') : 'Платёж обрабатывается. Доступ появится после подтверждения.',
+            'info',
+        );
     });
 });
 

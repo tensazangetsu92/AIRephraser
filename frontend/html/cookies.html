@@ -15,15 +15,16 @@
 
     <section class="auth-card cookie-policy-card" aria-labelledby="cookiesTitle">
         <h1 id="cookiesTitle" data-i18n="cookies_title" data-i18n-document-title="cookies_title">Файлы cookie</h1>
-        <p class="auth-card-description" data-i18n="cookies_description">Humary использует только необходимые технические cookie, чтобы выполнить вход и сохранить сессию пользователя.</p>
+        <p class="auth-card-description" data-i18n="cookies_description">Humary использует необходимые технические cookie для входа и сохранения сессии. Аналитические cookie подключаются только после отдельного согласия пользователя.</p>
         <p data-i18n="cookies_refresh">После входа по коду создаётся cookie humary_refresh_token. Он позволяет безопасно продлевать сессию без повторного подтверждения email. Cookie имеет флаг HttpOnly, поэтому JavaScript страницы не может прочитать его.</p>
         <p data-i18n="cookies_oauth">При входе через Яндекс или VK ID может использоваться технический cookie humary_session: он нужен только для проверки и завершения авторизации через внешний сервис. Он также имеет флаг HttpOnly и недоступен JavaScript.</p>
         <p data-i18n="cookies_usage">Эти cookie не используются для рекламы или отслеживания поведения на сторонних сайтах. Вы можете удалить их, выйдя из аккаунта или очистив cookie сайта в браузере.</p>
+        <p data-i18n="cookies_analytics">При согласии на аналитические cookie Humary подключает Яндекс Метрику для обезличенной статистики посещений, переходов по страницам и конверсий. Согласие можно изменить через «Настроить cookie».</p>
         <a class="auth-page-secondary" href="/auth"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> <span data-i18n="cookies_back">Вернуться ко входу</span></a>
         <button type="button" class="auth-page-secondary" data-cookie-settings-open><i class="fa-solid fa-sliders" aria-hidden="true"></i> <span data-i18n="cookies_settings">Настроить cookie</span></button>
     </section>
 </main>
 <script src="/js/lang.js?v=20261009-public-pages-en" defer></script>
-<script src="/js/cookie-consent.js?v=20260925-consent-version-2" defer></script>
+<script src="/js/cookie-consent.js?v=20261020-metrika-consent" defer></script>
 </body>
 </html>

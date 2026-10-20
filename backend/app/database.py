@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 import logging
 
-from sqlalchemy import create_engine, Column, Integer, String, Text, LargeBinary, DateTime, Boolean, ForeignKey, Date, Index, JSON, UniqueConstraint
+from sqlalchemy import create_engine, Column, Integer, String, Text, LargeBinary, DateTime, Boolean, ForeignKey, Date, Index, JSON, Numeric, UniqueConstraint
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 from sqlalchemy.sql import func
 from app.config import DATABASE_URL
@@ -128,6 +128,27 @@ class WordTransaction(Base):
     user = relationship("User")
 
 
+class Payment(Base):
+    """Server-side payment order; only a verified provider status can fulfil it."""
+    __tablename__ = "payments"
+
+    id = Column(String(36), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    provider = Column(String(32), nullable=False, default="yookassa")
+    provider_payment_id = Column(String(255), unique=True, nullable=True)
+    idempotence_key = Column(String(36), unique=True, nullable=False)
+    product_type = Column(String(32), nullable=False)  # subscription or word_package
+    product_id = Column(String(64), nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
+    currency = Column(String(3), nullable=False, default="RUB")
+    status = Column(String(32), nullable=False, default="created")
+    fulfilled_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    user = relationship("User")
+
+
 class StudyWorkTrial(Base):
     """One free Study Work processing granted to each newly registered user."""
     __tablename__ = "study_work_trials"
@@ -235,6 +256,7 @@ QUERY_INDEXES = (
         WordTransaction.status,
         WordTransaction.bucket,
     ),
+    Index("ix_payments_user_status", Payment.user_id, Payment.status),
     Index("ix_api_rate_limits_scope", ApiRateLimit.scope),
     Index("ix_user_refresh_sessions_user_revoked", UserRefreshSession.user_id, UserRefreshSession.revoked_at),
     Index("ix_password_reset_codes_user_used_expires", PasswordResetCode.user_id, PasswordResetCode.used_at, PasswordResetCode.expires_at),

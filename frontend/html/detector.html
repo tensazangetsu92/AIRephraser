@@ -13,7 +13,7 @@
     <div class="col" id="inputCol">
         <div class="textarea-wrapper">
             <div class="editor-name" data-i18n="your_text">Ваш текст</div>
-            <textarea id="input" placeholder="Вставьте текст для проверки на ИИ..." data-i18n-placeholder="detector_placeholder"></textarea>
+            <textarea id="input" class="ym-disable-keys" placeholder="Вставьте текст для проверки на ИИ..." data-i18n-placeholder="detector_placeholder"></textarea>
             <div class="document-actions">
                 <button class="paste-btn" id="pasteBtn"><i class="fas fa-paste"></i><span data-i18n="paste_text">Вставить текст</span></button>
                 <button class="pdf-btn" id="pdfBtn"><i class="fas fa-file-pdf"></i><span data-i18n="upload_pdf">Загрузить PDF</span></button>
@@ -33,7 +33,7 @@
 
     <div class="col result-col" id="resultCol" style="display: none;">
         <div class="editor-name" data-i18n="result">Результат</div>
-        <div id="result" class="output detector-output" placeholder="Результат появится здесь..." data-i18n-placeholder="result_placeholder"></div>
+        <div id="result" class="output detector-output ym-hide-content" placeholder="Результат появится здесь..." data-i18n-placeholder="result_placeholder"></div>
         <div class="word-counter-wrapper">
             <span class="word-count" id="resultWordCount" data-i18n-words-counter>0/1000 слов</span>
             <button class="copy-text-btn" id="copyResultBtn" title="Копировать результат" data-i18n-title="copy_result">

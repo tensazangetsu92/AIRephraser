@@ -160,3 +160,21 @@ SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "noreply@humary.com")
 SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "Humary")
+
+# Payments remain disabled until a real or test YooKassa shop is configured.
+# Keeping this explicit prevents a copied credential from enabling checkout by
+# accident before the public legal/payment information is ready.
+PAYMENTS_ENABLED = _as_bool(os.getenv("PAYMENTS_ENABLED"), False)
+YOOKASSA_SHOP_ID = os.getenv("YOOKASSA_SHOP_ID", "").strip()
+YOOKASSA_SECRET_KEY = os.getenv("YOOKASSA_SECRET_KEY", "").strip()
+YOOKASSA_RETURN_URL = os.getenv(
+    "YOOKASSA_RETURN_URL", f"{FRONTEND_URL}/pricing"
+).strip().rstrip("/")
+YOOKASSA_API_BASE_URL = "https://api.yookassa.ru/v3"
+
+if PAYMENTS_ENABLED and not (YOOKASSA_SHOP_ID and YOOKASSA_SECRET_KEY):
+    raise RuntimeError("YOOKASSA_SHOP_ID and YOOKASSA_SECRET_KEY are required when PAYMENTS_ENABLED=true.")
+if bool(YOOKASSA_SHOP_ID) != bool(YOOKASSA_SECRET_KEY):
+    raise RuntimeError("Configure both YOOKASSA_SHOP_ID and YOOKASSA_SECRET_KEY, or neither.")
+if PAYMENTS_ENABLED and IS_PRODUCTION and not _is_https_url(YOOKASSA_RETURN_URL):
+    raise RuntimeError("YOOKASSA_RETURN_URL must use HTTPS when payments are enabled in production.")
