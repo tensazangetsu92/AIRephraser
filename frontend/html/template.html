@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Humary - {% block title %}{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Humary — онлайн-инструменты для обработки учебных работ, гуманизации, перефразирования и проверки текста на признаки ИИ.{% endblock %}">
+    <link rel="canonical" href="{{ frontend_url }}{{ request.url.path }}">
     <link rel="icon" type="image/svg+xml" href="/images/logo1.svg?v=20260928-static-cache">
     <link rel="stylesheet" href="{{ css_bundle_url() }}">
     <link rel="preload" href="/fonts/Manrope-Variable.ttf?v=20260928-static-cache" as="font" type="font/ttf" crossorigin>

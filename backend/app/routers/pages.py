@@ -32,6 +32,7 @@ def _css_bundle_url() -> str:
 
 
 templates.env.globals["css_bundle_url"] = _css_bundle_url
+templates.env.globals["frontend_url"] = FRONTEND_URL
 
 AVAILABLE_HISTORY_TOOL_TYPES = ("study_work", "humanizer", "detector", "paraphraser")
 PUBLIC_PAGE_CACHE_CONTROL = "public, max-age=300, must-revalidate"
@@ -47,8 +48,6 @@ SITEMAP_PUBLIC_PATHS = (
     "/study-work",
     "/pricing",
     "/how-it-works",
-    "/support",
-    "/contacts",
 )
 
 
