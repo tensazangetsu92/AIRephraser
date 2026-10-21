@@ -48,6 +48,17 @@ SITEMAP_PUBLIC_PATHS = (
     "/study-work",
     "/pricing",
     "/how-it-works",
+    "/guides",
+    "/guides/humanize-text",
+    "/guides/paraphrase-study-text",
+    "/guides/ai-text-detectors",
+    "/guides/study-work-word",
+    "/guides/make-text-clearer",
+    "/guides/improve-text-uniqueness",
+    "/guides/introduction-coursework",
+    "/guides/reference-list-coursework",
+    "/guides/shorten-text-without-losing-meaning",
+    "/guides/conclusion-coursework",
 )
 
 
@@ -213,6 +224,61 @@ async def support_page(request: Request):
 @router.get("/how-it-works", response_class=HTMLResponse)
 async def how_it_works_page(request: Request):
     return _public_template(request, "how-it-works.html")
+
+
+@router.get("/guides", response_class=HTMLResponse)
+async def guides_page(request: Request):
+    return _public_template(request, "guides.html")
+
+
+@router.get("/guides/humanize-text", response_class=HTMLResponse)
+async def humanize_text_guide_page(request: Request):
+    return _public_template(request, "guide-humanize-text.html")
+
+
+@router.get("/guides/paraphrase-study-text", response_class=HTMLResponse)
+async def paraphrase_study_text_guide_page(request: Request):
+    return _public_template(request, "guide-paraphrase-study-text.html")
+
+
+@router.get("/guides/ai-text-detectors", response_class=HTMLResponse)
+async def ai_text_detectors_guide_page(request: Request):
+    return _public_template(request, "guide-ai-text-detectors.html")
+
+
+@router.get("/guides/study-work-word", response_class=HTMLResponse)
+async def study_work_word_guide_page(request: Request):
+    return _public_template(request, "guide-study-work-word.html")
+
+
+@router.get("/guides/make-text-clearer", response_class=HTMLResponse)
+async def make_text_clearer_guide_page(request: Request):
+    return _public_template(request, "guide-make-text-clearer.html")
+
+
+@router.get("/guides/improve-text-uniqueness", response_class=HTMLResponse)
+async def improve_text_uniqueness_guide_page(request: Request):
+    return _public_template(request, "guide-improve-text-uniqueness.html")
+
+
+@router.get("/guides/introduction-coursework", response_class=HTMLResponse)
+async def introduction_coursework_guide_page(request: Request):
+    return _public_template(request, "guide-introduction-coursework.html")
+
+
+@router.get("/guides/reference-list-coursework", response_class=HTMLResponse)
+async def reference_list_coursework_guide_page(request: Request):
+    return _public_template(request, "guide-reference-list-coursework.html")
+
+
+@router.get("/guides/shorten-text-without-losing-meaning", response_class=HTMLResponse)
+async def shorten_text_guide_page(request: Request):
+    return _public_template(request, "guide-shorten-text-without-losing-meaning.html")
+
+
+@router.get("/guides/conclusion-coursework", response_class=HTMLResponse)
+async def conclusion_coursework_guide_page(request: Request):
+    return _public_template(request, "guide-conclusion-coursework.html")
 
 
 @router.get("/study-work", response_class=HTMLResponse)

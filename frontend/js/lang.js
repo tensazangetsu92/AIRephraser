@@ -487,7 +487,7 @@ const translations = {
 
 // Interface strings that are shared by pages but do not belong to a tool.
 Object.assign(translations.ru, {
-    footer_contacts: 'Контакты', footer_support: 'Обратная связь',
+    footer_contacts: 'Контакты', footer_support: 'Обратная связь', footer_guides: 'Полезные материалы',
     footer_privacy: 'Конфиденциальность', footer_terms: 'Условия', footer_cookies: 'Cookie',
     footer_cookie_settings: 'Настройки cookie', footer_aria: 'Служебная информация',
     footer_documents_aria: 'Документы сайта',
@@ -533,7 +533,7 @@ Object.assign(translations.ru, {
 });
 
 Object.assign(translations.en, {
-    footer_contacts: 'Contacts', footer_support: 'Feedback',
+    footer_contacts: 'Contacts', footer_support: 'Feedback', footer_guides: 'Guides',
     footer_privacy: 'Privacy', footer_terms: 'Terms', footer_cookies: 'Cookies',
     footer_cookie_settings: 'Cookie settings', footer_aria: 'Site information',
     footer_documents_aria: 'Site documents',
