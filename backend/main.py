@@ -262,11 +262,11 @@ async def add_security_headers(_: Request, call_next):
     response = await call_next(_)
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+        "script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://mc.yandex.ru; "
         "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
         "font-src 'self' data: https://cdnjs.cloudflare.com; "
         "img-src 'self' data: blob: https:; "
-        "connect-src 'self'; "
+        "connect-src 'self' https://mc.yandex.ru; "
         "worker-src 'self' blob: https://cdnjs.cloudflare.com; "
         "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
     )
