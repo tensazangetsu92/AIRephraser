@@ -16,6 +16,45 @@
     margin-bottom: 3rem;
 }
 
+.pricing-legal-consent {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.6rem;
+    max-width: 760px;
+    margin: 0 auto 1.5rem;
+    padding: 0.8rem 0.9rem;
+    color: var(--text-muted);
+    background: var(--surface-card-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.pricing-legal-consent:focus-within {
+    border-color: var(--accent-border);
+}
+
+.pricing-legal-consent:has(input:checked) {
+    border-color: color-mix(in srgb, var(--success-color) 55%, var(--border-subtle));
+}
+
+.pricing-legal-consent input {
+    width: 16px;
+    height: 16px;
+    margin: 0.15rem 0 0;
+    accent-color: var(--main-color);
+    cursor: pointer;
+}
+
+.pricing-legal-consent a {
+    color: var(--main-color-light);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 .tariffs-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

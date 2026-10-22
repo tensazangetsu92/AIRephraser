@@ -134,7 +134,7 @@ class Payment(Base):
 
     id = Column(String(36), primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    provider = Column(String(32), nullable=False, default="yookassa")
+    provider = Column(String(32), nullable=False, default="robokassa")
     provider_payment_id = Column(String(255), unique=True, nullable=True)
     idempotence_key = Column(String(36), unique=True, nullable=False)
     product_type = Column(String(32), nullable=False)  # subscription or word_package

@@ -12,7 +12,9 @@ class LoggingSecurityTests(unittest.TestCase):
             'password=very-secret new_password: "another-secret" '
             'access_token=jwt-value cookie=session-secret '
             'Authorization: Bearer jwt.header.signature '
-            'X-API-Key=provider-secret'
+            'X-API-Key=provider-secret '
+            'ROBOKASSA_PASSWORD1=robokassa-first '
+            'ROBOKASSA_PASSWORD2=robokassa-second'
         )
         sanitized = _redact_sensitive_log_values(message)
 
@@ -22,7 +24,9 @@ class LoggingSecurityTests(unittest.TestCase):
         self.assertNotIn("session-secret", sanitized)
         self.assertNotIn("jwt.header.signature", sanitized)
         self.assertNotIn("provider-secret", sanitized)
-        self.assertEqual(sanitized.count("[REDACTED]"), 6)
+        self.assertNotIn("robokassa-first", sanitized)
+        self.assertNotIn("robokassa-second", sanitized)
+        self.assertEqual(sanitized.count("[REDACTED]"), 8)
 
     def test_filter_redacts_interpolated_log_arguments(self) -> None:
         record = logging.LogRecord(

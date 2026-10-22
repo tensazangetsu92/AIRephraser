@@ -726,6 +726,36 @@ Object.assign(translations.en, {
     support_title: 'Feedback', support_intro: 'Contact us if you need help with Humary or notice a technical issue.', support_contact_title: 'Technical support', support_contact_text: 'Copy the address and send an email from the mail app you use.', support_email_button: 'Copy email', support_email_copied: 'Email copied', support_email_copy_failed: 'Could not copy email', support_details_title: 'What to include', support_detail_1: 'the email address of the affected account;', support_detail_2: 'the tool name or a link to the page;', support_detail_3: 'what you did and what result you received;', support_detail_4: 'a screenshot of the error and the approximate time it occurred, if possible.', support_privacy_title: 'Questions about data and accounts', support_privacy_before: 'For personal-data, history, or account-deletion questions, you can also use this email address. More details are on the ', support_privacy_link: 'Privacy page',
 });
 
+Object.assign(translations.ru, {
+    legal_updated: 'Дата обновления: 22 октября 2026 г.',
+    privacy_updated: 'Дата обновления: 22 октября 2026 г.',
+    terms_payment_text_1: 'Оплата разовых цифровых услуг выполняется через платёжный сервис Robokassa. Доступные способы оплаты отображаются на его защищённой странице. Humary не подключает автоматические или регулярные списания: каждую оплату пользователь совершает отдельно.',
+    terms_payment_text_2: 'Цена в рублях и состав услуги указаны на странице тарифов до перехода к оплате. После подтверждения оплаты предоставляется тариф на 30 дней либо разовый пакет слов без срока действия. Доступ и слова начисляются только после подтверждения платежа.',
+    terms_payment_text_3: 'Для отмены или возврата напишите на humary.service@mail.ru, указав email аккаунта и номер платежа. Обращение рассматривается индивидуально с учётом фактически предоставленного цифрового доступа и прав потребителя по законодательству Российской Федерации.',
+    privacy_general_text_2: 'Сведения об операторе персональных данных и исполнителе платных услуг опубликованы на странице контактов.',
+    privacy_data_6: 'сведения о заказе: выбранный тариф или пакет слов, сумма, статус, идентификатор и дата платежа. Данные банковской карты Humary не получает и не хранит.',
+    privacy_third_robokassa: ' — обрабатывает оплату. Ей передаются данные, необходимые для создания и подтверждения платежа: сумма, номер заказа и email покупателя; реквизиты банковской карты Humary не получает;',
+    payment_terms_accept_prefix: 'Перед оплатой принимаю ',
+    payment_terms_accept_connector: ' и подтверждаю, что ознакомлен с ',
+    payment_terms_accept_suffix: '.',
+    payment_terms_accept_required: 'Перед оплатой примите Условия использования и ознакомьтесь с Политикой конфиденциальности.',
+});
+
+Object.assign(translations.en, {
+    legal_updated: 'Last updated: October 22, 2026',
+    privacy_updated: 'Last updated: October 22, 2026',
+    terms_payment_text_1: 'One-time payments for digital services are processed through Robokassa. Available payment methods are shown on its secure checkout page. Humary does not enable recurring or automatic charges: each payment is made separately by the user.',
+    terms_payment_text_2: 'The price in rubles and the service details are shown on the Pricing page before checkout. After payment confirmation, a plan is provided for 30 days or a one-time word package with no expiry. Access and words are credited only after payment confirmation.',
+    terms_payment_text_3: 'For cancellation or a refund, email humary.service@mail.ru with the account email and payment number. Each request is reviewed individually, taking account of the digital access already provided and applicable consumer law.',
+    privacy_general_text_2: 'Details of the personal-data operator and paid-services provider are published on the Contacts page.',
+    privacy_data_6: 'order information: the selected plan or word package, amount, status, payment identifier, and date. Humary does not receive or store bank-card details.',
+    privacy_third_robokassa: ' processes the payment. It receives the data needed to create and confirm the payment: amount, order number, and buyer email; Humary does not receive card details;',
+    payment_terms_accept_prefix: 'Before paying, I accept the ',
+    payment_terms_accept_connector: ' and confirm that I have read the ',
+    payment_terms_accept_suffix: '.',
+    payment_terms_accept_required: 'Before paying, accept the Terms of Use and review the Privacy Policy.',
+});
+
 function t(key) {
     return translations[currentLang]?.[key] ?? translations.ru[key] ?? key;
 }

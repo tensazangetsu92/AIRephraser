@@ -9,7 +9,7 @@ from app.database import User
 
 
 # This value must match the publication date shown on /terms and /privacy.
-LEGAL_DOCUMENTS_VERSION = "2026-10-18"
+LEGAL_DOCUMENTS_VERSION = "2026-10-22"
 LEGAL_CONSENT_MAX_AGE = timedelta(minutes=30)
 _VERSION_SESSION_KEY = "legal_documents_version"
 _TIME_SESSION_KEY = "legal_documents_accepted_at"

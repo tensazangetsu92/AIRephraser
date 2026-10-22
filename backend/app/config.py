@@ -161,20 +161,31 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "noreply@humary.com")
 SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "Humary")
 
-# Payments remain disabled until a real or test YooKassa shop is configured.
+# Payments remain disabled until a real or test Robokassa shop is configured.
 # Keeping this explicit prevents a copied credential from enabling checkout by
 # accident before the public legal/payment information is ready.
 PAYMENTS_ENABLED = _as_bool(os.getenv("PAYMENTS_ENABLED"), False)
-YOOKASSA_SHOP_ID = os.getenv("YOOKASSA_SHOP_ID", "").strip()
-YOOKASSA_SECRET_KEY = os.getenv("YOOKASSA_SECRET_KEY", "").strip()
-YOOKASSA_RETURN_URL = os.getenv(
-    "YOOKASSA_RETURN_URL", f"{FRONTEND_URL}/pricing"
+ROBOKASSA_MERCHANT_LOGIN = os.getenv("ROBOKASSA_MERCHANT_LOGIN", "").strip()
+ROBOKASSA_PASSWORD1 = os.getenv("ROBOKASSA_PASSWORD1", "").strip()
+ROBOKASSA_PASSWORD2 = os.getenv("ROBOKASSA_PASSWORD2", "").strip()
+ROBOKASSA_RETURN_URL = os.getenv(
+    "ROBOKASSA_RETURN_URL", f"{FRONTEND_URL}/pricing"
 ).strip().rstrip("/")
-YOOKASSA_API_BASE_URL = "https://api.yookassa.ru/v3"
+ROBOKASSA_IS_TEST = _as_bool(os.getenv("ROBOKASSA_IS_TEST"), False)
+ROBOKASSA_HASH_ALGORITHM = os.getenv("ROBOKASSA_HASH_ALGORITHM", "md5").strip().lower()
 
-if PAYMENTS_ENABLED and not (YOOKASSA_SHOP_ID and YOOKASSA_SECRET_KEY):
-    raise RuntimeError("YOOKASSA_SHOP_ID and YOOKASSA_SECRET_KEY are required when PAYMENTS_ENABLED=true.")
-if bool(YOOKASSA_SHOP_ID) != bool(YOOKASSA_SECRET_KEY):
-    raise RuntimeError("Configure both YOOKASSA_SHOP_ID and YOOKASSA_SECRET_KEY, or neither.")
-if PAYMENTS_ENABLED and IS_PRODUCTION and not _is_https_url(YOOKASSA_RETURN_URL):
-    raise RuntimeError("YOOKASSA_RETURN_URL must use HTTPS when payments are enabled in production.")
+if PAYMENTS_ENABLED and not (
+        ROBOKASSA_MERCHANT_LOGIN and ROBOKASSA_PASSWORD1 and ROBOKASSA_PASSWORD2
+):
+    raise RuntimeError(
+        "ROBOKASSA_MERCHANT_LOGIN, ROBOKASSA_PASSWORD1 and ROBOKASSA_PASSWORD2 "
+        "are required when PAYMENTS_ENABLED=true."
+    )
+if any((ROBOKASSA_MERCHANT_LOGIN, ROBOKASSA_PASSWORD1, ROBOKASSA_PASSWORD2)) and not all(
+        (ROBOKASSA_MERCHANT_LOGIN, ROBOKASSA_PASSWORD1, ROBOKASSA_PASSWORD2)
+):
+    raise RuntimeError("Configure all Robokassa credentials, or none.")
+if ROBOKASSA_HASH_ALGORITHM not in {"md5", "sha256", "sha512"}:
+    raise RuntimeError("ROBOKASSA_HASH_ALGORITHM must be md5, sha256 or sha512.")
+if PAYMENTS_ENABLED and IS_PRODUCTION and not _is_https_url(ROBOKASSA_RETURN_URL):
+    raise RuntimeError("ROBOKASSA_RETURN_URL must use HTTPS when payments are enabled in production.")

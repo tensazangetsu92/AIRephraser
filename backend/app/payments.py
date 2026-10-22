@@ -1,24 +1,27 @@
-"""Safe one-time YooKassa checkout and fulfilment helpers."""
+"""Safe one-time Robokassa checkout and fulfilment helpers."""
 
 from __future__ import annotations
 
-from datetime import datetime
 from decimal import Decimal, InvalidOperation
+import hashlib
+import hmac
 import logging
-import re
-from typing import Any
+import secrets
+from typing import Mapping
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import uuid4
 
-import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.config import (
     PAYMENTS_ENABLED,
-    YOOKASSA_API_BASE_URL,
-    YOOKASSA_RETURN_URL,
-    YOOKASSA_SECRET_KEY,
-    YOOKASSA_SHOP_ID,
+    ROBOKASSA_HASH_ALGORITHM,
+    ROBOKASSA_IS_TEST,
+    ROBOKASSA_MERCHANT_LOGIN,
+    ROBOKASSA_PASSWORD1,
+    ROBOKASSA_PASSWORD2,
+    ROBOKASSA_RETURN_URL,
 )
 from app.database import Payment
 from app.subscription import (
@@ -34,13 +37,15 @@ logger = logging.getLogger("uvicorn.error")
 
 PRODUCT_SUBSCRIPTION = "subscription"
 PRODUCT_WORD_PACKAGE = "word_package"
-PAYMENT_PROVIDER = "yookassa"
+PAYMENT_PROVIDER = "robokassa"
 PAYMENT_CURRENCY = "RUB"
-_PROVIDER_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,255}$")
+ROBOKASSA_CHECKOUT_URL = "https://auth.robokassa.ru/Merchant/Index.aspx"
+_MAX_INVOICE_ID = 9_223_372_036_854_775_807
+_CUSTOM_ORDER_PARAMETER = "Shp_order"
 
 
 class PaymentProviderError(RuntimeError):
-    """A provider request failed without exposing sensitive response details."""
+    """A provider interaction failed without exposing configuration details."""
 
 
 def require_payments_enabled() -> None:
@@ -72,18 +77,29 @@ def product_details(product_type: str, product_id: str) -> tuple[Decimal, str]:
     raise HTTPException(status_code=400, detail="Некорректный товар.")
 
 
+def _new_invoice_id(db: Session) -> str:
+    """Return an unused positive 64-bit invoice number required by Robokassa."""
+    for _ in range(20):
+        invoice_id = str(secrets.randbelow(_MAX_INVOICE_ID - 1) + 1)
+        exists = db.query(Payment.id).filter(Payment.provider_payment_id == invoice_id).first()
+        if not exists:
+            return invoice_id
+    raise PaymentProviderError("Could not allocate a payment invoice number")
+
+
 def create_payment_order(db: Session, user_id: int, product_type: str, product_id: str) -> Payment:
     amount, _ = product_details(product_type, product_id)
     order = Payment(
         id=str(uuid4()),
         user_id=user_id,
         provider=PAYMENT_PROVIDER,
+        provider_payment_id=_new_invoice_id(db),
         idempotence_key=str(uuid4()),
         product_type=product_type,
         product_id=product_id,
         amount=amount,
         currency=PAYMENT_CURRENCY,
-        status="created",
+        status="pending",
     )
     db.add(order)
     db.commit()
@@ -91,77 +107,63 @@ def create_payment_order(db: Session, user_id: int, product_type: str, product_i
     return order
 
 
-async def _provider_request(method: str, path: str, **kwargs: Any) -> dict[str, Any]:
-    require_payments_enabled()
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.request(
-                method,
-                f"{YOOKASSA_API_BASE_URL}{path}",
-                auth=(YOOKASSA_SHOP_ID, YOOKASSA_SECRET_KEY),
-                **kwargs,
-            )
-    except httpx.HTTPError as exc:
-        raise PaymentProviderError("YooKassa is unavailable") from exc
-
-    if response.status_code >= 400:
-        raise PaymentProviderError(f"YooKassa returned HTTP {response.status_code}")
-    try:
-        data = response.json()
-    except ValueError as exc:
-        raise PaymentProviderError("YooKassa returned invalid JSON") from exc
-    if not isinstance(data, dict):
-        raise PaymentProviderError("YooKassa returned an invalid response")
-    return data
+def _signature(parts: list[str]) -> str:
+    source = ":".join(parts).encode("utf-8")
+    return hashlib.new(ROBOKASSA_HASH_ALGORITHM, source).hexdigest().lower()
 
 
-async def create_provider_payment(order: Payment) -> dict[str, Any]:
+def _return_url(order_id: str) -> str:
+    parsed = urlsplit(ROBOKASSA_RETURN_URL)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query["payment"] = order_id
+    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment))
+
+
+def create_provider_payment(order: Payment, customer_email: str) -> dict[str, str]:
+    """Build a signed hosted checkout URL; prices never come from the browser."""
+    if not order.provider_payment_id:
+        raise PaymentProviderError("Payment invoice number is missing")
+
     _, description = product_details(order.product_type, order.product_id)
-    payload = {
-        "amount": {"value": f"{Decimal(order.amount):.2f}", "currency": order.currency},
-        "capture": True,
-        "confirmation": {
-            "type": "redirect",
-            "return_url": f"{YOOKASSA_RETURN_URL}?payment={order.id}",
-        },
-        "description": description,
-        "metadata": {
-            "humary_payment_id": order.id,
-            "humary_user_id": str(order.user_id),
-            "humary_product_type": order.product_type,
-            "humary_product_id": order.product_id,
-        },
+    amount = f"{Decimal(order.amount):.2f}"
+    invoice_id = order.provider_payment_id
+    custom_parameters = {_CUSTOM_ORDER_PARAMETER: order.id}
+    success_url = _return_url(order.id)
+    fail_url = _return_url(order.id)
+    signature_parts = [
+        ROBOKASSA_MERCHANT_LOGIN,
+        amount,
+        invoice_id,
+        success_url,
+        "GET",
+        fail_url,
+        "GET",
+        ROBOKASSA_PASSWORD1,
+        *[f"{key}={value}" for key, value in sorted(custom_parameters.items())],
+    ]
+    params = {
+        "MerchantLogin": ROBOKASSA_MERCHANT_LOGIN,
+        "OutSum": amount,
+        "InvId": invoice_id,
+        "Description": description[:100],
+        "SignatureValue": _signature(signature_parts),
+        "Email": customer_email,
+        "Culture": "ru",
+        "SuccessUrl2": success_url,
+        "SuccessUrl2Method": "GET",
+        "FailUrl2": fail_url,
+        "FailUrl2Method": "GET",
+        **custom_parameters,
     }
-    return await _provider_request(
-        "POST",
-        "/payments",
-        headers={"Idempotence-Key": order.idempotence_key},
-        json=payload,
-    )
+    if ROBOKASSA_IS_TEST:
+        params["IsTest"] = "1"
+    return {
+        "id": invoice_id,
+        "confirmation_url": f"{ROBOKASSA_CHECKOUT_URL}?{urlencode(params)}",
+    }
 
 
-async def get_provider_payment(provider_payment_id: str) -> dict[str, Any]:
-    if not _PROVIDER_ID_PATTERN.fullmatch(provider_payment_id):
-        raise PaymentProviderError("Invalid provider payment id")
-    return await _provider_request("GET", f"/payments/{provider_payment_id}")
-
-
-def save_provider_payment(db: Session, order: Payment, provider_payment: dict[str, Any]) -> Payment:
-    provider_id = provider_payment.get("id")
-    confirmation_url = (provider_payment.get("confirmation") or {}).get("confirmation_url")
-    if not isinstance(provider_id, str) or not _PROVIDER_ID_PATTERN.fullmatch(provider_id):
-        raise PaymentProviderError("YooKassa did not return a valid payment id")
-    if not isinstance(confirmation_url, str) or not confirmation_url.startswith("https://"):
-        raise PaymentProviderError("YooKassa did not return a checkout URL")
-
-    order.provider_payment_id = provider_id
-    order.status = str(provider_payment.get("status") or "pending")[:32]
-    db.commit()
-    db.refresh(order)
-    return order
-
-
-def public_payment_status(order: Payment) -> dict[str, Any]:
+def public_payment_status(order: Payment) -> dict[str, str | bool]:
     return {
         "id": order.id,
         "status": order.status,
@@ -173,62 +175,51 @@ def public_payment_status(order: Payment) -> dict[str, Any]:
     }
 
 
-def _provider_amount_matches(order: Payment, provider_payment: dict[str, Any]) -> bool:
-    amount = provider_payment.get("amount") or {}
+def _result_signature_matches(parameters: Mapping[str, str]) -> bool:
+    amount = parameters.get("OutSum", "")
+    invoice_id = parameters.get("InvId", "")
+    received_signature = parameters.get("SignatureValue", "")
+    order_id = parameters.get(_CUSTOM_ORDER_PARAMETER, "")
+    if not (amount and invoice_id and received_signature and order_id):
+        return False
+    expected_signature = _signature(
+        [amount, invoice_id, ROBOKASSA_PASSWORD2, f"{_CUSTOM_ORDER_PARAMETER}={order_id}"]
+    )
+    return hmac.compare_digest(expected_signature, received_signature.lower())
+
+
+def _result_amount_matches(order: Payment, raw_amount: str) -> bool:
     try:
-        provider_amount = _money(amount.get("value"))
+        return Decimal(raw_amount) == Decimal(order.amount)
     except (InvalidOperation, TypeError, ValueError):
         return False
-    return provider_amount == Decimal(order.amount) and amount.get("currency") == order.currency
 
 
-def _provider_metadata_matches(order: Payment, provider_payment: dict[str, Any]) -> bool:
-    metadata = provider_payment.get("metadata") or {}
-    return (
-        metadata.get("humary_payment_id") == order.id
-        and metadata.get("humary_user_id") == str(order.user_id)
-        and metadata.get("humary_product_type") == order.product_type
-        and metadata.get("humary_product_id") == order.product_id
+def reconcile_provider_payment(db: Session, parameters: Mapping[str, str]) -> Payment | None:
+    """Verify a signed ResultURL notification and fulfil exactly once."""
+    if not _result_signature_matches(parameters):
+        logger.warning("Rejected Robokassa ResultURL notification with an invalid signature")
+        return None
+
+    invoice_id = parameters["InvId"]
+    order_id = parameters[_CUSTOM_ORDER_PARAMETER]
+    order = (
+        db.query(Payment)
+        .filter(Payment.provider_payment_id == invoice_id)
+        .with_for_update()
+        .one_or_none()
     )
-
-
-def reconcile_provider_payment(db: Session, provider_payment: dict[str, Any]) -> Payment | None:
-    """Persist a provider status and fulfil exactly once after full verification."""
-    provider_id = provider_payment.get("id")
-    metadata = provider_payment.get("metadata") or {}
-    order_id = metadata.get("humary_payment_id")
-    if not isinstance(provider_id, str) or not isinstance(order_id, str):
+    if not order or order.provider != PAYMENT_PROVIDER or order.id != order_id:
+        logger.warning("Rejected Robokassa ResultURL notification for an unknown payment")
         return None
 
-    order = db.query(Payment).filter(Payment.id == order_id).with_for_update().one_or_none()
-    if not order or order.provider != PAYMENT_PROVIDER:
-        return None
-    if order.provider_payment_id and order.provider_payment_id != provider_id:
-        logger.warning("Rejected mismatched provider payment for order_id=%s", order.id)
-        return None
-
-    order.provider_payment_id = provider_id
-    provider_status = str(provider_payment.get("status") or "unknown")[:32]
-    order.status = provider_status
-
-    if provider_status != "succeeded":
+    if not _result_amount_matches(order, parameters["OutSum"]):
+        order.status = "verification_failed"
         db.commit()
-        db.refresh(order)
+        logger.error("Rejected Robokassa payment with an unexpected amount for order_id=%s", order.id)
         return order
 
     if order.fulfilled_at is not None:
-        db.commit()
-        db.refresh(order)
-        return order
-
-    if (
-        provider_payment.get("paid") is not True
-        or not _provider_amount_matches(order, provider_payment)
-        or not _provider_metadata_matches(order, provider_payment)
-    ):
-        order.status = "verification_failed"
-        db.commit()
-        logger.error("Rejected unverified successful payment for order_id=%s", order.id)
         return order
 
     if order.product_type == PRODUCT_SUBSCRIPTION:
@@ -236,7 +227,7 @@ def reconcile_provider_payment(db: Session, provider_payment: dict[str, Any]) ->
             db,
             order.user_id,
             order.product_id,
-            payment_id=provider_id,
+            payment_id=invoice_id,
             duration_days=30,
             commit=False,
         )
@@ -245,18 +236,18 @@ def reconcile_provider_payment(db: Session, provider_payment: dict[str, Any]) ->
             db,
             order.user_id,
             order.product_id,
-            payment_id=provider_id,
+            payment_id=invoice_id,
             commit=False,
         )
     else:
         order.status = "verification_failed"
         db.commit()
-        logger.error("Rejected payment with unknown product for order_id=%s", order.id)
+        logger.error("Rejected Robokassa payment with an unknown product for order_id=%s", order.id)
         return order
 
     order.status = "succeeded"
     order.fulfilled_at = get_current_datetime()
     db.commit()
     db.refresh(order)
-    logger.info("Fulfilled YooKassa payment order_id=%s provider_payment_id=%s", order.id, provider_id)
+    logger.info("Fulfilled Robokassa payment order_id=%s invoice_id=%s", order.id, invoice_id)
     return order

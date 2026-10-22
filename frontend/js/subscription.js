@@ -51,10 +51,22 @@ function showPaymentsUnavailable() {
     showNotification(message, 'info');
 }
 
-async function startYooKassaCheckout(productType, productId, button = null) {
+async function startRobokassaCheckout(productType, productId, button = null) {
     if (!Auth.isAuthenticated() || !Auth.getUser()) {
         showNotification('Пожалуйста, войдите в аккаунт', 'warning');
         Auth.showAuthModal();
+        return;
+    }
+
+    const termsCheckbox = document.getElementById('pricingTermsAccepted');
+    if (!termsCheckbox?.checked) {
+        showNotification(
+            typeof window.t === 'function'
+                ? window.t('payment_terms_accept_required')
+                : 'Перед оплатой примите Условия использования и ознакомьтесь с Политикой конфиденциальности.',
+            'warning',
+        );
+        termsCheckbox?.focus();
         return;
     }
 
@@ -69,7 +81,7 @@ async function startYooKassaCheckout(productType, productId, button = null) {
             product_type: productType,
             product_id: productId,
         });
-        const result = await API.createYooKassaPayment(productType, productId);
+        const result = await API.createRobokassaPayment(productType, productId, true);
         if (!result.ok || !result.data?.confirmation_url) {
             throw new Error(result.data?.detail || 'Payment creation failed');
         }
@@ -312,7 +324,7 @@ async function refreshAllSubscriptionData(force = false) {
 }
 
 function upgradePlan(planType, button = null) {
-    return startYooKassaCheckout('subscription', planType, button);
+    return startRobokassaCheckout('subscription', planType, button);
 }
 
 async function loadCurrentSubscription() {
@@ -348,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.word-pack-btn').forEach(button => {
         button.addEventListener('click', () => {
-            startYooKassaCheckout('word_package', button.dataset.package, button);
+            startRobokassaCheckout('word_package', button.dataset.package, button);
         });
     });
 
@@ -356,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!paymentId) return;
 
     window.history.replaceState({}, '', window.location.pathname);
-    API.getYooKassaPayment(paymentId).then((result) => {
+    const checkReturnedPayment = (retriesLeft = 5) => API.getRobokassaPayment(paymentId).then((result) => {
         const payment = result.data?.payment;
         if (!result.ok || !payment) return;
         if (payment.fulfilled) {
@@ -373,17 +385,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 'warning',
             );
         } else {
+            if (retriesLeft > 0) {
+                window.setTimeout(() => checkReturnedPayment(retriesLeft - 1), 2000);
+                return;
+            }
             showNotification(
                 typeof window.t === 'function' ? window.t('payment_pending') : 'Платёж обрабатывается. Доступ появится после подтверждения.',
                 'info',
             );
         }
     }).catch(() => {
+        if (retriesLeft > 0) {
+            window.setTimeout(() => checkReturnedPayment(retriesLeft - 1), 2000);
+            return;
+        }
         showNotification(
             typeof window.t === 'function' ? window.t('payment_pending') : 'Платёж обрабатывается. Доступ появится после подтверждения.',
             'info',
         );
     });
+    checkReturnedPayment();
 });
 
 window.forceUpdateBalance = () => refreshAllSubscriptionData(true);

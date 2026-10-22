@@ -67,15 +67,16 @@ const API = {
         return this.request('/auth/legal-consent', 'POST');
     },
 
-    createYooKassaPayment(productType, productId) {
-        return this.request('/payments/yookassa/create', 'POST', {
+    createRobokassaPayment(productType, productId, termsAccepted) {
+        return this.request('/payments/robokassa/create', 'POST', {
             product_type: productType,
             product_id: productId,
+            terms_accepted: termsAccepted,
         }, true);
     },
 
-    getYooKassaPayment(paymentId) {
-        return this.request(`/payments/yookassa/${encodeURIComponent(paymentId)}`, 'GET', null, true);
+    getRobokassaPayment(paymentId) {
+        return this.request(`/payments/robokassa/${encodeURIComponent(paymentId)}`, 'GET', null, true);
     },
 
     confirmEmailCode(email, code) {
