@@ -59,8 +59,8 @@ const API = {
         }, true);
     },
 
-    requestEmailCode(email) {
-        return this.request('/auth/email-code/request', 'POST', { email });
+    requestEmailCode(email, registration = false) {
+        return this.request('/auth/email-code/request', 'POST', { email, registration });
     },
 
     acceptLegalDocuments() {
@@ -78,8 +78,8 @@ const API = {
         return this.request(`/payments/robokassa/${encodeURIComponent(paymentId)}`, 'GET', null, true);
     },
 
-    confirmEmailCode(email, code) {
-        return this.request('/auth/email-code/confirm', 'POST', { email, code });
+    confirmEmailCode(email, code, registration = false) {
+        return this.request('/auth/email-code/confirm', 'POST', { email, code, registration });
     },
 
     prepareStudyWork(text, workType) {

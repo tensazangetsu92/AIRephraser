@@ -139,7 +139,7 @@
 
     if (registerBtn) {
         registerBtn.addEventListener('click', () => {
-            if (typeof Auth !== 'undefined') Auth.showAuthModal();
+            if (typeof Auth !== 'undefined') Auth.showAuthModal('register');
         });
     }
 

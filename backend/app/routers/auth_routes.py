@@ -108,8 +108,17 @@ async def request_email_code(
         db: Session = Depends(get_db),
 ):
     """Issue a passwordless sign-in code for an existing or new account."""
-    require_pending_legal_consent(request)
     email = str(data.email).strip().casefold()
+    user = get_user_by_email(db, email)
+    if user and not user.is_active:
+        raise HTTPException(status_code=403, detail="Аккаунт отключён")
+    if user is None:
+        if not data.registration:
+            raise HTTPException(
+                status_code=404,
+                detail="Аккаунт с таким email не найден. Нажмите «Регистрация», чтобы создать его.",
+            )
+        require_pending_legal_consent(request)
     now = _utc_now()
     recent_code = db.query(EmailLoginCode).filter(
         EmailLoginCode.email == email,
@@ -184,7 +193,6 @@ async def confirm_email_code(
         db: Session = Depends(get_db),
 ):
     """Validate the code, then sign in or create the verified account."""
-    require_pending_legal_consent(request)
     email = str(data.email).strip().casefold()
     enforce_auth_rate_limit(db, request, scope="email-code-confirm", email=email)
     if not data.code.isdigit() or len(data.code) != 6:
@@ -221,6 +229,12 @@ async def confirm_email_code(
     if user and not user.is_active:
         raise HTTPException(status_code=403, detail="Аккаунт отключён")
     if not user:
+        if not data.registration:
+            raise HTTPException(
+                status_code=404,
+                detail="Аккаунт с таким email не найден. Нажмите «Регистрация», чтобы создать его.",
+            )
+        require_pending_legal_consent(request)
         # Keep the existing non-null column for legacy accounts. The random value
         # is never shown or accepted by the passwordless UI.
         user = User(email=email, password_hash=get_hash_password(secrets.token_urlsafe(48)), is_active=True)
@@ -228,7 +242,8 @@ async def confirm_email_code(
         db.flush()
         created = True
 
-    persist_legal_consent(db, user)
+    if created:
+        persist_legal_consent(db, user)
     login_code.used_at = now
     db.commit()
     db.refresh(user)

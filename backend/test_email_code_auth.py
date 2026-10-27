@@ -47,7 +47,7 @@ class EmailCodeAuthTests(unittest.TestCase):
 
     def test_new_user_is_created_only_after_valid_code_and_receives_session(self):
         email = "new-user@humary-test.dev"
-        asyncio.run(auth_routes.request_email_code(EmailCodeRequest(email=email), _request(), self.db))
+        asyncio.run(auth_routes.request_email_code(EmailCodeRequest(email=email, registration=True), _request(), self.db))
 
         self.assertEqual(len(self.codes), 1)
         self.assertIsNone(self.db.query(User).filter(User.email == email).first())
@@ -55,7 +55,7 @@ class EmailCodeAuthTests(unittest.TestCase):
 
         response = Response()
         token = asyncio.run(auth_routes.confirm_email_code(
-            EmailCodeConfirm(email=email, code=self.codes[0]), response, _request(), self.db,
+            EmailCodeConfirm(email=email, code=self.codes[0], registration=True), response, _request(), self.db,
         ))
 
         user = self.db.query(User).filter(User.email == email).one()
@@ -67,18 +67,30 @@ class EmailCodeAuthTests(unittest.TestCase):
 
     def test_existing_code_is_reused_without_a_second_email_or_rate_limit_error(self):
         email = "reuse-code@humary-test.dev"
-        asyncio.run(auth_routes.request_email_code(EmailCodeRequest(email=email), _request(), self.db))
+        asyncio.run(auth_routes.request_email_code(EmailCodeRequest(email=email, registration=True), _request(), self.db))
 
-        result = asyncio.run(auth_routes.request_email_code(EmailCodeRequest(email=email), _request(), self.db))
+        result = asyncio.run(auth_routes.request_email_code(EmailCodeRequest(email=email, registration=True), _request(), self.db))
 
         self.assertTrue(result["success"])
         self.assertTrue(result["already_sent"])
         self.assertEqual(result["email"], email)
         self.assertEqual(len(self.codes), 1)
 
-    def test_email_code_request_requires_legal_consent(self):
+    def test_registration_requires_legal_consent(self):
         with self.assertRaises(Exception) as raised:
             asyncio.run(auth_routes.request_email_code(
-                EmailCodeRequest(email="no-consent@humary-test.dev"), _request(consented=False), self.db,
+                EmailCodeRequest(email="no-consent@humary-test.dev", registration=True), _request(consented=False), self.db,
             ))
         self.assertEqual(getattr(raised.exception, "status_code", None), 403)
+
+    def test_existing_user_can_sign_in_without_accepting_documents_again(self):
+        email = "existing-user@humary-test.dev"
+        self.db.add(User(email=email, password_hash="hash", is_active=True))
+        self.db.commit()
+
+        result = asyncio.run(auth_routes.request_email_code(
+            EmailCodeRequest(email=email), _request(consented=False), self.db,
+        ))
+
+        self.assertTrue(result["success"])
+        self.assertEqual(len(self.codes), 1)

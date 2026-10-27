@@ -74,7 +74,7 @@ function submitRobokassaCheckout(checkoutUrl, checkoutFields) {
     });
 
     document.body.appendChild(form);
-    form.submit();
+    HTMLFormElement.prototype.submit.call(form);
 }
 
 async function startRobokassaCheckout(productType, productId, button = null) {

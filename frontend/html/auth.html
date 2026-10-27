@@ -24,12 +24,13 @@
                 <span data-i18n="auth_cookie_consent">Я соглашаюсь на использование cookie для авторизации и сохранения сессии.</span>
                 <a href="/cookies" target="_blank" rel="noopener" data-i18n="auth_cookie_policy">Подробнее</a>
             </label>
-            <label class="auth-cookie-consent auth-legal-consent" for="authTermsAccepted">
+            <label class="auth-cookie-consent auth-legal-consent" id="authLegalConsent" for="authTermsAccepted" hidden>
                 <input type="checkbox" id="authTermsAccepted" required>
                 <span><span data-i18n="auth_terms_accept_prefix">Принимаю </span><a href="/terms" target="_blank" rel="noopener" data-i18n="auth_terms_link">Условия использования</a><span data-i18n="auth_terms_accept_connector"> и подтверждаю, что ознакомлен с </span><a href="/privacy" target="_blank" rel="noopener" data-i18n="auth_privacy_link">Политикой конфиденциальности</a><span data-i18n="auth_terms_accept_suffix">.</span></span>
             </label>
             <button type="submit" class="auth-page-submit" id="authSubmitBtn" data-i18n="auth_email_code_request">Получить код</button>
         </form>
+        <button type="button" class="auth-mode-toggle" id="authModeToggle"></button>
         <div class="auth-divider"><span data-i18n="auth_or">или</span></div>
         <div class="auth-oauth-actions">
             <button type="button" id="yandexLoginBtn" class="auth-page-oauth">
@@ -64,9 +65,9 @@
     </button>
 </div>
 <script src="/js/utils.js?v=20261011-lazy-upload-libraries" defer></script>
-<script src="/js/api.js?v=20261019-server-legal-consent" defer></script>
+<script src="/js/api.js?v=20261027-registration-and-checkout" defer></script>
 <script src="/js/notifications.js?v=20261011-toast-accessibility" defer></script>
-<script src="/js/auth.js?v=20261019-server-legal-consent" defer></script>
+<script src="/js/auth.js?v=20261027-registration-only-consent" defer></script>
 <script src="/js/lang.js?v=20261011-history-empty-states" defer></script>
 <script src="/js/cookie-consent.js?v=20261010-auth-cookie-consent" defer></script>
 </body>

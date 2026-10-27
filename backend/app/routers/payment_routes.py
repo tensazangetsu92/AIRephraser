@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import Payment, User, get_db
-from app.legal_consent import has_current_legal_consent
 from app.payments import (
     PRODUCT_SUBSCRIPTION,
     PRODUCT_WORD_PACKAGE,
@@ -37,12 +36,6 @@ async def create_checkout(
         db: Session = Depends(get_db),
 ):
     require_payments_enabled()
-    if not has_current_legal_consent(current_user):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Войдите в аккаунт заново и примите актуальные Условия использования.",
-        )
-
     order = create_payment_order(db, current_user.id, payload.product_type, payload.product_id)
     try:
         provider_payment = create_provider_payment(order, current_user.email)

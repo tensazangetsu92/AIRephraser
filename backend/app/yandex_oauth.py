@@ -59,12 +59,14 @@ def _require_yandex_configuration() -> None:
 
 
 @router.get("/login")
-async def yandex_login(request: Request):
+async def yandex_login(request: Request, registration: bool = False):
     """Start an authorization-code OAuth flow with a CSRF-protected state."""
     _require_yandex_configuration()
-    require_pending_legal_consent(request)
+    if registration:
+        require_pending_legal_consent(request)
     state = secrets.token_urlsafe(32)
     request.session["yandex_oauth_state"] = state
+    request.session["yandex_oauth_registration"] = registration
     params = {
         "client_id": YANDEX_CLIENT_ID,
         "redirect_uri": YANDEX_REDIRECT_URI,
@@ -85,8 +87,8 @@ async def yandex_auth_callback(
 ):
     """Exchange the Yandex authorization code and create or sign in a user."""
     _require_yandex_configuration()
-    require_pending_legal_consent(request)
     expected_state = request.session.pop("yandex_oauth_state", None)
+    registration = request.session.pop("yandex_oauth_registration", False) is True
     if not (
         isinstance(expected_state, str)
         and isinstance(state, str)
@@ -135,7 +137,11 @@ async def yandex_auth_callback(
     avatar_url = _get_yandex_avatar_url(profile)
     display_name = _get_yandex_display_name(profile)
     user = db.query(User).filter(func.lower(User.email) == email).first()
+    created = False
     if user is None:
+        if not registration:
+            return RedirectResponse(url=f"{FRONTEND_URL}/auth?mode=register&error=registration_required")
+        require_pending_legal_consent(request)
         user = User(
             email=email,
             password_hash=get_hash_password(secrets.token_urlsafe(32)),
@@ -147,6 +153,7 @@ async def yandex_auth_callback(
         db.commit()
         db.refresh(user)
         initialise_new_user_entitlements(db, user.id, user.email)
+        created = True
     elif not user.is_active:
         raise HTTPException(status_code=403, detail="Этот аккаунт отключён.")
     else:
@@ -160,7 +167,7 @@ async def yandex_auth_callback(
         if profile_changed:
             db.commit()
 
-    if persist_legal_consent(db, user):
+    if created and persist_legal_consent(db, user):
         db.commit()
 
     refresh_token = create_refresh_session(db, user)

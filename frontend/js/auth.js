@@ -5,6 +5,7 @@ try { localStorage.removeItem('token'); } catch { /* storage can be unavailable 
 const Auth = {
     token: null,
     pendingEmail: null,
+    mode: 'login',
     refreshPromise: null,
     resendTimerId: null,
     resendDeadlineKey: 'humary_email_code_resend_deadline',
@@ -123,23 +124,51 @@ const Auth = {
         return false;
     },
 
+    isRegistrationMode() {
+        return this.mode === 'register';
+    },
+
+    setMode(mode = 'login') {
+        this.mode = mode === 'register' ? 'register' : 'login';
+        const legalConsent = document.getElementById('authLegalConsent');
+        const termsCheckbox = document.getElementById('authTermsAccepted');
+        if (legalConsent) legalConsent.hidden = !this.isRegistrationMode();
+        if (termsCheckbox) {
+            termsCheckbox.required = this.isRegistrationMode();
+            if (!this.isRegistrationMode()) termsCheckbox.checked = false;
+        }
+        const toggle = document.getElementById('authModeToggle');
+        if (toggle) {
+            toggle.textContent = this.isRegistrationMode()
+                ? 'Уже есть аккаунт? Войти'
+                : 'Нет аккаунта? Регистрация';
+        }
+    },
+
+    async startOAuth(provider) {
+        if (!this.ensureCookieConsent()) return;
+        if (this.isRegistrationMode() && !await this.prepareLegalConsent()) return;
+        const registration = this.isRegistrationMode() ? '?registration=true' : '';
+        window.location.assign(`/auth/${provider}/login${registration}`);
+    },
     async loginWithYandex() {
-        if (await this.prepareLegalConsent()) window.location.assign('/auth/yandex/login');
+        await this.startOAuth('yandex');
     },
     async loginWithVK() {
-        if (await this.prepareLegalConsent()) window.location.assign('/auth/vk/login');
+        await this.startOAuth('vk');
     },
     async handleOAuthCallback() { return false; },
     async logout() {
         try { await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
         finally { this.clearExpiredSession(); window.location.reload(); }
     },
-    showAuthModal() {
+    showAuthModal(mode = 'login') {
         if (window.location.pathname !== '/auth') {
             const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-            window.location.assign(`/auth?next=${encodeURIComponent(next)}`);
+            window.location.assign(`/auth?next=${encodeURIComponent(next)}&mode=${mode === 'register' ? 'register' : 'login'}`);
             return;
         }
+        this.setMode(mode);
         this.resetForm();
         setTimeout(() => document.getElementById('authEmail')?.focus(), 100);
     },
@@ -234,14 +263,15 @@ const Auth = {
         const email = document.getElementById('authEmail')?.value.trim();
         if (!email) return this.showError(typeof t === 'function' ? t('auth_email_required') : 'Введите email');
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return this.showError(typeof t === 'function' ? t('auth_email_invalid') : 'Введите корректный email');
-        if (!await this.prepareLegalConsent()) return;
+        if (!this.ensureCookieConsent()) return;
+        if (this.isRegistrationMode() && !await this.prepareLegalConsent()) return;
 
         const button = document.getElementById('authSubmitBtn');
         const initialText = button?.textContent;
         this.setError('authError');
         if (button) { button.disabled = true; button.textContent = typeof t === 'function' ? t('auth_email_code_sending') : 'Отправляем код…'; }
         try {
-            const result = await API.requestEmailCode(email);
+            const result = await API.requestEmailCode(email, this.isRegistrationMode());
             // A code may have been sent just before a page reload. The server
             // deliberately does not send another one for a minute, but the
             // user must still be able to enter the existing code.
@@ -277,14 +307,14 @@ const Auth = {
         const code = document.getElementById('verificationCode')?.value.trim();
         if (!this.pendingEmail) return this.showError(typeof t === 'function' ? t('auth_email_code_restart') : 'Запросите новый код.');
         if (!/^\d{6}$/.test(code || '')) return this.setError('verificationError', typeof t === 'function' ? t('auth_email_code_invalid') : 'Введите 6-значный код из письма');
-        if (!await this.prepareLegalConsent()) return;
+        if (this.isRegistrationMode() && !await this.prepareLegalConsent()) return;
 
         const button = document.getElementById('verificationSubmitBtn');
         const initialText = button?.textContent;
         this.setError('verificationError');
         if (button) { button.disabled = true; button.textContent = typeof t === 'function' ? t('auth_email_code_verifying') : 'Проверяем код…'; }
         try {
-            const result = await API.confirmEmailCode(this.pendingEmail, code);
+            const result = await API.confirmEmailCode(this.pendingEmail, code, this.isRegistrationMode());
             if (!result.ok) {
                 this.setError('verificationError', result.data?.detail || (typeof t === 'function' ? t('auth_email_code_confirm_error') : 'Не удалось подтвердить код.'));
                 return;
@@ -302,10 +332,11 @@ const Auth = {
     },
     async resendEmailCode() {
         if (!this.pendingEmail) return this.showError(typeof t === 'function' ? t('auth_email_code_restart') : 'Запросите новый код.');
-        if (!await this.prepareLegalConsent()) return;
+        if (!this.ensureCookieConsent()) return;
+        if (this.isRegistrationMode() && !await this.prepareLegalConsent()) return;
         this.setError('verificationError');
         try {
-            const result = await API.requestEmailCode(this.pendingEmail);
+            const result = await API.requestEmailCode(this.pendingEmail, this.isRegistrationMode());
             if (result.ok) {
                 this.startResendTimer(result.retryAfter || result.data.retry_after || 60);
                 if (typeof showNotification === 'function') showNotification(typeof t === 'function' ? t('auth_email_code_resent') : 'Код отправлен повторно.', 'success');
@@ -336,7 +367,20 @@ function initAuthPage() {
     });
     window.addEventListener('cookieConsentChanged', syncCookieConsent);
     syncCookieConsent();
+    const search = new URLSearchParams(window.location.search);
+    Auth.setMode(search.get('mode'));
+    if (search.get('error') === 'registration_required') {
+        Auth.showError('Аккаунт не найден. Выберите регистрацию и примите Условия использования.');
+    }
     document.getElementById('authForm')?.addEventListener('submit', (event) => { event.preventDefault(); Auth.handleSubmit(); });
+    document.getElementById('authModeToggle')?.addEventListener('click', () => {
+        Auth.setMode(Auth.isRegistrationMode() ? 'login' : 'register');
+        const next = new URLSearchParams(window.location.search);
+        next.set('mode', Auth.mode);
+        next.delete('error');
+        window.history.replaceState(null, '', `${window.location.pathname}?${next.toString()}`);
+        Auth.setError('authError');
+    });
     document.getElementById('yandexLoginBtn')?.addEventListener('click', () => Auth.loginWithYandex());
     document.getElementById('vkLoginBtn')?.addEventListener('click', () => Auth.loginWithVK());
     document.getElementById('verificationSubmitBtn')?.addEventListener('click', () => Auth.confirmEmailCode());
@@ -352,8 +396,8 @@ window.closeAuthModal = () => Auth.closeAuthModal();
 document.addEventListener('DOMContentLoaded', async () => {
     const handledOAuthCallback = await Auth.handleOAuthCallback();
     initAuthPage();
-    document.getElementById('authBtn')?.addEventListener('click', () => Auth.showAuthModal());
-    document.getElementById('registerBtn')?.addEventListener('click', () => Auth.showAuthModal());
+    document.getElementById('authBtn')?.addEventListener('click', () => Auth.showAuthModal('login'));
+    document.getElementById('registerBtn')?.addEventListener('click', () => Auth.showAuthModal('register'));
     if (!handledOAuthCallback) {
         const restored = await Auth.restoreSession();
         if (restored && window.location.pathname === '/auth') Auth.redirectAfterAuth();

@@ -1,6 +1,6 @@
 function showLogin() { Auth.showAuthModal(); }
 function showRegister() {
-    Auth.showAuthModal();
+    Auth.showAuthModal('register');
 }
 function closeModals() { Auth.closeAuthModal(); }
 
@@ -9,7 +9,7 @@ async function handleLogin() {
 }
 
 async function handleRegister() {
-    Auth.showAuthModal();
+    Auth.showAuthModal('register');
 }
 
 function handleLogout() { Auth.logout(); }
@@ -135,7 +135,7 @@ function updateUI() {
         }
         if (registerBtn) {
             registerBtn.style.display = 'flex';
-            registerBtn.onclick = () => Auth.showAuthModal();
+            registerBtn.onclick = () => Auth.showAuthModal('register');
         }
         if (typeof resetTariffCards === 'function') resetTariffCards();
         ['balanceBlock', 'extraBalanceBlock'].forEach(id => {

@@ -74,14 +74,16 @@ def _code_challenge(verifier: str) -> str:
 
 
 @router.get("/login")
-async def vk_login(request: Request):
+async def vk_login(request: Request, registration: bool = False):
     """Start VK ID OAuth 2.1 authorization code flow with PKCE."""
     _require_vk_configuration()
-    require_pending_legal_consent(request)
+    if registration:
+        require_pending_legal_consent(request)
     state = secrets.token_urlsafe(32)
     verifier = secrets.token_urlsafe(48)
     request.session["vk_oauth_state"] = state
     request.session["vk_oauth_verifier"] = verifier
+    request.session["vk_oauth_registration"] = registration
     params = {
         "client_id": VK_ID_APP_ID,
         "redirect_uri": VK_ID_REDIRECT_URI,
@@ -110,9 +112,9 @@ async def vk_auth_callback(
 ):
     """Exchange a VK ID code for a token and sign the user in by verified email."""
     _require_vk_configuration()
-    require_pending_legal_consent(request)
     expected_state = request.session.pop("vk_oauth_state", None)
     verifier = request.session.pop("vk_oauth_verifier", None)
+    registration = request.session.pop("vk_oauth_registration", False) is True
     if not (
         isinstance(expected_state, str)
         and isinstance(state, str)
@@ -186,6 +188,9 @@ async def vk_auth_callback(
     else:
         user = db.query(User).filter(func.lower(User.email) == email).first() if email else None
         if user is None:
+            if not registration:
+                return RedirectResponse(url=f"{FRONTEND_URL}/auth?mode=register&error=registration_required")
+            require_pending_legal_consent(request)
             user = User(
                 email=email,
                 password_hash=get_hash_password(secrets.token_urlsafe(32)),
@@ -220,7 +225,7 @@ async def vk_auth_callback(
     if profile_changed:
         db.commit()
 
-    if persist_legal_consent(db, user):
+    if created_user and persist_legal_consent(db, user):
         db.commit()
 
     refresh_token = create_refresh_session(db, user)

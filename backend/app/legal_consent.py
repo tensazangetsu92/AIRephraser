@@ -26,14 +26,14 @@ def _session(request: Request) -> dict:
 
 
 def record_pending_legal_consent(request: Request) -> None:
-    """Record the affirmative action immediately before an auth attempt."""
+    """Record the affirmative action immediately before account registration."""
     session = _session(request)
     session[_VERSION_SESSION_KEY] = LEGAL_DOCUMENTS_VERSION
     session[_TIME_SESSION_KEY] = _utc_now().isoformat()
 
 
 def require_pending_legal_consent(request: Request) -> None:
-    """Reject authentication attempts that did not first accept the documents."""
+    """Reject account registration that did not first accept the documents."""
     session = _session(request)
     accepted_at = session.get(_TIME_SESSION_KEY)
     if session.get(_VERSION_SESSION_KEY) != LEGAL_DOCUMENTS_VERSION or not isinstance(accepted_at, str):

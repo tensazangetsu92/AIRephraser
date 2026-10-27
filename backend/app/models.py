@@ -29,12 +29,14 @@ class PasswordResetConfirm(BaseModel):
 class EmailCodeRequest(BaseModel):
     """Request a one-time code for passwordless sign-in or registration."""
     email: EmailStr
+    registration: bool = False
 
 
 class EmailCodeConfirm(BaseModel):
     """Complete passwordless sign-in with a short-lived code."""
     email: EmailStr
     code: str = Field(min_length=6, max_length=6)
+    registration: bool = False
 
 
 class Token(BaseModel):
