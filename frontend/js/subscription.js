@@ -51,6 +51,32 @@ function showPaymentsUnavailable() {
     showNotification(message, 'info');
 }
 
+function submitRobokassaCheckout(checkoutUrl, checkoutFields) {
+    if (!checkoutUrl || !checkoutFields || typeof checkoutFields !== 'object') {
+        throw new Error('Payment checkout data is incomplete');
+    }
+
+    // Receipt data can exceed safe URL lengths. Robokassa requires it to be
+    // signed and sent as a POST field for fiscalisation.
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = checkoutUrl;
+    form.acceptCharset = 'UTF-8';
+    form.style.display = 'none';
+
+    Object.entries(checkoutFields).forEach(([name, value]) => {
+        if (value === undefined || value === null) return;
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = String(value);
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+}
+
 async function startRobokassaCheckout(productType, productId, button = null) {
     if (!Auth.isAuthenticated() || !Auth.getUser()) {
         showNotification('Пожалуйста, войдите в аккаунт', 'warning');
@@ -82,10 +108,10 @@ async function startRobokassaCheckout(productType, productId, button = null) {
             product_id: productId,
         });
         const result = await API.createRobokassaPayment(productType, productId, true);
-        if (!result.ok || !result.data?.confirmation_url) {
+        if (!result.ok || !result.data?.checkout_url || !result.data?.checkout_fields) {
             throw new Error(result.data?.detail || 'Payment creation failed');
         }
-        window.location.assign(result.data.confirmation_url);
+        submitRobokassaCheckout(result.data.checkout_url, result.data.checkout_fields);
     } catch (error) {
         showNotification(
             error?.message || (typeof window.t === 'function'

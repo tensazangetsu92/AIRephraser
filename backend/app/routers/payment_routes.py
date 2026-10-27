@@ -61,7 +61,8 @@ async def create_checkout(
     return {
         "success": True,
         "payment": public_payment_status(order),
-        "confirmation_url": provider_payment["confirmation_url"],
+        "checkout_url": provider_payment["checkout_url"],
+        "checkout_fields": provider_payment["checkout_fields"],
     }
 
 

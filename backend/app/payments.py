@@ -5,10 +5,11 @@ from __future__ import annotations
 from decimal import Decimal, InvalidOperation
 import hashlib
 import hmac
+import json
 import logging
 import secrets
 from typing import Mapping
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 from uuid import uuid4
 
 from fastapi import HTTPException, status
@@ -77,6 +78,38 @@ def product_details(product_type: str, product_id: str) -> tuple[Decimal, str]:
     raise HTTPException(status_code=400, detail="Некорректный товар.")
 
 
+def _fiscal_receipt(order: Payment) -> str:
+    """Return the URL-encoded one-item receipt required by Robocheki SMZ.
+
+    Humary sells a single digital service per checkout. The price is always
+    calculated server-side from the product configuration, so the fiscal item
+    cannot be substituted by the browser.
+    """
+    amount, _ = product_details(order.product_type, order.product_id)
+    if order.product_type == PRODUCT_SUBSCRIPTION:
+        item_name = f"Humary: тариф {order.product_id} на 30 дней"
+    elif order.product_type == PRODUCT_WORD_PACKAGE:
+        package = PURCHASE_PACKAGES[order.product_id]
+        item_name = f"Humary: пакет {package['words']} слов"
+    else:
+        raise PaymentProviderError("Unknown product for fiscal receipt")
+
+    receipt = {
+        "items": [{
+            "name": item_name,
+            "quantity": 1,
+            "sum": float(amount),
+            "payment_method": "full_payment",
+            "payment_object": "service",
+            "tax": "none",
+        }],
+    }
+    return quote(
+        json.dumps(receipt, ensure_ascii=False, separators=(",", ":")),
+        safe="",
+    )
+
+
 def _new_invoice_id(db: Session) -> str:
     """Return an unused positive 64-bit invoice number required by Robokassa."""
     for _ in range(20):
@@ -119,8 +152,8 @@ def _return_url(order_id: str) -> str:
     return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment))
 
 
-def create_provider_payment(order: Payment, customer_email: str) -> dict[str, str]:
-    """Build a signed hosted checkout URL; prices never come from the browser."""
+def create_provider_payment(order: Payment, customer_email: str) -> dict[str, object]:
+    """Build a signed POST checkout form; prices never come from the browser."""
     if not order.provider_payment_id:
         raise PaymentProviderError("Payment invoice number is missing")
 
@@ -130,10 +163,12 @@ def create_provider_payment(order: Payment, customer_email: str) -> dict[str, st
     custom_parameters = {_CUSTOM_ORDER_PARAMETER: order.id}
     success_url = _return_url(order.id)
     fail_url = _return_url(order.id)
+    receipt = _fiscal_receipt(order)
     signature_parts = [
         ROBOKASSA_MERCHANT_LOGIN,
         amount,
         invoice_id,
+        receipt,
         success_url,
         "GET",
         fail_url,
@@ -146,6 +181,7 @@ def create_provider_payment(order: Payment, customer_email: str) -> dict[str, st
         "OutSum": amount,
         "InvId": invoice_id,
         "Description": description[:100],
+        "Receipt": receipt,
         "SignatureValue": _signature(signature_parts),
         "Email": customer_email,
         "Culture": "ru",
@@ -159,7 +195,8 @@ def create_provider_payment(order: Payment, customer_email: str) -> dict[str, st
         params["IsTest"] = "1"
     return {
         "id": invoice_id,
-        "confirmation_url": f"{ROBOKASSA_CHECKOUT_URL}?{urlencode(params)}",
+        "checkout_url": ROBOKASSA_CHECKOUT_URL,
+        "checkout_fields": params,
     }
 
 

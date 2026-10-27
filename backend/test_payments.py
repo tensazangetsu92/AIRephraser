@@ -1,9 +1,10 @@
 """Unit tests for the one-time Robokassa payment boundary."""
 
 from decimal import Decimal
+import json
 import unittest
 from unittest.mock import patch
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import unquote
 
 from fastapi import HTTPException, status
 from sqlalchemy import create_engine
@@ -90,15 +91,39 @@ class PaymentProductTests(unittest.TestCase):
                 require_payments_enabled()
         self.assertEqual(raised.exception.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
 
-    def test_checkout_url_is_signed_and_uses_server_price(self) -> None:
+    def test_checkout_form_is_signed_and_uses_server_price(self) -> None:
         order = self._order()
         payment = create_provider_payment(order, self.user.email)
-        query = parse_qs(urlsplit(payment["confirmation_url"]).query)
-        self.assertEqual(query["OutSum"], ["179.00"])
-        self.assertEqual(query["InvId"], ["654321"])
-        self.assertEqual(query["Shp_order"], [order.id])
-        self.assertEqual(query["IsTest"], ["1"])
-        self.assertIn(f"payment={order.id}", query["SuccessUrl2"][0])
+        fields = payment["checkout_fields"]
+        self.assertEqual(payment["checkout_url"], "https://auth.robokassa.ru/Merchant/Index.aspx")
+        self.assertEqual(fields["OutSum"], "179.00")
+        self.assertEqual(fields["InvId"], "654321")
+        self.assertEqual(fields["Shp_order"], order.id)
+        self.assertEqual(fields["IsTest"], "1")
+        self.assertIn(f"payment={order.id}", fields["SuccessUrl2"])
+
+        receipt = json.loads(unquote(fields["Receipt"]))
+        self.assertEqual(receipt["items"], [{
+            "name": "Humary: тариф premium на 30 дней",
+            "quantity": 1,
+            "sum": 179.0,
+            "payment_method": "full_payment",
+            "payment_object": "service",
+            "tax": "none",
+        }])
+        expected_signature = _signature([
+            "humary-demo",
+            "179.00",
+            "654321",
+            fields["Receipt"],
+            fields["SuccessUrl2"],
+            "GET",
+            fields["FailUrl2"],
+            "GET",
+            "password-one",
+            f"Shp_order={order.id}",
+        ])
+        self.assertEqual(fields["SignatureValue"], expected_signature)
 
     def test_provider_result_signature_must_be_valid(self) -> None:
         order = self._order()
