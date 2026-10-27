@@ -57,12 +57,17 @@ def require_pending_legal_consent(request: Request) -> None:
         )
 
 
-def persist_legal_consent(db: Session, user: User) -> bool:
-    """Store the accepted document version once the account identity is proven."""
-    if (
+def has_current_legal_consent(user: User) -> bool:
+    """Return whether the account accepted the currently published documents."""
+    return (
         user.legal_documents_version == LEGAL_DOCUMENTS_VERSION
         and user.legal_accepted_at is not None
-    ):
+    )
+
+
+def persist_legal_consent(db: Session, user: User) -> bool:
+    """Store the accepted document version once the account identity is proven."""
+    if has_current_legal_consent(user):
         return False
     user.legal_documents_version = LEGAL_DOCUMENTS_VERSION
     user.legal_accepted_at = _utc_now()

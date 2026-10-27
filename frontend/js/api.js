@@ -67,11 +67,10 @@ const API = {
         return this.request('/auth/legal-consent', 'POST');
     },
 
-    createRobokassaPayment(productType, productId, termsAccepted) {
+    createRobokassaPayment(productType, productId) {
         return this.request('/payments/robokassa/create', 'POST', {
             product_type: productType,
             product_id: productId,
-            terms_accepted: termsAccepted,
         }, true);
     },
 

@@ -84,18 +84,6 @@ async function startRobokassaCheckout(productType, productId, button = null) {
         return;
     }
 
-    const termsCheckbox = document.getElementById('pricingTermsAccepted');
-    if (!termsCheckbox?.checked) {
-        showNotification(
-            typeof window.t === 'function'
-                ? window.t('payment_terms_accept_required')
-                : 'Перед оплатой примите Условия использования и ознакомьтесь с Политикой конфиденциальности.',
-            'warning',
-        );
-        termsCheckbox?.focus();
-        return;
-    }
-
     const initialText = button?.textContent;
     if (button) {
         button.disabled = true;
@@ -107,7 +95,7 @@ async function startRobokassaCheckout(productType, productId, button = null) {
             product_type: productType,
             product_id: productId,
         });
-        const result = await API.createRobokassaPayment(productType, productId, true);
+        const result = await API.createRobokassaPayment(productType, productId);
         if (!result.ok || !result.data?.checkout_url || !result.data?.checkout_fields) {
             throw new Error(result.data?.detail || 'Payment creation failed');
         }

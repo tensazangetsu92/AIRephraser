@@ -735,10 +735,6 @@ Object.assign(translations.ru, {
     privacy_general_text_2: 'Сведения об операторе персональных данных и исполнителе платных услуг опубликованы на странице контактов.',
     privacy_data_6: 'сведения о заказе: выбранный тариф или пакет слов, сумма, статус, идентификатор и дата платежа. Данные банковской карты Humary не получает и не хранит.',
     privacy_third_robokassa: ' — обрабатывает оплату. Ей передаются данные, необходимые для создания и подтверждения платежа: сумма, номер заказа и email покупателя; реквизиты банковской карты Humary не получает;',
-    payment_terms_accept_prefix: 'Перед оплатой принимаю ',
-    payment_terms_accept_connector: ' и подтверждаю, что ознакомлен с ',
-    payment_terms_accept_suffix: '.',
-    payment_terms_accept_required: 'Перед оплатой примите Условия использования и ознакомьтесь с Политикой конфиденциальности.',
 });
 
 Object.assign(translations.en, {
@@ -750,10 +746,6 @@ Object.assign(translations.en, {
     privacy_general_text_2: 'Details of the personal-data operator and paid-services provider are published on the Contacts page.',
     privacy_data_6: 'order information: the selected plan or word package, amount, status, payment identifier, and date. Humary does not receive or store bank-card details.',
     privacy_third_robokassa: ' processes the payment. It receives the data needed to create and confirm the payment: amount, order number, and buyer email; Humary does not receive card details;',
-    payment_terms_accept_prefix: 'Before paying, I accept the ',
-    payment_terms_accept_connector: ' and confirm that I have read the ',
-    payment_terms_accept_suffix: '.',
-    payment_terms_accept_required: 'Before paying, accept the Terms of Use and review the Privacy Policy.',
 });
 
 function t(key) {

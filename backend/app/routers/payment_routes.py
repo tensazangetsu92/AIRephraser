@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import Payment, User, get_db
-from app.legal_consent import persist_legal_consent
+from app.legal_consent import has_current_legal_consent
 from app.payments import (
     PRODUCT_SUBSCRIPTION,
     PRODUCT_WORD_PACKAGE,
@@ -28,7 +28,6 @@ router = APIRouter(prefix="/payments/robokassa", tags=["payments"])
 class CheckoutRequest(BaseModel):
     product_type: Literal["subscription", "word_package"]
     product_id: str
-    terms_accepted: bool
 
 
 @router.post("/create")
@@ -38,15 +37,12 @@ async def create_checkout(
         db: Session = Depends(get_db),
 ):
     require_payments_enabled()
-    if not payload.terms_accepted:
+    if not has_current_legal_consent(current_user):
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Перед оплатой примите Условия использования и ознакомьтесь с Политикой конфиденциальности.",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Войдите в аккаунт заново и примите актуальные Условия использования.",
         )
 
-    # The user has just performed an explicit checkout acknowledgement. The
-    # following order commit persists the current legal-document version too.
-    persist_legal_consent(db, current_user)
     order = create_payment_order(db, current_user.id, payload.product_type, payload.product_id)
     try:
         provider_payment = create_provider_payment(order, current_user.email)
