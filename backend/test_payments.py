@@ -4,7 +4,7 @@ from decimal import Decimal
 import json
 import unittest
 from unittest.mock import patch
-from urllib.parse import unquote
+from urllib.parse import unquote_plus
 
 from fastapi import HTTPException, status
 from sqlalchemy import create_engine
@@ -101,8 +101,10 @@ class PaymentProductTests(unittest.TestCase):
         self.assertEqual(fields["IsTest"], "1")
         self.assertNotIn("SuccessUrl2", fields)
         self.assertNotIn("FailUrl2", fields)
+        self.assertIn("+", fields["Receipt"])
+        self.assertIn("%5Cu", fields["Receipt"])
 
-        receipt = json.loads(unquote(fields["Receipt"]))
+        receipt = json.loads(unquote_plus(fields["Receipt"]))
         self.assertEqual(receipt["items"], [{
             "name": "Humary: тариф premium на 30 дней",
             "quantity": 1,

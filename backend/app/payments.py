@@ -9,7 +9,7 @@ import json
 import logging
 import secrets
 from typing import Mapping
-from urllib.parse import quote
+from urllib.parse import quote_plus
 from uuid import uuid4
 
 from fastapi import HTTPException, status
@@ -103,8 +103,13 @@ def _fiscal_receipt(order: Payment) -> str:
             "tax": "none",
         }],
     }
-    return quote(
-        json.dumps(receipt, ensure_ascii=False, separators=(",", ":")),
+    # Robokassa's HTML-form example uses application/x-www-form-urlencoded
+    # encoding for Receipt (not encodeURIComponent): spaces become "+" and
+    # non-ASCII characters are represented by JSON \u escapes.  The exact
+    # encoded value is included in SignatureValue, so it must use that same
+    # canonical representation.
+    return quote_plus(
+        json.dumps(receipt, ensure_ascii=True, separators=(",", ":")),
         safe="",
     )
 
