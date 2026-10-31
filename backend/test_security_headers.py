@@ -17,7 +17,7 @@ class SecurityHeadersTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://mc.yandex.ru", csp)
         self.assertIn("connect-src 'self' https://mc.yandex.ru", csp)
-        self.assertIn("form-action 'self' https://robokassa.ru https://*.robokassa.ru", csp)
+        self.assertNotIn("form-action", csp)
 
 
 if __name__ == "__main__":

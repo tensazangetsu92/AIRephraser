@@ -269,7 +269,7 @@ async def add_security_headers(_: Request, call_next):
         "img-src 'self' data: blob: https:; "
         "connect-src 'self' https://mc.yandex.ru; "
         "worker-src 'self' blob: https://cdnjs.cloudflare.com; "
-        "object-src 'none'; base-uri 'self'; form-action 'self' https://robokassa.ru https://*.robokassa.ru; frame-ancestors 'none'"
+        "object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
     )
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
