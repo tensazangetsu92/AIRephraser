@@ -19,16 +19,22 @@ Humary принимает только разовые платежи: тариф
    ROBOKASSA_MERCHANT_LOGIN=логин_тестового_магазина
    ROBOKASSA_PASSWORD1=тестовый_пароль_1
    ROBOKASSA_PASSWORD2=тестовый_пароль_2
-   ROBOKASSA_RETURN_URL=https://staging.humary.ru/pricing
    ROBOKASSA_IS_TEST=true
    ROBOKASSA_HASH_ALGORITHM=md5
    ```
 
 3. В технических настройках Robokassa выберите алгоритм хеширования `MD5` и
-   задайте `ResultURL` методом `POST`:
+   задайте `ResultURL` методом `POST`, а также `Success URL` и `Fail URL`
+   методом `GET`:
 
    ```text
    https://staging.humary.ru/payments/robokassa/result
+   ```
+
+   Для `Success URL` и `Fail URL` укажите:
+
+   ```text
+   https://staging.humary.ru/pricing
    ```
 
 4. Обновите staging и оплатите один тариф и один пакет слов в тестовом режиме.
@@ -47,15 +53,21 @@ PAYMENTS_ENABLED=true
 ROBOKASSA_MERCHANT_LOGIN=логин_магазина
 ROBOKASSA_PASSWORD1=пароль_1
 ROBOKASSA_PASSWORD2=пароль_2
-ROBOKASSA_RETURN_URL=https://humary.ru/pricing
 ROBOKASSA_IS_TEST=false
 ROBOKASSA_HASH_ALGORITHM=md5
 ```
 
-В боевом магазине задайте `ResultURL` методом `POST`:
+В боевом магазине задайте `ResultURL` методом `POST`, а также `Success URL` и
+`Fail URL` методом `GET`:
 
 ```text
 https://humary.ru/payments/robokassa/result
+```
+
+Для `Success URL` и `Fail URL` укажите:
+
+```text
+https://humary.ru/pricing
 ```
 
 Для автоматических чеков самозанятого в личном кабинете Robokassa подключите

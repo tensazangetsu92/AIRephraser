@@ -30,7 +30,6 @@ class PaymentProductTests(unittest.TestCase):
             ROBOKASSA_MERCHANT_LOGIN="humary-demo",
             ROBOKASSA_PASSWORD1="password-one",
             ROBOKASSA_PASSWORD2="password-two",
-            ROBOKASSA_RETURN_URL="https://humary.ru/pricing",
             ROBOKASSA_HASH_ALGORITHM="md5",
             ROBOKASSA_IS_TEST=True,
         )
@@ -100,7 +99,8 @@ class PaymentProductTests(unittest.TestCase):
         self.assertEqual(fields["InvId"], "654321")
         self.assertEqual(fields["Shp_order"], order.id)
         self.assertEqual(fields["IsTest"], "1")
-        self.assertIn(f"payment={order.id}", fields["SuccessUrl2"])
+        self.assertNotIn("SuccessUrl2", fields)
+        self.assertNotIn("FailUrl2", fields)
 
         receipt = json.loads(unquote(fields["Receipt"]))
         self.assertEqual(receipt["items"], [{
@@ -116,10 +116,6 @@ class PaymentProductTests(unittest.TestCase):
             "179.00",
             "654321",
             fields["Receipt"],
-            fields["SuccessUrl2"],
-            "GET",
-            fields["FailUrl2"],
-            "GET",
             "password-one",
             f"Shp_order={order.id}",
         ])

@@ -9,7 +9,7 @@ import json
 import logging
 import secrets
 from typing import Mapping
-from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
+from urllib.parse import quote
 from uuid import uuid4
 
 from fastapi import HTTPException, status
@@ -22,7 +22,6 @@ from app.config import (
     ROBOKASSA_MERCHANT_LOGIN,
     ROBOKASSA_PASSWORD1,
     ROBOKASSA_PASSWORD2,
-    ROBOKASSA_RETURN_URL,
 )
 from app.database import Payment
 from app.subscription import (
@@ -145,13 +144,6 @@ def _signature(parts: list[str]) -> str:
     return hashlib.new(ROBOKASSA_HASH_ALGORITHM, source).hexdigest().lower()
 
 
-def _return_url(order_id: str) -> str:
-    parsed = urlsplit(ROBOKASSA_RETURN_URL)
-    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
-    query["payment"] = order_id
-    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment))
-
-
 def create_provider_payment(order: Payment, customer_email: str) -> dict[str, object]:
     """Build a signed POST checkout form; prices never come from the browser."""
     if not order.provider_payment_id:
@@ -161,18 +153,12 @@ def create_provider_payment(order: Payment, customer_email: str) -> dict[str, ob
     amount = f"{Decimal(order.amount):.2f}"
     invoice_id = order.provider_payment_id
     custom_parameters = {_CUSTOM_ORDER_PARAMETER: order.id}
-    success_url = _return_url(order.id)
-    fail_url = _return_url(order.id)
     receipt = _fiscal_receipt(order)
     signature_parts = [
         ROBOKASSA_MERCHANT_LOGIN,
         amount,
         invoice_id,
         receipt,
-        success_url,
-        "GET",
-        fail_url,
-        "GET",
         ROBOKASSA_PASSWORD1,
         *[f"{key}={value}" for key, value in sorted(custom_parameters.items())],
     ]
@@ -185,10 +171,6 @@ def create_provider_payment(order: Payment, customer_email: str) -> dict[str, ob
         "SignatureValue": _signature(signature_parts),
         "Email": customer_email,
         "Culture": "ru",
-        "SuccessUrl2": success_url,
-        "SuccessUrl2Method": "GET",
-        "FailUrl2": fail_url,
-        "FailUrl2Method": "GET",
         **custom_parameters,
     }
     if ROBOKASSA_IS_TEST:

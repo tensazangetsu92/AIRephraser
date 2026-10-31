@@ -168,9 +168,6 @@ PAYMENTS_ENABLED = _as_bool(os.getenv("PAYMENTS_ENABLED"), False)
 ROBOKASSA_MERCHANT_LOGIN = os.getenv("ROBOKASSA_MERCHANT_LOGIN", "").strip()
 ROBOKASSA_PASSWORD1 = os.getenv("ROBOKASSA_PASSWORD1", "").strip()
 ROBOKASSA_PASSWORD2 = os.getenv("ROBOKASSA_PASSWORD2", "").strip()
-ROBOKASSA_RETURN_URL = os.getenv(
-    "ROBOKASSA_RETURN_URL", f"{FRONTEND_URL}/pricing"
-).strip().rstrip("/")
 ROBOKASSA_IS_TEST = _as_bool(os.getenv("ROBOKASSA_IS_TEST"), False)
 ROBOKASSA_HASH_ALGORITHM = os.getenv("ROBOKASSA_HASH_ALGORITHM", "md5").strip().lower()
 
@@ -187,5 +184,3 @@ if any((ROBOKASSA_MERCHANT_LOGIN, ROBOKASSA_PASSWORD1, ROBOKASSA_PASSWORD2)) and
     raise RuntimeError("Configure all Robokassa credentials, or none.")
 if ROBOKASSA_HASH_ALGORITHM not in {"md5", "sha256", "sha512"}:
     raise RuntimeError("ROBOKASSA_HASH_ALGORITHM must be md5, sha256 or sha512.")
-if PAYMENTS_ENABLED and IS_PRODUCTION and not _is_https_url(ROBOKASSA_RETURN_URL):
-    raise RuntimeError("ROBOKASSA_RETURN_URL must use HTTPS when payments are enabled in production.")
