@@ -1,4 +1,4 @@
-"""Keep the production diagnostic limited to an unsigned-invoice probe."""
+"""Check that the production probe isolates Robokassa signature fields."""
 
 from contextlib import redirect_stdout
 from io import StringIO
@@ -17,12 +17,13 @@ SPEC.loader.exec_module(probe)
 
 
 class RobokassaProbeTests(unittest.TestCase):
-    def test_minimal_request_omits_receipt_and_does_not_print_secrets(self) -> None:
+    def test_requests_isolate_signed_fields_and_do_not_print_secrets(self) -> None:
         response = MagicMock()
         response.__enter__.return_value = response
         response.status = 200
         response.url = "https://auth.robokassa.ru/Merchant/Index.aspx"
-        response.read.return_value = "<html>Код ошибки: 29</html>".encode("utf-8")
+        response.headers.get_content_charset.return_value = "windows-1251"
+        response.read.return_value = "<html>Код ошибки: 29</html>".encode("cp1251")
         output = StringIO()
         settings = {
             "PAYMENTS_ENABLED": "true",
@@ -33,21 +34,30 @@ class RobokassaProbeTests(unittest.TestCase):
         }
 
         with patch.object(probe, "running_app_environment", return_value=settings), \
-                patch.object(probe.secrets, "randbelow", return_value=123), \
+                patch.object(probe.secrets, "randbelow", side_effect=[123, 124, 125, 126]), \
                 patch.object(probe, "urlopen", return_value=response) as send, \
                 redirect_stdout(output):
             self.assertEqual(probe.main(), 0)
 
-        request = send.call_args.args[0]
-        fields = parse_qs(request.data.decode("ascii"))
-        self.assertEqual(request.get_method(), "POST")
-        self.assertEqual(set(fields), {"MerchantLogin", "OutSum", "InvId", "SignatureValue"})
-        self.assertEqual(fields["SignatureValue"], [
-            hashlib.md5(b"Humary:1.00:124:test-secret").hexdigest()
-        ])
-        self.assertIn("Код Robokassa: 29", output.getvalue())
+        requests = [call.args[0] for call in send.call_args_list]
+        self.assertEqual(len(requests), 4)
+        for request, has_receipt, has_order in zip(
+                requests, (False, True, False, True), (False, False, True, True)
+        ):
+            fields = {key: value[0] for key, value in parse_qs(request.data.decode("ascii")).items()}
+            self.assertEqual(request.get_method(), "POST")
+            self.assertEqual("Receipt" in fields, has_receipt)
+            self.assertEqual("Shp_order" in fields, has_order)
+            parts = [fields["MerchantLogin"], fields["OutSum"], fields["InvId"]]
+            if has_receipt:
+                parts.append(fields["Receipt"])
+            parts.append("test-secret")
+            if has_order:
+                parts.append(f"Shp_order={fields['Shp_order']}")
+            self.assertEqual(fields["SignatureValue"], hashlib.md5(":".join(parts).encode()).hexdigest())
+            self.assertNotIn(fields["SignatureValue"], output.getvalue())
+        self.assertEqual(output.getvalue().count("код=29"), 4)
         self.assertNotIn("test-secret", output.getvalue())
-        self.assertNotIn(fields["SignatureValue"][0], output.getvalue())
 
 
 if __name__ == "__main__":
