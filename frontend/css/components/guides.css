@@ -131,6 +131,15 @@
 .guide-content li + li,
 .guide-related li + li { margin-top: .35rem; }
 
+.guide-content p a,
+.guide-content li a {
+    color: var(--accent-text);
+    text-underline-offset: 3px;
+}
+
+.guide-content p a:hover,
+.guide-content li a:hover { color: var(--main-color-light); }
+
 .guide-note {
     margin-top: 1.1rem;
     padding: 1rem 1.1rem;
