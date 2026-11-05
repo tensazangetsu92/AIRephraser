@@ -42,6 +42,11 @@ PAYMENT_CURRENCY = "RUB"
 ROBOKASSA_CHECKOUT_URL = "https://auth.robokassa.ru/Merchant/Index.aspx"
 _MAX_INVOICE_ID = 9_223_372_036_854_775_807
 _CUSTOM_ORDER_PARAMETER = "Shp_order"
+_PLAN_DISPLAY_NAMES = {
+    "premium": "Сессия",
+    "pro": "Семестр",
+    "unlimited": "Максимум",
+}
 
 
 class PaymentProviderError(RuntimeError):
@@ -64,9 +69,10 @@ def product_details(product_type: str, product_id: str) -> tuple[Decimal, str]:
     """Return only server-owned prices and descriptions for checkout."""
     if product_type == PRODUCT_SUBSCRIPTION:
         plan = SUBSCRIPTION_PLANS.get(product_id)
-        if not plan or product_id == "free":
+        display_name = _PLAN_DISPLAY_NAMES.get(product_id)
+        if not plan or not display_name:
             raise HTTPException(status_code=400, detail="Некорректный тариф.")
-        return _money(plan["price_monthly"]), f"Humary: тариф {product_id} на 30 дней"
+        return _money(plan["price_monthly"]), f"Humary: тариф «{display_name}» на 30 дней"
 
     if product_type == PRODUCT_WORD_PACKAGE:
         package = PURCHASE_PACKAGES.get(product_id)
@@ -84,14 +90,7 @@ def _fiscal_receipt(order: Payment) -> str:
     calculated server-side from the product configuration, so the fiscal item
     cannot be substituted by the browser.
     """
-    amount, _ = product_details(order.product_type, order.product_id)
-    if order.product_type == PRODUCT_SUBSCRIPTION:
-        item_name = f"Humary: тариф {order.product_id} на 30 дней"
-    elif order.product_type == PRODUCT_WORD_PACKAGE:
-        package = PURCHASE_PACKAGES[order.product_id]
-        item_name = f"Humary: пакет {package['words']} слов"
-    else:
-        raise PaymentProviderError("Unknown product for fiscal receipt")
+    amount, item_name = product_details(order.product_type, order.product_id)
 
     receipt = {
         "items": [{

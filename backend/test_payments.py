@@ -75,7 +75,9 @@ class PaymentProductTests(unittest.TestCase):
         return values
 
     def test_product_prices_are_server_owned(self) -> None:
-        self.assertEqual(product_details(PRODUCT_SUBSCRIPTION, "premium")[0], Decimal("179.00"))
+        self.assertEqual(product_details(PRODUCT_SUBSCRIPTION, "premium"), (Decimal("179.00"), "Humary: тариф «Сессия» на 30 дней"))
+        self.assertEqual(product_details(PRODUCT_SUBSCRIPTION, "pro"), (Decimal("277.00"), "Humary: тариф «Семестр» на 30 дней"))
+        self.assertEqual(product_details(PRODUCT_SUBSCRIPTION, "unlimited"), (Decimal("699.00"), "Humary: тариф «Максимум» на 30 дней"))
         self.assertEqual(product_details(PRODUCT_WORD_PACKAGE, "words_2000")[0], Decimal("60.00"))
 
     def test_free_or_unknown_product_cannot_be_paid_for(self) -> None:
@@ -98,6 +100,7 @@ class PaymentProductTests(unittest.TestCase):
         self.assertEqual(fields["OutSum"], "179.00")
         self.assertEqual(fields["InvId"], "654321")
         self.assertEqual(fields["Shp_order"], order.id)
+        self.assertEqual(fields["Description"], "Humary: тариф «Сессия» на 30 дней")
         self.assertEqual(fields["IsTest"], "1")
         self.assertNotIn("SuccessUrl2", fields)
         self.assertNotIn("FailUrl2", fields)
@@ -106,7 +109,7 @@ class PaymentProductTests(unittest.TestCase):
 
         receipt = json.loads(unquote_plus(fields["Receipt"]))
         self.assertEqual(receipt["items"], [{
-            "name": "Humary: тариф premium на 30 дней",
+            "name": "Humary: тариф «Сессия» на 30 дней",
             "quantity": 1,
             "sum": 179.0,
             "payment_method": "full_payment",
